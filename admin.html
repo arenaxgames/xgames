@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X-Games Admin">
+<meta name="theme-color" content="#000814">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="theme-color" content="#000814">
+<title>X-Games · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#000814;--s1:#0a0f1e;--s2:#0d1530;--s3:#111827;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff9f1c;--txt:#e0e7ff;--dim:#4a5568;--dim2:#6b7280}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,245,255,.01) 2px,rgba(0,245,255,.01) 4px);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(114,9,183,.1) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(67,97,238,.1) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* LOGIN */
+#loginScr{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px}
+.login-logo{font-family:'Orbitron',monospace;font-size:1.7rem;font-weight:900;color:var(--cyan);text-shadow:0 0 28px var(--cyan);letter-spacing:.1em;text-align:center}
+.login-sub{font-size:.68rem;color:var(--dim);letter-spacing:.2em;text-transform:uppercase}
+.login-box{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(0,245,255,.15);border-radius:18px;padding:26px 22px;width:100%;max-width:340px}
+.login-lbl{font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:7px;display:block}
+.login-inp{width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.15);border-radius:10px;color:var(--txt);font-size:1rem;padding:11px 14px;outline:none;font-family:'Rajdhani',sans-serif;margin-bottom:14px;transition:border-color .2s}
+.login-inp:focus{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,245,255,.1)}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;padding:12px;cursor:pointer;letter-spacing:.08em}
+.login-btn:active{opacity:.8}
+.login-err{font-size:.76rem;color:var(--red);text-align:center;min-height:16px;margin-top:8px}
+
+/* APP SHELL */
+#adm{position:relative;z-index:1;display:none;flex-direction:column;min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:rgba(10,15,30,.97);border-bottom:1px solid rgba(0,245,255,.08);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.topbar-logo{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:900;color:var(--cyan);text-shadow:0 0 12px var(--cyan);letter-spacing:.08em}
+.topbar-logo b{color:var(--pink);font-weight:inherit}
+.tb-badge{font-size:.58rem;color:var(--green);background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.2);border-radius:20px;padding:3px 9px;letter-spacing:.1em}
+.logout{background:transparent;border:1px solid rgba(255,255,255,.08);border-radius:7px;color:var(--dim);font-size:.68rem;padding:5px 10px;cursor:pointer;font-family:'Rajdhani',sans-serif}
+
+/* TABS */
+.tabs{display:flex;background:rgba(0,0,0,.4);border-bottom:1px solid rgba(0,245,255,.07);overflow-x:auto;padding:0 10px;gap:2px}
+.tab{padding:10px 13px;font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border:none;background:transparent;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;font-family:'Rajdhani',sans-serif;white-space:nowrap;flex-shrink:0}
+.tab.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:14px 13px 40px}
+
+/* SECTION TITLE */
+.st{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(0,245,255,.45);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.st::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.15),transparent)}
+
+/* CARDS */
+.card{background:linear-gradient(135deg,rgba(10,15,30,.92),rgba(13,21,48,.92));border:1px solid rgba(0,245,255,.12);border-radius:16px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,245,255,.3),transparent)}
+
+/* INPUTS */
+.lbl{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;display:block}
+.inp{width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.12);border-radius:9px;color:var(--txt);font-size:.9rem;padding:9px 12px;outline:none;font-family:'Rajdhani',sans-serif;transition:border-color .2s;margin-bottom:10px}
+.inp:focus{border-color:var(--cyan)}
+.inp-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:10px}
+.inp-row .inp{margin-bottom:0;flex:1}
+.inp-sm{width:80px;flex-shrink:0}
+
+/* BUTTONS */
+.btn{padding:10px 16px;border:none;border-radius:9px;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;cursor:pointer;letter-spacing:.06em;transition:all .2s}
+.btn:active{opacity:.7;transform:scale(.98)}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#000}
+.btn-green{background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);color:var(--green)}
+.btn-red{background:rgba(255,0,110,.1);border:1px solid rgba(255,0,110,.2);color:var(--red)}
+.btn-gold{background:linear-gradient(135deg,rgba(255,214,10,.2),rgba(255,159,28,.2));border:1px solid rgba(255,214,10,.3);color:var(--gold)}
+.btn-gold:active{background:rgba(255,214,10,.3)}
+@keyframes scan-line{0%{top:0;opacity:1}50%{opacity:.8}100%{top:calc(100% - 2px);opacity:1}}
+@keyframes badge-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.7}}
+@keyframes alert-flash{from{opacity:.85}to{opacity:1}}
+@keyframes alert-shake{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}}
+@keyframes ticker-scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+.btn-violet{background:rgba(114,9,183,.2);border:1px solid rgba(114,9,183,.3);color:var(--violet)}
+.btn-full{width:100%;display:block;text-align:center;padding:12px}
+.btn-sm{padding:6px 12px;font-size:.6rem}
+
+/* FEEDBACK */
+.fb{font-size:.76rem;padding:7px 11px;border-radius:8px;margin-top:8px;display:none;text-align:center}
+.fb.ok{background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.2);color:var(--green);display:block}
+.fb.err{background:rgba(255,0,110,.1);border:1px solid rgba(255,0,110,.2);color:var(--red);display:block}
+
+/* SEARCH */
+.search-row{display:flex;gap:8px;margin-bottom:12px}
+.search-row .inp{margin-bottom:0}
+
+/* CLIENT ROW */
+.cl-row{background:rgba(10,15,30,.8);border:1px solid rgba(0,0,0,.4);border-radius:11px;padding:11px 13px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.cl-row:active,.cl-row.sel{border-color:rgba(0,245,255,.25);background:rgba(0,245,255,.04)}
+.cl-top{display:flex;align-items:center;gap:10px}
+.cl-av{font-size:1.2rem;flex-shrink:0}
+.cl-name{flex:1;font-size:.87rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-xp{font-family:'Orbitron',monospace;font-size:.82rem;color:var(--cyan);font-weight:700;flex-shrink:0}
+.cl-id{font-size:.62rem;color:var(--dim);margin-top:2px}
+.cl-bar{margin-top:8px;height:5px;background:rgba(0,0,0,.5);border-radius:3px;overflow:hidden}
+.cl-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .5s}
+
+/* DETAIL */
+.detail-box{background:rgba(0,245,255,.03);border:1px solid rgba(0,245,255,.15);border-radius:14px;padding:16px;margin-bottom:12px;display:none}
+.detail-box.on{display:block}
+.det-hdr{display:flex;align-items:center;gap:13px;margin-bottom:14px;padding-bottom:13px;border-bottom:1px solid rgba(0,245,255,.07)}
+.det-av{font-size:2.2rem}
+.det-info{flex:1}
+.det-name{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:700}
+.det-id{font-size:.62rem;color:var(--dim);margin-top:3px}
+.det-xp{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--cyan);text-shadow:0 0 18px var(--cyan)}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.ctrl-btn{padding:11px 8px;border:none;border-radius:11px;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;cursor:pointer;letter-spacing:.05em;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px}
+.ctrl-btn .ci{font-size:1.2rem}
+.ctrl-btn:active{transform:scale(.96);opacity:.8}
+.ctrl-add{background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);color:var(--cyan)}
+.ctrl-rem{background:rgba(255,0,110,.08);border:1px solid rgba(255,0,110,.18);color:var(--red)}
+.ctrl-slot{background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.2);color:var(--gold)}
+.ctrl-qr{background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);color:var(--green)}
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.preset{background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.1);border-radius:7px;color:var(--dim2);font-size:.7rem;padding:5px 11px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600}
+.preset.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.07)}
+.xp-preview{font-size:.68rem;color:var(--cyan);text-align:center;margin-bottom:10px;min-height:18px}
+
+/* PENDING SLOTS */
+.pending-row{background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.2);border-radius:11px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.pr-info{flex:1}
+.pr-name{font-size:.85rem;font-weight:700;color:var(--gold)}
+.pr-time{font-size:.62rem;color:var(--dim)}
+.pr-btns{display:flex;gap:6px}
+
+/* TIERS CONFIG */
+.tier-row{background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.08);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.tier-row .inp{margin:0;flex:1}
+.tier-row .inp-sm{margin:0;width:70px}
+
+/* COUPONS VALIDATION */
+.cpv-row{background:rgba(10,15,30,.8);border:1px solid rgba(255,159,28,.15);border-radius:11px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+.cpv-icon{font-size:1.3rem;flex-shrink:0}
+.cpv-info{flex:1;min-width:0}
+.cpv-name{font-size:.82rem;font-weight:700}
+.cpv-client{font-size:.63rem;color:var(--dim)}
+.cpv-status{font-size:.6rem;font-family:'Orbitron',monospace;padding:3px 9px;border-radius:20px;flex-shrink:0}
+.cpv-status.active{background:rgba(0,245,255,.1);color:var(--cyan);border:1px solid rgba(0,245,255,.18)}
+
+/* QR MODAL */
+#qrModal{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px}
+#qrModal.on{display:flex}
+.qr-box{background:rgba(10,15,30,.97);border:1px solid rgba(0,245,255,.2);border-radius:20px;padding:22px;text-align:center;width:100%;max-width:310px}
+.qr-t{font-family:'Orbitron',monospace;font-size:.78rem;color:var(--cyan);letter-spacing:.12em;margin-bottom:4px}
+.qr-s{font-size:.68rem;color:var(--dim);margin-bottom:14px}
+#qrCvs{border-radius:10px;display:block;margin:0 auto}
+.qr-btns{display:flex;gap:8px;margin-top:14px;justify-content:center}
+.qr-dl{background:linear-gradient(135deg,var(--blue),var(--cyan));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:8px 16px;cursor:pointer}
+.qr-cl{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--dim);font-size:.65rem;padding:7px 14px;cursor:pointer;font-family:'Rajdhani',sans-serif}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-c{background:rgba(10,15,30,.8);border:1px solid rgba(0,245,255,.08);border-radius:13px;padding:13px;text-align:center}
+.stat-v{font-family:'Orbitron',monospace;font-size:1.35rem;font-weight:900;margin-bottom:3px}
+.stat-l{font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.toggle-lbl{font-size:.78rem;color:var(--txt)}
+.toggle{width:44px;height:24px;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.15);border-radius:12px;cursor:pointer;position:relative;transition:background .2s}
+.toggle.on{background:rgba(0,245,255,.2);border-color:var(--cyan)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:var(--dim);top:2px;left:2px;transition:all .2s}
+.toggle.on::after{background:var(--cyan);left:22px;box-shadow:0 0 8px var(--cyan)}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(10,15,30,.97);border:1px solid rgba(0,245,255,.2);border-radius:18px;padding:7px 18px;font-size:.74rem;color:var(--green);pointer-events:none;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:9999;white-space:nowrap}
+#toast.on{transform:translateX(-50%) translateY(0)}
+
+/* EMPTY */
+.empty-s{text-align:center;padding:36px 16px;color:var(--dim);font-size:.78rem}
+.empty-si{font-size:2rem;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScr">
+  <div class="login-logo">X-GAMES</div>
+  <div class="login-sub">Admin Panel</div>
+  <div class="login-box">
+    <label class="login-lbl">Mot de passe admin</label>
+    <input class="login-inp" type="password" id="pwdInp" placeholder="••••••••" autocomplete="current-password">
+    <button class="login-btn" id="loginBtn">ACCÉDER AU PANEL ⚡</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adm">
+  <div class="topbar">
+    <div class="topbar-logo">X-<b>GAMES</b></div>
+    <div class="tb-badge">● ADMIN</div>
+    <button class="logout" id="logoutBtn">QUITTER</button>
+  </div>
+
+  <!-- BANNIÈRE ALERTE JACKPOT — visible sur tous les onglets -->
+  <div id="jackpotAlert" style="display:none;background:linear-gradient(135deg,rgba(255,0,110,.95),rgba(247,37,133,.95));padding:10px 16px;display:none;align-items:center;gap:10px;cursor:pointer;border-bottom:2px solid rgba(255,255,255,.2);animation:alert-flash 1s ease-in-out infinite alternate" onclick="document.querySelector('[data-t=slots]').click()">
+    <span style="font-size:1.4rem;animation:alert-shake .3s ease-in-out infinite">🎰</span>
+    <div style="flex:1">
+      <div style="font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;color:#fff;letter-spacing:.08em">DEMANDE JACKPOT EN ATTENTE !</div>
+      <div style="font-size:.62rem;color:rgba(255,255,255,.8);margin-top:1px" id="jackpotAlertTxt">Un joueur attend ta validation</div>
+    </div>
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:#fff;background:rgba(0,0,0,.3);border-radius:8px;padding:4px 10px">VOIR →</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-t="clients">🎮 Clients</button>
+    <button class="tab" data-t="slots" id="slotsTab">🎰 Jackpot</button>
+    <button class="tab" data-t="coupons">🎫 Coupons</button>
+    <button class="tab" data-t="config">⚙️ Config</button>
+    <button class="tab" data-t="stats">📊 Stats</button>
+  </div>
+  <div class="content" id="admContent"></div>
+</div>
+
+<!-- QR MODAL -->
+<div id="qrModal">
+  <div class="qr-box">
+    <div class="qr-t">QR CODE CLIENT</div>
+    <div class="qr-s" id="qrSub"></div>
+    <canvas id="qrCvs" width="200" height="200"></canvas>
+    <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--txt);margin-top:10px" id="qrName"></div>
+    <div style="font-size:.6rem;color:var(--dim);margin-top:3px" id="qrId"></div>
+    <div style="font-size:.55rem;color:rgba(0,245,255,.35);margin-top:5px;word-break:break-all" id="qrUrl"></div>
+    <div class="qr-btns">
+      <button class="qr-dl" id="qrDl">💾 Télécharger</button>
+      <button class="qr-cl" onclick="document.getElementById('qrModal').classList.remove('on')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">✓</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, collection, setDoc, updateDoc, getDoc, getDocs, addDoc, onSnapshot, query, orderBy, where, limit, serverTimestamp, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ════════════════════════════════════
+// 🔧 COLLE TA CONFIG FIREBASE ICI
+// (même que register.html et client.html)
+// ════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
+  authDomain: "xgames-loyalty.firebaseapp.com",
+  projectId: "xgames-loyalty",
+  storageBucket: "xgames-loyalty.firebasestorage.app",
+  messagingSenderId: "1082099112233",
+  appId: "1:1082099112233:web:bf52d043621ba76061bf38"
+};
+// ════════════════════════════════════
+
+// ⚠️ CHANGE CE MOT DE PASSE
+const ADMIN_PWD = "xgames2024";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let allClients = [];
+let config = { tiers: [], jackpot: { winRate: 20, prizes: ['Partie gratuite','Peluche','Bonbon géant'] }, sumupLink: '', slotPrice: '2€', cashEnabled: false };
+let curTab = 'clients';
+let selClientId = null;
+let selEuros = null;
+let toastT;
+
+// ── LOGIN ──
+// ── SW CLEANUP ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+  if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+}
+
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('pwdInp').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogin() {
+  const v = document.getElementById('pwdInp').value;
+  if (v === ADMIN_PWD) {
+    document.getElementById('loginScr').style.display = 'none';
+    document.getElementById('adm').style.display = 'flex';
+    // Demande permission notifications pour les alertes jackpot
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    initAdmin();
+  } else {
+    document.getElementById('loginErr').textContent = 'Mot de passe incorrect';
+    document.getElementById('pwdInp').value = '';
+    setTimeout(() => document.getElementById('loginErr').textContent = '', 3000);
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  document.getElementById('adm').style.display = 'none';
+  document.getElementById('loginScr').style.display = 'flex';
+});
+
+function initAdmin() {
+  // Load config
+  onSnapshot(doc(db, 'config', 'main'), snap => {
+    if (snap.exists()) config = { ...config, ...snap.data() };
+    // Met à jour le bandeau défilant
+    if (config.bandeau) {
+      const ticker = document.getElementById('tickerContent');
+      if (ticker) ticker.textContent = config.bandeau;
+    }
+    if (curTab === 'config') renderTab('config');
+  });
+  // Load clients
+  onSnapshot(query(collection(db, 'clients')), snap => {
+    allClients = snap.docs
+      .map(d => ({ ...d.data(), _id: d.id }))
+      .sort((a,b) => {
+        const lvlDiff = (b.level||0) - (a.level||0);
+        return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
+      });
+    if (curTab === 'clients') renderTab('clients');
+    if (curTab === 'stats') renderTab('stats');
+  });
+  // Listen slots
+  onSnapshot(query(collection(db, 'slots'), where('status', '==', 'pending')), snap => {
+    const prev = (window._pendingSlots || []).length;
+    window._pendingSlots = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
+    const curr = window._pendingSlots.length;
+
+    // Bannière d'alerte — visible sur TOUS les onglets
+    const banner = document.getElementById('jackpotAlert');
+    if (banner) {
+      if (curr > 0) {
+        banner.style.display = 'flex';
+        const names = window._pendingSlots.map(s => s.clientPseudo || '?').join(', ');
+        document.getElementById('jackpotAlertTxt').textContent =
+          curr === 1
+            ? `${window._pendingSlots[0]?.clientPseudo || 'Un joueur'} attend ta validation`
+            : `${curr} joueurs en attente : ${names}`;
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    // Badge sur l'onglet 🎰
+    const slotTab = document.getElementById('slotsTab');
+    if (slotTab) {
+      slotTab.innerHTML = curr > 0
+        ? `🎰 Jackpot <span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:.6rem;margin-left:4px;animation:badge-pulse 1s ease-in-out infinite">${curr}</span>`
+        : '🎰 Jackpot';
+    }
+
+    // Son + notif système si nouvelle demande
+    if (curr > prev) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [440, 550, 660].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          gain.gain.setValueAtTime(0.3, ctx.currentTime + i*0.15);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.15 + 0.3);
+          osc.start(ctx.currentTime + i*0.15);
+          osc.stop(ctx.currentTime + i*0.15 + 0.3);
+        });
+      } catch(e) {}
+      if (Notification.permission === 'granted') {
+        new Notification('🎰 X-Games — Demande jackpot !', {
+          body: `${window._pendingSlots[curr-1]?.clientPseudo || 'Un joueur'} veut jouer !`,
+          icon: './icon-192.png'
+        });
+      }
+    }
+
+    if (curTab === 'slots') renderTab('slots');
+  });
+
+  // Handle QR scan from URL
+  handleScanFromURL();
+
+  renderTab('clients');
+}
+
+// ── TABS ──
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    curTab = t.dataset.t;
+    renderTab(curTab);
+  });
+});
+
+function renderTab(t) {
+  const c = document.getElementById('admContent');
+  if (t === 'clients') renderClients(c);
+  else if (t === 'slots') renderSlots(c);
+  else if (t === 'coupons') renderCoupons(c);
+  else if (t === 'config') renderConfig(c);
+  else if (t === 'stats') renderStats(c);
+}
+
+// ═══════════════════════════════════════
+// CLIENTS TAB
+// ═══════════════════════════════════════
+function renderClients(c) {
+  c.innerHTML = `
+    <div class="search-row">
+      <input class="inp" id="srch" type="text" placeholder="Rechercher par pseudo…" autocomplete="off" style="margin-bottom:0">
+    </div>
+    <div class="detail-box" id="detBox"></div>
+    <div id="clList"></div>`;
+
+  document.getElementById('srch').addEventListener('input', () => {
+    const q = document.getElementById('srch').value.toLowerCase();
+    displayClients(q ? allClients.filter(cl => cl.pseudo?.toLowerCase().includes(q)) : allClients);
+  });
+
+  if (selClientId) renderDetail(selClientId);
+  displayClients(allClients);
+}
+
+function displayClients(list) {
+  const el = document.getElementById('clList');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-s"><div class="empty-si">👤</div>Aucun client</div>';
+    return;
+  }
+  const maxXP = config.tiers?.length ? config.tiers[config.tiers.length-1].xp : 100;
+  el.innerHTML = list.map(cl => {
+    const pts   = cl.xp || 0;
+    const euros = (cl.totalEuros || 0).toFixed(0);
+    return `<div class="cl-row ${cl._id===selClientId?'sel':''}" data-id="${cl._id}">
+      <div class="cl-top">
+        <div class="cl-av">${cl.avatar||'🎮'}</div>
+        <div style="flex:1;min-width:0">
+          <div class="cl-name">${cl.pseudo||'—'}</div>
+          <div class="cl-id">Niv.${cl.level||0} · 💰 ${euros}€ dépensé</div>
+        </div>
+        <div class="cl-xp">${pts} XP</div>
+      </div>
+      <div class="cl-bar"><div class="cl-bar-fill" style="width:${Math.min((pts/maxXP)*100,100)}%"></div></div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.cl-row').forEach(r => {
+    r.addEventListener('click', () => { selClientId = r.dataset.id; displayClients(list); renderDetail(selClientId); });
+  });
+}
+
+function renderDetail(id) {
+  const box = document.getElementById('detBox');
+  if (!box) return;
+  const cl = allClients.find(x => x._id === id);
+  if (!cl) return;
+  box.classList.add('on');
+  const maxXP = config.tiers?.length ? config.tiers[config.tiers.length-1].xp : 100;
+  const nextT = (config.tiers||[]).find(t => t.xp > (cl.xp||0));
+
+  box.innerHTML = `
+    <div class="det-hdr">
+      <div class="det-av">${cl.avatar||'🎮'}</div>
+      <div class="det-info">
+        <div class="det-name">${cl.pseudo}</div>
+        <div class="det-id">Niv.${cl.level||0} · ${nextT?`Prochain : ${nextT.name} (${nextT.xp} XP)`:'MAX LEVEL'}</div>
+        <div style="font-size:.65rem;color:var(--gold);margin-top:3px">💰 ${(cl.totalEuros||0).toFixed(0)}€ dépensé au total</div>
+      </div>
+      <div class="det-xp">${cl.xp||0} XP</div>
+    </div>
+    <div class="fb" id="detFb"></div>
+    <div style="margin-bottom:8px">
+      <label class="lbl">Montant joué (€)</label>
+      <div class="preset-row">
+        ${[5,10,15,20,30,50].map(v=>`<div class="preset" data-v="${v}">${v}€</div>`).join('')}
+      </div>
+      <div class="inp-row">
+        <input class="inp" id="euroInp" type="number" placeholder="Autre montant…" min="1" max="9999" style="margin:0">
+        <span style="font-size:.8rem;color:var(--dim);padding:0 4px;align-self:center">€</span>
+      </div>
+      <div class="xp-preview" id="xpPrev">Sélectionne ou tape un montant</div>
+    </div>
+    <div class="ctrl-grid">
+      <button class="ctrl-btn ctrl-add" id="addXpBtn"><div class="ci">⬆️</div>AJOUTER XP</button>
+      <button class="ctrl-btn ctrl-rem" id="remXpBtn"><div class="ci">⬇️</div>RETIRER 1 XP</button>
+      <button class="ctrl-btn ctrl-qr" id="qrBtn"><div class="ci">📱</div>QR CODE</button>
+    </div>
+    <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:12px;padding:12px;margin-top:8px">
+      <div style="font-size:.68rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎰 Débloquer des lancers jackpot</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:.7rem;color:var(--dim);flex:1">Nombre de lancers :</div>
+        <input id="multiSpinInp" type="number" min="1" max="20" value="1" style="width:54px;background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.3);border-radius:6px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.85rem;text-align:center;padding:6px">
+        <button class="btn btn-gold" id="multiSpinBtn" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
+      </div>
+    </div>
+    <button class="btn btn-red btn-sm" id="delBtn" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>`;
+
+  // Preset click
+  box.querySelectorAll('.preset').forEach(p => {
+    p.addEventListener('click', () => {
+      box.querySelectorAll('.preset').forEach(x => x.classList.remove('on'));
+      p.classList.add('on');
+      document.getElementById('euroInp').value = p.dataset.v;
+      updateXpPreview();
+    });
+  });
+  document.getElementById('euroInp').addEventListener('input', () => {
+    box.querySelectorAll('.preset').forEach(x => x.classList.remove('on'));
+    updateXpPreview();
+  });
+
+  function updateXpPreview() {
+    const e  = parseFloat(document.getElementById('euroInp')?.value) || 0;
+    const xp = Math.floor(e); // 1€ = 1 XP
+    const el = document.getElementById('xpPrev');
+    if (el) el.textContent = e > 0 ? `${e}€ = +${xp} XP (1€ = 1 XP)` : 'Sélectionne ou tape un montant';
+  }
+
+  document.getElementById('addXpBtn').addEventListener('click', () => addXP(id));
+  document.getElementById('remXpBtn').addEventListener('click', () => removeXP(id));
+  document.getElementById('qrBtn').addEventListener('click', () => showQR(cl));
+  document.getElementById('multiSpinBtn').addEventListener('click', () => {
+    const n = parseInt(document.getElementById('multiSpinInp').value) || 1;
+    if (n < 1 || n > 20) { showDetFb('Entre un nombre entre 1 et 20', 'err'); return; }
+    multiUnlockSlot(id, cl.pseudo, n);
+  });
+  document.getElementById('delBtn').addEventListener('click', async() => {
+    if (!confirm(`Supprimer ${cl.pseudo} ?`)) return;
+    await deleteDoc(doc(db, 'clients', id));
+    selClientId = null;
+    box.classList.remove('on');
+    toast('Client supprimé');
+  });
+}
+
+async function addXP(id) {
+  const euros  = parseFloat(document.getElementById('euroInp')?.value) || 0;
+  const xpToAdd = Math.floor(euros); // 1€ = 1 XP
+  if (xpToAdd <= 0) { showDetFb('Entre un montant valide', 'err'); return; }
+
+  const cl = allClients.find(x => x._id === id);
+  if (!cl) return;
+
+  const sortedTiers = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
+  const maxXP = sortedTiers.length ? sortedTiers[sortedTiers.length-1].xp : 100;
+
+  let curXP  = cl.xp || 0;
+  let curLevel = cl.level || 0;
+  let cycles = 0;
+  const newCoupons = [];
+  let simXP = curXP;
+  let remaining = xpToAdd;
+
+  while (remaining > 0) {
+    const spaceLeft = maxXP - simXP;
+    if (remaining >= spaceLeft) {
+      // Franchit tous les paliers restants de ce cycle
+      sortedTiers.filter(t => t.xp > simXP && t.xp <= maxXP).forEach((t, idx) => {
+        newCoupons.push({
+          id: `cp-${Date.now()}-${t.xp}-${idx}-${cycles}`,
+          type: 'xp', name: t.name, icon: t.icon || '🎁',
+          used: false, earnedAt: new Date().toLocaleDateString('fr-FR')
+        });
+      });
+      remaining -= spaceLeft;
+      simXP = 0;
+      cycles++;
+      curLevel++;
+    } else {
+      // Paliers franchis dans ce cycle partiel
+      sortedTiers.filter(t => t.xp > simXP && t.xp <= simXP + remaining).forEach((t, idx) => {
+        newCoupons.push({
+          id: `cp-${Date.now()}-${t.xp}-${idx}`,
+          type: 'xp', name: t.name, icon: t.icon || '🎁',
+          used: false, earnedAt: new Date().toLocaleDateString('fr-FR')
+        });
+      });
+      simXP += remaining;
+      remaining = 0;
+    }
+  }
+
+  const newXP = simXP;
+
+  // Lecture fraîche des coupons
+  const freshSnap = await getDoc(doc(db, 'clients', id));
+  const existing  = freshSnap.data()?.coupons || [];
+  const merged    = [...existing, ...newCoupons];
+
+  try {
+    await updateDoc(doc(db, 'clients', id), {
+      xp: newXP,
+      level: curLevel,
+      totalEuros: (cl.totalEuros || 0) + euros,
+      coupons: merged,
+      updatedAt: serverTimestamp()
+    });
+
+    await addDoc(collection(db, 'clients', id, 'history'), {
+      type: 'add',
+      label: `+${xpToAdd} XP (${euros}€)${cycles > 0 ? ` · ${cycles} niveau(x) gagné(s)` : ''}`,
+      euros, xp: xpToAdd, timestamp: serverTimestamp()
+    });
+    await addDoc(collection(db, 'logs'), {
+      type: 'add', clientId: id, clientName: cl.pseudo,
+      euros, xp: xpToAdd, timestamp: serverTimestamp()
+    });
+
+    let msg = `✓ +${xpToAdd} XP — Total : ${newXP} XP`;
+    if (cycles > 0) msg += ` · 🎖️ Niveau ${curLevel} !`;
+    if (newCoupons.length) msg += ` · ${newCoupons.length} coupon(s)`;
+
+    showDetFb(msg, 'ok');
+    document.getElementById('euroInp').value = '';
+    document.querySelectorAll('.preset').forEach(x => x.classList.remove('on'));
+    toast(`+${xpToAdd} XP pour ${cl.pseudo}`);
+  } catch(e) { showDetFb('Erreur : ' + e.message, 'err'); }
+}
+
+async function removeXP(id) {
+  const cl = allClients.find(x => x._id === id);
+  if (!cl || (cl.xp||0) <= 0) { showDetFb('Déjà à 0 XP', 'err'); return; }
+  await updateDoc(doc(db, 'clients', id), { xp: Math.max(0, (cl.xp||0)-1), updatedAt: serverTimestamp() });
+  await addDoc(collection(db, 'clients', id, 'history'), { type:'add', label:'-1 XP (correction)', xp:-1, timestamp: serverTimestamp() });
+  showDetFb(`✓ -1 XP — Total : ${Math.max(0,(cl.xp||0)-1)} XP`, 'ok');
+  toast(`-1 XP pour ${cl.pseudo}`);
+}
+
+async function unlockSlot(id) {
+  const cl = allClients.find(x => x._id === id);
+  await setDoc(doc(db, 'slots', id), { status: 'ready', clientId: id, clientPseudo: cl?.pseudo||'—', forced: false, unlockedAt: serverTimestamp() });
+  showDetFb('✓ Partie débloquée !', 'ok');
+  toast(`Partie débloquée pour ${cl?.pseudo}`);
+}
+
+async function multiUnlockSlot(id, pseudo, count) {
+  const cl = allClients.find(x => x._id === id);
+  await setDoc(doc(db, 'slots', id), {
+    status: 'ready', clientId: id,
+    clientPseudo: cl?.pseudo||'—',
+    forced: false,
+    multiCount: count, // Le client voit combien de lancers il a
+    unlockedAt: serverTimestamp()
+  });
+  showDetFb(`✓ ${count} lancer(s) offert(s) à ${pseudo} !`, 'ok');
+  toast(`${count} lancers pour ${pseudo}`);
+}
+
+function showDetFb(msg, type) {
+  const fb = document.getElementById('detFb');
+  if (!fb) return;
+  fb.className = 'fb '+type; fb.textContent = msg;
+  setTimeout(() => { if(fb) fb.className='fb'; }, 5000);
+}
+
+// ═══════════════════════════════════════
+// SLOTS TAB
+// ═══════════════════════════════════════
+function renderSlots(c) {
+  const pending = window._pendingSlots || [];
+
+  c.innerHTML = `
+    <div class="st">Demandes en attente</div>
+    ${pending.length ? pending.map(s => {
+      const time = s.requestedAt ? new Date(s.requestedAt.seconds*1000).toLocaleTimeString('fr-FR') : '—';
+      return `
+      <div style="border:2px solid rgba(255,214,10,.4);background:rgba(255,214,10,.06);border-radius:14px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="font-size:2rem">🎰</div>
+          <div style="flex:1">
+            <div style="font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;color:var(--gold)">${s.clientPseudo||'—'}</div>
+            <div style="font-size:.65rem;color:var(--dim);margin-top:2px">⏱ Demande à ${time}</div>
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:.72rem;color:rgba(255,255,255,.7);line-height:1.7">
+          💵 Le joueur paie <b style="color:var(--gold)">en espèces au stand</b>.<br>
+          Encaisse l'argent puis valide la partie.
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-green" style="flex:1;padding:11px;font-size:.72rem" data-cid="${s.clientId}" data-action="unlock">✅ J'AI ENCAISSÉ — LANCER LA PARTIE</button>
+          <button class="btn btn-red" style="padding:11px 14px;font-size:.72rem" data-cid="${s.clientId}" data-action="reject">✗ Refuser</button>
+        </div>
+      </div>`;
+    }).join('') : '<div class="empty-s"><div class="empty-si">🎰</div>Aucune demande en attente</div>'}
+
+    <div style="margin-top:16px">
+      <div class="st">Débloquer manuellement (espèces)</div>
+      <div class="card">
+        <label class="lbl">Client (pseudo)</label>
+        <input class="inp" id="cashPseudo" placeholder="Pseudo du joueur…" autocomplete="off">
+        <button class="btn btn-gold btn-full" id="cashUnlockBtn">🎰 DÉBLOQUER PARTIE CASH</button>
+        <div class="fb" id="cashFb"></div>
+      </div>
+    </div>`;
+
+  c.querySelectorAll('[data-action]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const cid = b.dataset.cid;
+      if (b.dataset.action === 'unlock') {
+        await setDoc(doc(db, 'slots', cid), { status: 'ready', clientId: cid, forced: false, unlockedAt: serverTimestamp() });
+        toast('Partie débloquée');
+      } else {
+        await setDoc(doc(db, 'slots', cid), { status: 'idle', clientId: cid });
+        toast('Refusé');
+      }
+    });
+  });
+
+  document.getElementById('cashUnlockBtn').addEventListener('click', async () => {
+    const pseudo = document.getElementById('cashPseudo').value.trim();
+    if (!pseudo) return;
+    const cl = allClients.find(x => x.pseudo?.toLowerCase() === pseudo.toLowerCase());
+    if (!cl) { document.getElementById('cashFb').className='fb err'; document.getElementById('cashFb').textContent='Client introuvable'; return; }
+    await setDoc(doc(db, 'slots', cl._id), { status: 'ready', clientId: cl._id, clientPseudo: cl.pseudo, forced: false, unlockedAt: serverTimestamp() });
+    document.getElementById('cashFb').className='fb ok'; document.getElementById('cashFb').textContent=`✓ Partie débloquée pour ${cl.pseudo}`;
+    document.getElementById('cashPseudo').value = '';
+    toast(`Partie cash pour ${cl.pseudo}`);
+  });
+}
+
+// ═══════════════════════════════════════
+// COUPONS TAB — SCANNER QR
+// ═══════════════════════════════════════
+function renderCoupons(c) {
+  c.innerHTML = `
+    <div class="st">Scanner un QR coupon</div>
+    <div class="card" style="margin-bottom:14px">
+      <p style="font-size:.74rem;color:var(--dim);line-height:1.6;margin-bottom:14px">
+        Le client appuie sur <b style="color:var(--cyan)">"UTILISER CE COUPON"</b> → un QR code s'affiche sur son écran.<br>
+        Appuie sur <b style="color:var(--gold)">Scanner</b> et pointe ta caméra sur son téléphone.
+      </p>
+      <button class="btn btn-gold btn-full" id="startScanBtn" style="font-size:.82rem;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px">
+        <span style="font-size:1.3rem">📷</span> SCANNER LE QR CODE
+      </button>
+      <div id="scanContainer" style="display:none;margin-top:12px">
+        <div style="position:relative;border-radius:12px;overflow:hidden;border:2px solid var(--gold)">
+          <video id="scanVideo" style="width:100%;display:block;border-radius:10px" playsinline></video>
+          <div style="position:absolute;inset:0;border:3px solid rgba(255,214,10,.4);border-radius:10px;pointer-events:none"></div>
+          <!-- Scan line animation -->
+          <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scan-line 1.5s ease-in-out infinite" id="scanLine"></div>
+        </div>
+        <button class="btn btn-red btn-sm btn-full" id="stopScanBtn" style="margin-top:8px">✕ Arrêter le scan</button>
+      </div>
+      <div class="fb" id="scanFb" style="margin-top:10px"></div>
+    </div>
+
+    <div class="st">Demandes en cours</div>
+    <div id="pendingValidations"></div>
+
+    <div style="margin-top:16px">
+      <div class="st">Valider manuellement (par pseudo)</div>
+      <div class="card">
+        <label class="lbl">Pseudo du client</label>
+        <input class="inp" id="cpPseudo" placeholder="Entre le pseudo…" autocomplete="off">
+        <button class="btn btn-primary btn-full" id="cpSearch">🔍 Voir les coupons</button>
+      </div>
+      <div id="cpResults"></div>
+    </div>`;
+
+  // ── SCANNER ──
+  let scanStream  = null;
+  let scanTimer   = null;
+
+  document.getElementById('startScanBtn').addEventListener('click', startScan);
+  document.getElementById('stopScanBtn').addEventListener('click', stopScan);
+
+  async function startScan() {
+    document.getElementById('scanContainer').style.display = 'block';
+    document.getElementById('startScanBtn').style.display  = 'none';
+    try {
+      scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.getElementById('scanVideo');
+      video.srcObject = scanStream;
+      video.play();
+      scanLoop(video);
+    } catch(e) {
+      showScanFb('Caméra non accessible : ' + e.message, 'err');
+      stopScan();
+    }
+  }
+
+  function stopScan() {
+    if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+    clearInterval(scanTimer);
+    document.getElementById('scanContainer').style.display = 'none';
+    document.getElementById('startScanBtn').style.display  = 'flex';
+  }
+
+  function scanLoop(video) {
+    // Use BarcodeDetector if available (Chrome/Android), fallback to jsQR
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector({ formats: ['qr_code'] });
+      scanTimer = setInterval(async () => {
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length > 0) { stopScan(); handleScanResult(codes[0].rawValue); }
+        } catch {}
+      }, 300);
+    } else {
+      // Fallback: draw frame to canvas and decode
+      const cvs = document.createElement('canvas');
+      const ctx = cvs.getContext('2d');
+      scanTimer = setInterval(() => {
+        if (!video.videoWidth) return;
+        cvs.width  = video.videoWidth;
+        cvs.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        // Try to find QR via URL pattern in title (simplified)
+        // For full decode we'd need jsQR — use a basic URL check
+        const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
+        // Import jsQR dynamically
+        import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js').then(m => {
+          const result = (m.default || window.jsQR)(imageData.data, imageData.width, imageData.height);
+          if (result?.data) { stopScan(); handleScanResult(result.data); }
+        }).catch(() => {});
+      }, 400);
+    }
+  }
+
+  async function handleScanResult(url) {
+    showScanFb('QR détecté…', 'ok');
+    try {
+      const u      = new URL(url);
+      const token  = u.searchParams.get('token');
+      const cpName = decodeURIComponent(u.searchParams.get('coupon') || '');
+      const cpIcon = decodeURIComponent(u.searchParams.get('icon')   || '🎁');
+      const clId   = u.searchParams.get('client');
+
+      if (!token) { showScanFb('QR invalide', 'err'); return; }
+
+      // Charge le document de validation
+      const validSnap = await getDoc(doc(db, 'validations', token));
+      if (!validSnap.exists()) { showScanFb('Coupon introuvable ou expiré', 'err'); return; }
+      const v = validSnap.data();
+      if (v.validated)         { showScanFb('Coupon déjà utilisé', 'err'); return; }
+      if (v.expiresAt < Date.now()) { showScanFb('QR expiré — le client doit en générer un nouveau', 'err'); return; }
+
+      // Valide
+      await setDoc(doc(db, 'validations', token), { ...v, validated: true, validatedAt: serverTimestamp() });
+      await addDoc(collection(db, 'logs'), {
+        type: 'coupon_used', clientId: clId, clientName: v.pseudo,
+        couponName: v.couponName, timestamp: serverTimestamp()
+      });
+
+      showScanFb(`✓ Coupon validé pour ${v.pseudo} : ${cpIcon} ${cpName}`, 'ok');
+      toast(`✓ ${v.pseudo} — ${cpName}`);
+    } catch(e) {
+      showScanFb('Erreur : ' + e.message, 'err');
+    }
+  }
+
+  function showScanFb(msg, type) {
+    const fb = document.getElementById('scanFb');
+    if (!fb) return;
+    fb.className = 'fb ' + type; fb.textContent = msg;
+    if (type === 'ok') setTimeout(() => { if(fb) fb.className = 'fb'; }, 6000);
+  }
+
+  // ── PENDING VALIDATIONS LIVE ──
+  onSnapshot(collection(db, 'validations'), snap => {
+    const box = document.getElementById('pendingValidations');
+    if (!box) return;
+    const pending = snap.docs
+      .map(d => ({ ...d.data(), _id: d.id }))
+      .filter(v => !v.validated && v.expiresAt > Date.now());
+
+    if (!pending.length) {
+      box.innerHTML = '<div class="empty-s" style="padding:14px"><div class="empty-si" style="font-size:1.5rem">✅</div><span style="font-size:.75rem">Aucun coupon en attente</span></div>';
+      return;
+    }
+
+    box.innerHTML = pending.map(v => `
+      <div style="background:rgba(255,214,10,.04);border:1px solid rgba(255,214,10,.18);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:1.6rem">${v.couponIcon||'🎁'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.84rem;font-weight:700">${v.pseudo}</div>
+          <div style="font-size:.7rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.couponName}</div>
+          <div style="font-size:.6rem;color:var(--dim);margin-top:2px">${Math.max(0,Math.round((v.expiresAt-Date.now())/1000))}s restantes</div>
+        </div>
+        <button class="btn btn-green btn-sm" data-tok="${v._id}" data-pseudo="${v.pseudo}" data-cpname="${v.couponName}" data-clid="${v.clientId}">✓ Valider</button>
+      </div>`).join('');
+
+    box.querySelectorAll('[data-tok]').forEach(b => {
+      b.addEventListener('click', async () => {
+        const vSnap = await getDoc(doc(db, 'validations', b.dataset.tok));
+        if (!vSnap.exists()) return;
+        await setDoc(doc(db, 'validations', b.dataset.tok), { ...vSnap.data(), validated: true, validatedAt: serverTimestamp() });
+        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:b.dataset.clid, clientName:b.dataset.pseudo, couponName:b.dataset.cpname, timestamp:serverTimestamp() });
+        toast(`✓ Validé pour ${b.dataset.pseudo}`);
+      });
+    });
+  });
+
+  // ── MANUEL PAR PSEUDO ──
+  document.getElementById('cpSearch').addEventListener('click', () => {
+    const pseudo = document.getElementById('cpPseudo').value.trim();
+    const cl = allClients.find(x => x.pseudo?.toLowerCase() === pseudo.toLowerCase());
+    const res = document.getElementById('cpResults');
+    if (!cl) { res.innerHTML = '<div class="empty-s"><div class="empty-si">❌</div>Client introuvable</div>'; return; }
+    const active = (cl.coupons||[]).filter(cp => !cp.used);
+    if (!active.length) { res.innerHTML = '<div class="empty-s"><div class="empty-si">🎫</div>Aucun coupon actif</div>'; return; }
+    res.innerHTML = `<div class="card" style="margin-top:10px">` +
+      active.map(cp => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.3)">
+          <div style="font-size:1.3rem">${cp.icon||'🎁'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cp.name}</div>
+            <div style="font-size:.62rem;color:var(--dim)">Gagné le ${cp.earnedAt||'—'}</div>
+          </div>
+          <button class="btn btn-green btn-sm" data-cpid="${cp.id}" data-clid="${cl._id}" data-clname="${cl.pseudo}">✓</button>
+        </div>`).join('') + `</div>`;
+
+    res.querySelectorAll('[data-cpid]').forEach(b => {
+      b.addEventListener('click', async () => {
+        const clData = allClients.find(x => x._id === b.dataset.clid);
+        if (!clData) return;
+        const updated = (clData.coupons||[]).map(cp =>
+          cp.id === b.dataset.cpid ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
+        );
+        await updateDoc(doc(db, 'clients', b.dataset.clid), { coupons: updated });
+        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:b.dataset.clid, clientName:b.dataset.clname, timestamp:serverTimestamp() });
+        toast('✓ Coupon validé');
+        document.getElementById('cpSearch').click();
+      });
+    });
+  });
+  document.getElementById('cpPseudo').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cpSearch').click(); });
+}
+
+// ── GESTION SCAN DEPUIS URL (?scan=1&token=...) ──────────────────
+// Si l'admin ouvre l'app via le QR scanné, on traite directement
+async function handleScanFromURL() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('scan') !== '1') return;
+  const token  = p.get('token');
+  const pseudo = p.get('client');
+  const cpName = decodeURIComponent(p.get('coupon') || '');
+  const cpIcon = decodeURIComponent(p.get('icon')   || '🎁');
+  if (!token) return;
+
+  // Nettoie l'URL sans rechargement
+  window.history.replaceState({}, '', window.location.pathname);
+
+  // On attend que Firebase soit prêt
+  // Affiche un prompt de confirmation
+  if (!confirm(`Valider le coupon ?\n${cpIcon} ${cpName}`)) return;
+
+  try {
+    const validSnap = await getDoc(doc(db, 'validations', token));
+    if (!validSnap.exists())    { alert('Coupon introuvable'); return; }
+    const v = validSnap.data();
+    if (v.validated)            { alert('Coupon déjà utilisé !'); return; }
+    if (v.expiresAt < Date.now()){ alert('QR expiré !'); return; }
+
+    await setDoc(doc(db, 'validations', token), { ...v, validated: true, validatedAt: serverTimestamp() });
+    await addDoc(collection(db, 'logs'), {
+      type: 'coupon_used', clientId: v.clientId, clientName: v.pseudo,
+      couponName: v.couponName, timestamp: serverTimestamp()
+    });
+    toast(`✓ ${v.pseudo} — ${cpName}`);
+    alert(`✅ Coupon validé pour ${v.pseudo} !\n${cpIcon} ${cpName}`);
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+// ═══════════════════════════════════════
+// CONFIG TAB
+// ═══════════════════════════════════════
+function renderConfig(c) {
+  const tiers = config.tiers || [];
+  const jackpot = config.jackpot || {};
+  const prizes = jackpot.prizes || [];
+
+  c.innerHTML = `
+    <!-- ══ BANDEAU DÉFILANT ══ -->
+    <div class="st" style="margin-top:18px">📢 Bandeau défilant</div>
+    <div class="card">
+      <p style="font-size:.72rem;color:var(--dim);margin-bottom:12px;line-height:1.5">
+        Ce texte défile en bas de l'écran admin. Utilise-le pour afficher des infos sur ton stand.
+      </p>
+      <textarea class="inp" id="bandeauInp" rows="3" placeholder="Ex: 🎯 X-Games — Jeu d'adresse • Gros lots à gagner • 2€ la partie • Tentez votre chance !" style="resize:vertical;font-size:.8rem;line-height:1.5">${config.bandeau || '🎯 X-Games — Jeu d\'adresse • Gros lots à gagner • 2€ la partie • Tentez votre chance !'}</textarea>
+      <button class="btn btn-primary btn-full" id="saveBandeauBtn" style="margin-top:10px">💾 SAUVEGARDER LE BANDEAU</button>
+      <div class="fb" id="bandeauFb"></div>
+    </div>
+    <div class="card">
+      <p style="font-size:.72rem;color:var(--dim);margin-bottom:14px;line-height:1.5">
+        Pour chaque palier, définis le nombre de XP requis, le nom du lot et une icône.<br>
+        Quand un client atteint ce palier → un coupon avec ce lot est automatiquement ajouté à sa carte.
+      </p>
+      <div id="tiersContainer"></div>
+      <button class="btn btn-green btn-full" id="addTierBtn" style="margin-top:8px">＋ Ajouter un palier</button>
+      <button class="btn btn-primary btn-full" id="saveTiersBtn" style="margin-top:10px">💾 SAUVEGARDER LES PALIERS</button>
+      <div class="fb" id="tiersFb"></div>
+    </div>
+
+    <!-- ══ LOTS JACKPOT ══ -->
+    <div class="st">Lots du Jackpot (machine à sous)</div>
+    <div class="card">
+      <p style="font-size:.72rem;color:var(--dim);margin-bottom:14px;line-height:1.5">
+        Quand un client gagne au jackpot, l'app tire au sort un de ces lots.<br>
+        Ajoute autant de lots que tu veux — les lots fréquents = plus de chances d'être tirés.
+      </p>
+      <div id="prizesContainer"></div>
+      <button class="btn btn-green btn-full" id="addPrizeBtn" style="margin-top:8px">＋ Ajouter un lot jackpot</button>
+
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,245,255,.08)">
+        <label class="lbl">% de chance de gagner (0 = jamais, 100 = toujours)</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <input class="inp" id="winRateInp" type="range" min="0" max="100" value="${jackpot.winRate||20}" style="flex:1;padding:6px 0;accent-color:var(--cyan)">
+          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);min-width:48px;text-align:right" id="winRateVal">${jackpot.winRate||20}%</div>
+        </div>
+        <label class="lbl">Lien de paiement SumUp</label>
+        <input class="inp" id="sumupInp" value="${config.sumupLink||''}" placeholder="https://pay.sumup.com/b2c/…">
+        <label class="lbl">Prix affiché au client (ex: 2€)</label>
+        <input class="inp" id="priceInp" value="${config.slotPrice||'2€'}" placeholder="2€" style="width:100px">
+        <div class="toggle-row" style="margin-top:4px">
+          <div class="toggle-lbl" style="font-size:.74rem">Bouton "Jouer (Cash)" visible chez le client</div>
+          <div class="toggle ${config.cashEnabled?'on':''}" id="cashToggle"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" id="saveJackpotBtn" style="margin-top:10px">💾 SAUVEGARDER CONFIG JACKPOT</button>
+      <div class="fb" id="jackpotFb"></div>
+    </div>
+
+    <!-- ══ MOT DE PASSE ══ -->
+    <div class="st">Mot de passe admin</div>
+    <div class="card">
+      <p style="font-size:.74rem;color:var(--dim);line-height:1.5">
+        Modifie la ligne <code style="color:var(--cyan);background:rgba(0,245,255,.07);padding:1px 5px;border-radius:4px">const ADMIN_PWD = "…"</code> dans admin.html
+      </p>
+    </div>`;
+
+  // ── TIERS ──
+  let localTiers = JSON.parse(JSON.stringify(tiers));
+
+  const TIER_EMOJIS = ['🎯','🎁','⚡','💎','👑','🏆','🌟','🎪','🔥','🎮'];
+
+  function rebuildTiers() {
+    const container = document.getElementById('tiersContainer');
+    if (!container) return;
+    if (!localTiers.length) {
+      container.innerHTML = `<div style="font-size:.72rem;color:var(--dim);text-align:center;padding:12px">Aucun palier. Clique "Ajouter" pour commencer.</div>`;
+      return;
+    }
+    container.innerHTML = localTiers.map((t, i) => `
+      <div style="background:rgba(0,0,0,.35);border:1px solid rgba(0,245,255,.08);border-radius:11px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--cyan);background:rgba(0,245,255,.08);border-radius:6px;padding:2px 8px">PALIER ${i+1}</div>
+          <button class="btn btn-red btn-sm" data-del="${i}" style="margin-left:auto;padding:4px 10px;font-size:.6rem">✕ Supprimer</button>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr 52px;gap:6px;margin-bottom:6px">
+          <div>
+            <div class="lbl" style="margin-bottom:4px">XP requis</div>
+            <input class="inp" type="number" placeholder="XP" value="${t.xp||''}" data-field="xp" data-idx="${i}" style="margin:0;text-align:center;font-family:'Orbitron',monospace;font-size:.9rem">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:4px">Nom du lot 🎁</div>
+            <input class="inp" placeholder="Ex: Partie offerte" value="${t.name||''}" data-field="name" data-idx="${i}" style="margin:0">
+          </div>
+          <div>
+            <div class="lbl" style="margin-bottom:4px">Icône</div>
+            <input class="inp" placeholder="🎁" value="${t.icon||'🎁'}" data-field="icon" data-idx="${i}" style="margin:0;text-align:center;font-size:1.1rem">
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${TIER_EMOJIS.map(e=>`<button class="btn btn-sm tier-emo" data-idx="${i}" data-emo="${e}" style="padding:4px 7px;font-size:.95rem;background:rgba(0,0,0,.3);border:1px solid ${t.icon===e?'var(--cyan)':'rgba(0,245,255,.08)'};border-radius:6px">${e}</button>`).join('')}
+        </div>
+      </div>`).join('');
+
+    container.querySelectorAll('input[data-field]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const idx = parseInt(inp.dataset.idx);
+        localTiers[idx][inp.dataset.field] = inp.dataset.field === 'xp' ? parseInt(inp.value)||0 : inp.value;
+      });
+    });
+    container.querySelectorAll('[data-del]').forEach(b => {
+      b.addEventListener('click', () => { localTiers.splice(parseInt(b.dataset.del),1); rebuildTiers(); });
+    });
+    container.querySelectorAll('.tier-emo').forEach(b => {
+      b.addEventListener('click', () => {
+        const idx = parseInt(b.dataset.idx);
+        localTiers[idx].icon = b.dataset.emo;
+        const iconInp = container.querySelector(`input[data-field="icon"][data-idx="${idx}"]`);
+        if (iconInp) iconInp.value = b.dataset.emo;
+        rebuildTiers();
+      });
+    });
+  }
+
+  document.getElementById('addTierBtn').addEventListener('click', () => {
+    localTiers.push({ xp: 0, name: '', icon: '🎁' });
+    rebuildTiers();
+    // Scroll to bottom
+    document.getElementById('tiersContainer').lastElementChild?.scrollIntoView({ behavior:'smooth' });
+  });
+
+  document.getElementById('saveBandeauBtn').addEventListener('click', async () => {
+    const txt = document.getElementById('bandeauInp').value.trim();
+    if (!txt) { document.getElementById('bandeauFb').className='fb err'; document.getElementById('bandeauFb').textContent='Entre un texte'; return; }
+    await setDoc(doc(db,'config','main'), { bandeau: txt }, { merge:true });
+    // Met à jour le ticker immédiatement
+    const ticker = document.getElementById('tickerContent');
+    if (ticker) ticker.textContent = txt;
+    document.getElementById('bandeauFb').className='fb ok';
+    document.getElementById('bandeauFb').textContent='✓ Bandeau mis à jour !';
+    toast('Bandeau mis à jour');
+  });
+
+  document.getElementById('saveTiersBtn').addEventListener('click', async () => {
+    const valid = localTiers.filter(t => t.xp > 0 && t.name.trim()).sort((a,b) => a.xp-b.xp);
+    if (!valid.length) { document.getElementById('tiersFb').className='fb err'; document.getElementById('tiersFb').textContent='Aucun palier valide (XP > 0 et nom requis)'; return; }
+    await setDoc(doc(db,'config','main'), { tiers: valid }, { merge:true });
+    document.getElementById('tiersFb').className='fb ok';
+    document.getElementById('tiersFb').textContent=`✓ ${valid.length} palier(s) sauvegardé(s) — visible en temps réel chez les clients`;
+    toast('Paliers mis à jour');
+  });
+
+  rebuildTiers();
+
+  // ── PRIZES ──
+  let localPrizes = [...prizes];
+
+  const PRIZE_EMOJIS = ['🎯','🎪','🧸','🍬','🎠','🎡','💰','🎲','🏆','🎁','🌟','👑'];
+
+  function rebuildPrizes() {
+    const container = document.getElementById('prizesContainer');
+    if (!container) return;
+    if (!localPrizes.length) {
+      container.innerHTML = `<div style="font-size:.72rem;color:var(--dim);text-align:center;padding:12px">Aucun lot. Clique "Ajouter" pour commencer.</div>`;
+      return;
+    }
+    container.innerHTML = localPrizes.map((p, i) => {
+      // Support both string and object format
+      const name = typeof p === 'string' ? p : (p.name || '');
+      const icon = typeof p === 'object' ? (p.icon || '🎰') : '🎰';
+      return `<div style="background:rgba(255,159,28,.04);border:1px solid rgba(255,159,28,.15);border-radius:11px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:8px">
+        <input class="inp" style="margin:0;font-size:1.1rem;width:44px;text-align:center;padding:6px 4px" value="${icon}" data-prize-icon="${i}" placeholder="🎰">
+        <input class="inp" style="margin:0;flex:1" placeholder="Ex: Peluche géante" value="${name}" data-prize-name="${i}">
+        <button class="btn btn-red btn-sm" data-prize-del="${i}" style="padding:4px 10px;font-size:.62rem;flex-shrink:0">✕</button>
+      </div>`;
+    }).join('');
+
+    container.querySelectorAll('[data-prize-name]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const i = parseInt(inp.dataset.prizeName);
+        if (typeof localPrizes[i] === 'string') localPrizes[i] = { name: inp.value, icon: '🎰' };
+        else localPrizes[i].name = inp.value;
+      });
+    });
+    container.querySelectorAll('[data-prize-icon]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const i = parseInt(inp.dataset.prizeIcon);
+        if (typeof localPrizes[i] === 'string') localPrizes[i] = { name: localPrizes[i], icon: inp.value };
+        else localPrizes[i].icon = inp.value;
+      });
+    });
+    container.querySelectorAll('[data-prize-del]').forEach(b => {
+      b.addEventListener('click', () => { localPrizes.splice(parseInt(b.dataset.prizeDel),1); rebuildPrizes(); });
+    });
+  }
+
+  document.getElementById('addPrizeBtn').addEventListener('click', () => {
+    localPrizes.push({ name: '', icon: '🎁' });
+    rebuildPrizes();
+  });
+
+  rebuildPrizes();
+
+  // Win rate slider
+  document.getElementById('winRateInp').addEventListener('input', function() {
+    document.getElementById('winRateVal').textContent = this.value + '%';
+  });
+
+  // Cash toggle
+  let cashEnabled = config.cashEnabled || false;
+  document.getElementById('cashToggle').addEventListener('click', function() {
+    cashEnabled = !cashEnabled;
+    this.classList.toggle('on', cashEnabled);
+  });
+
+  // Save jackpot
+  document.getElementById('saveJackpotBtn').addEventListener('click', async () => {
+    const winRateRaw = document.getElementById('winRateInp').value;
+    const winRate = winRateRaw === '' ? 20 : parseInt(winRateRaw); // Fix: 0 est valide
+    const sumupLink = document.getElementById('sumupInp').value.trim();
+    const slotPrice = document.getElementById('priceInp').value.trim();
+    // Normalize prizes to objects
+    const normalizedPrizes = localPrizes
+      .map(p => typeof p === 'string' ? { name: p, icon: '🎰' } : p)
+      .filter(p => p.name.trim());
+    if (!normalizedPrizes.length) {
+      document.getElementById('jackpotFb').className='fb err';
+      document.getElementById('jackpotFb').textContent='Ajoute au moins 1 lot jackpot';
+      return;
+    }
+    await setDoc(doc(db,'config','main'), {
+      sumupLink, slotPrice, cashEnabled,
+      jackpot: { winRate, prizes: normalizedPrizes }
+    }, { merge:true });
+    document.getElementById('jackpotFb').className='fb ok';
+    document.getElementById('jackpotFb').textContent=`✓ Config sauvegardée — ${normalizedPrizes.length} lot(s) jackpot, ${winRate}% de chance`;
+    toast('Config jackpot mise à jour');
+  });
+}
+
+// ═══════════════════════════════════════
+// STATS TAB
+// ═══════════════════════════════════════
+function renderStats(c) {
+  const total      = allClients.length;
+  const totalXP    = allClients.reduce((s,cl)=>s+(cl.xp||0),0);
+  const totalEuros = allClients.reduce((s,cl)=>s+(cl.totalEuros||0),0);
+  const withCoupons = allClients.filter(cl=>(cl.coupons||[]).some(cp=>!cp.used)).length;
+
+  // Tri par niveau DESC puis XP DESC
+  const sorted = [...allClients].sort((a,b) => {
+    const lvlDiff = (b.level||0) - (a.level||0);
+    return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
+  });
+  const top = sorted[0];
+
+  // 10 derniers inscrits
+  const recent = [...allClients].sort((a,b) => {
+    const ta = a.createdAt?.seconds || 0;
+    const tb = b.createdAt?.seconds || 0;
+    return tb - ta;
+  }).slice(0, 10);
+
+  c.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-c"><div class="stat-v" style="color:var(--cyan)">${total}</div><div class="stat-l">Clients</div></div>
+      <div class="stat-c"><div class="stat-v" style="color:var(--gold)">${totalEuros.toFixed(0)}€</div><div class="stat-l">Total dépensé</div></div>
+      <div class="stat-c"><div class="stat-v" style="color:var(--green)">${Math.round(totalXP/(total||1))}</div><div class="stat-l">Moy. XP</div></div>
+      <div class="stat-c"><div class="stat-v" style="color:var(--pink)">${withCoupons}</div><div class="stat-l">Coupons actifs</div></div>
+    </div>
+
+    ${top ? `<div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.18);border-radius:13px;padding:13px;text-align:center;margin-bottom:14px">
+      <div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">🏆 Meilleur joueur</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.95rem;color:var(--gold)">${top.pseudo}</div>
+      <div style="font-size:.72rem;color:var(--dim);margin-top:3px">Niv.${top.level||0} · ${top.xp||0} XP · ${(top.totalEuros||0).toFixed(0)}€</div>
+    </div>` : ''}
+
+    <div class="st">10 derniers inscrits</div>
+    ${recent.map(cl=>`
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(10,15,30,.7);border:1px solid rgba(0,245,255,.08);border-radius:9px;padding:8px 12px;margin-bottom:5px">
+        <div style="font-size:1.1rem">${cl.avatar||'🎮'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.82rem;font-weight:700">${cl.pseudo}</div>
+          <div style="font-size:.6rem;color:var(--dim)">Niv.${cl.level||0} · ${cl.xp||0} XP · ${(cl.totalEuros||0).toFixed(0)}€</div>
+        </div>
+        <button class="btn btn-sm" style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.15);color:var(--cyan);font-size:.58rem" onclick="selClientId='${cl._id}';document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelector('[data-t=clients]').classList.add('on');curTab='clients';renderTab('clients')">Voir</button>
+      </div>`).join('')}
+
+    <div class="st" style="margin-top:14px">Classement complet</div>
+    ${sorted.map((cl,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(10,15,30,.7);border:1px solid rgba(0,0,0,.3);border-radius:9px;padding:8px 12px;margin-bottom:6px">
+        <div style="font-family:'Orbitron',monospace;font-size:.68rem;color:var(--dim);width:18px">#${i+1}</div>
+        <div style="font-size:1.1rem">${cl.avatar||'🎮'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.82rem;font-weight:700">${cl.pseudo}</div>
+          <div style="font-size:.6rem;color:var(--dim)">Niv.${cl.level||0} · ${(cl.totalEuros||0).toFixed(0)}€ dépensé</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--cyan);font-weight:700">${cl.xp||0} XP</div>
+        </div>
+        <button class="btn btn-sm" style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.15);color:var(--cyan);font-size:.58rem" onclick="showQRById('${cl._id}')">QR</button>
+      </div>`).join('')}
+
+    <button class="btn btn-green btn-full" style="margin-top:14px" onclick="exportData()">📥 EXPORTER LES DONNÉES (CSV)</button>`;
+}
+
+function exportData() {
+  const rows = [['Pseudo','Avatar','XP','Niveau','Euros dépensés','Coupons actifs','Date inscription']];
+  allClients.forEach(cl => {
+    const active = (cl.coupons||[]).filter(c=>!c.used).length;
+    const date   = cl.createdAt?.seconds ? new Date(cl.createdAt.seconds*1000).toLocaleDateString('fr-FR') : '—';
+    rows.push([cl.pseudo, cl.avatar||'', cl.xp||0, cl.level||0, (cl.totalEuros||0).toFixed(2), active, date]);
+  });
+  const csv  = rows.map(r => r.join(';')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `xgames-export-${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.csv`;
+  a.click();
+  toast('Export CSV téléchargé');
+}
+
+// ── QR ──
+function showQR(cl) {
+  const url = `${window.location.origin}/client.html?id=${cl._id}`;
+  document.getElementById('qrSub').textContent = `Carte de ${cl.pseudo}`;
+  document.getElementById('qrName').textContent = cl.pseudo;
+  document.getElementById('qrId').textContent = cl.id || cl._id;
+  document.getElementById('qrUrl').textContent = url;
+  const cvs = document.getElementById('qrCvs');
+  const ctx = cvs.getContext('2d');
+  ctx.clearRect(0,0,200,200);
+  ctx.fillStyle='#000814'; ctx.fillRect(0,0,200,200);
+  const tmp = document.createElement('div');
+  new QRCode(tmp, { text:url, width:180, height:180, colorDark:'#00f5ff', colorLight:'#000814', correctLevel:QRCode.CorrectLevel.M });
+  setTimeout(() => {
+    const img = tmp.querySelector('img') || tmp.querySelector('canvas');
+    if (img) { const i=new Image(); i.onload=()=>ctx.drawImage(i,10,10,180,180); i.src=img.tagName==='CANVAS'?img.toDataURL():img.src; }
+  }, 300);
+  document.getElementById('qrDl').onclick = () => { const a=document.createElement('a'); a.download=`xgames-${cl.pseudo}.png`; a.href=cvs.toDataURL(); a.click(); };
+  document.getElementById('qrModal').classList.add('on');
+}
+
+window.showQRById = (id) => { const cl=allClients.find(x=>x._id===id); if(cl) showQR(cl); };
+document.getElementById('qrModal').addEventListener('click', e => { if(e.target===document.getElementById('qrModal')) document.getElementById('qrModal').classList.remove('on'); });
+
+// ── TOAST ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ '+msg; t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'),2000);
+}
+</script>
+</body>
+</html>

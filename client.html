@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X-Games">
+<meta name="theme-color" content="#000814">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>X-Games · Ma Carte</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#000814;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff9f1c;--txt:#e0e7ff;--dim:#4a5568}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',Arial,sans-serif;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,245,255,.012) 2px,rgba(0,245,255,.012) 4px);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(67,97,238,.18) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(114,9,183,.15) 0%,transparent 50%);pointer-events:none;z-index:0}
+#pts{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.pt{position:absolute;width:2px;height:2px;border-radius:50%;animation:fl linear infinite}
+@keyframes fl{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) translateX(var(--dx));opacity:0}}
+#loadOv{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.ll{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);text-shadow:0 0 30px var(--cyan);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.lb{width:200px;height:3px;background:rgba(0,245,255,.15);border-radius:2px;overflow:hidden}
+.lf{height:100%;background:var(--cyan);animation:lfill 1.4s ease-out forwards}
+@keyframes lfill{0%{width:0}100%{width:100%}}
+#errScreen{position:fixed;inset:0;z-index:9998;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.err-t{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--red)}
+#main{position:relative;z-index:2;min-height:100vh;padding:16px 14px 50px;max-width:430px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+.hdr-logo{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan);text-shadow:0 0 15px var(--cyan);letter-spacing:.08em}
+.hdr-back{background:transparent;border:1px solid rgba(0,245,255,.15);border-radius:8px;color:var(--cyan);font-size:.7rem;padding:5px 11px;cursor:pointer;font-family:'Orbitron',monospace}
+.profile-card{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(0,245,255,.18);border-radius:20px;padding:18px;position:relative;overflow:hidden}
+.profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.ptop{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+.pavatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid rgba(0,245,255,.35);flex-shrink:0}
+.pinfo{flex:1;min-width:0}
+.pname{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plevel{font-size:.7rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.pbadge{display:inline-block;padding:2px 9px;border-radius:20px;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:#000;margin-top:4px}
+.xp-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
+.xp-lbl{font-size:.62rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase}
+.xp-cnt{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;color:var(--cyan)}
+.xp-wrap{position:relative;height:24px;background:rgba(0,0,0,.6);border-radius:12px;border:1px solid rgba(0,245,255,.12);overflow:hidden;margin-bottom:6px}
+.xp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:12px;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--pink));transition:width 1.2s cubic-bezier(.34,1.56,.64,1)}
+.xp-milestones{display:flex;gap:3px;margin-top:4px}
+.xm{flex:1;text-align:center;font-size:.5rem;color:rgba(0,245,255,.3);font-family:'Orbitron',monospace}
+.xm.done{color:var(--cyan)}
+.next-rwd{background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.18);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-top:10px}
+.nr-icon{font-size:1.3rem}
+.nr-info{flex:1}
+.nr-lbl{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
+.nr-name{font-size:.82rem;color:var(--gold);font-weight:700;margin-top:1px}
+.nr-pts{font-size:.65rem;color:rgba(255,214,10,.55);margin-top:1px}
+.sec-t{font-family:'Orbitron',monospace;font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.45);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.18),transparent)}
+.slot-card{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,159,28,.25);border-radius:20px;padding:18px;position:relative;overflow:hidden}
+.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.slot-title{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.15em;margin-bottom:16px}
+.reels{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
+.reel{width:70px;height:70px;background:rgba(0,0,0,.7);border:2px solid rgba(255,159,28,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;overflow:hidden}
+.reel.spin{animation:reelspin .1s steps(1) infinite}
+@keyframes reelspin{0%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.reel.win{border-color:var(--gold);box-shadow:0 0 20px var(--gold)}
+.slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim);letter-spacing:.1em;margin-bottom:12px;min-height:20px}
+.slot-btns{display:flex;gap:8px}
+.btn-slot-pay{flex:1;background:linear-gradient(135deg,rgba(114,9,183,.4),rgba(67,97,238,.4));border:1px solid rgba(114,9,183,.5);border-radius:12px;color:var(--txt);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.btn-slot-pay:disabled{opacity:.35;cursor:not-allowed}
+.btn-slot-pay .bs-icon{font-size:1.2rem}
+.btn-slot-cash{flex:1;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.25);border-radius:12px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.slot-price{font-size:.6rem;color:var(--dim);margin-top:6px;text-align:center}
+.cp-tabs{display:flex;gap:6px;margin-bottom:12px}
+.cp-tab{flex:1;padding:8px 6px;border:1px solid rgba(0,245,255,.1);border-radius:9px;background:transparent;color:var(--dim);font-size:.68rem;font-weight:600;cursor:pointer;font-family:'Orbitron',monospace;letter-spacing:.06em;text-align:center}
+.cp-tab.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.07)}
+.cp-tab-count{display:inline-block;background:rgba(0,245,255,.15);border-radius:10px;padding:1px 7px;font-size:.6rem;margin-left:4px}
+.coupon-list{display:flex;flex-direction:column;gap:9px}
+.coupon{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden}
+.coupon.slot{border-color:rgba(255,214,10,.2)}
+.coupon.xp{border-color:rgba(0,245,255,.18)}
+.coupon.used{opacity:.35}
+.cp-top{display:flex;align-items:center;gap:12px;padding:13px 14px 10px}
+.cp-icon{font-size:1.8rem;flex-shrink:0}
+.cp-info{flex:1;min-width:0}
+.cp-name{font-size:.84rem;font-weight:700;color:var(--txt)}
+.cp-type{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
+.coupon.slot .cp-type{color:var(--gold)}
+.coupon.xp .cp-type{color:var(--cyan)}
+.cp-date{font-size:.6rem;color:var(--dim);margin-top:2px}
+.coupon-used-label{background:var(--dim);color:rgba(0,0,0,.5);font-family:'Orbitron',monospace;font-size:.58rem;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.cp-use-btn{width:100%;background:linear-gradient(90deg,rgba(0,245,255,.12),rgba(67,97,238,.12));border:none;border-top:1px solid rgba(0,245,255,.1);color:var(--cyan);font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:9px;cursor:pointer;letter-spacing:.1em}
+.coupon.slot .cp-use-btn{background:linear-gradient(90deg,rgba(255,214,10,.1),rgba(255,159,28,.1));border-top-color:rgba(255,214,10,.15);color:var(--gold)}
+.lb-list{display:flex;flex-direction:column;gap:6px}
+.lb-item{background:rgba(10,15,30,.7);border:1px solid rgba(0,0,0,.3);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px}
+.lb-item.me{border-color:rgba(0,245,255,.25);background:rgba(0,245,255,.04)}
+.lb-rank{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;width:24px;text-align:center;flex-shrink:0}
+.lb-rank.r1{color:var(--gold)}.lb-rank.r2{color:#c0c0c0}.lb-rank.r3{color:#cd7f32}
+.lb-av{font-size:1.1rem;flex-shrink:0}
+.lb-name{flex:1;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-xp{font-family:'Orbitron',monospace;font-size:.75rem;color:var(--cyan);font-weight:700;flex-shrink:0}
+.lb-you{font-size:.58rem;color:var(--cyan);background:rgba(0,245,255,.1);padding:1px 6px;border-radius:8px;margin-left:4px}
+/* Enhanced leaderboard */
+.lb-list{display:flex;flex-direction:column;gap:8px}
+.lb-item{background:rgba(10,15,30,.7);border:1px solid rgba(0,0,0,.3);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px;transition:all .3s}
+.lb-item.me{border-color:rgba(0,245,255,.3)!important;background:rgba(0,245,255,.05)!important}
+.lb-rank{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;width:28px;text-align:center;flex-shrink:0}
+.lb-rank.r1{color:var(--gold)}.lb-rank.r2{color:#c0c0c0}.lb-rank.r3{color:#cd7f32}
+
+/* Enhanced slot machine */
+.slot-card{background:linear-gradient(135deg,rgba(5,5,20,.98),rgba(10,10,30,.98));border:2px solid rgba(255,159,28,.3);border-radius:24px;padding:20px;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(255,159,28,.1),inset 0 0 40px rgba(0,0,0,.5)}
+.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--orange),var(--gold),transparent)}
+.slot-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,214,10,.3),transparent)}
+.slot-title{font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.2em;margin-bottom:18px;text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.3)}
+.reels{display:flex;justify-content:center;gap:12px;margin-bottom:18px;position:relative}
+.reels::before{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:20px;height:20px;background:var(--gold);clip-path:polygon(50% 0%,0% 100%,100% 100%);filter:drop-shadow(0 0 8px var(--gold))}
+.reel{width:76px;height:76px;background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(10,5,0,.95));border:2px solid rgba(255,159,28,.4);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;overflow:hidden;position:relative;box-shadow:inset 0 0 20px rgba(0,0,0,.8),0 4px 15px rgba(0,0,0,.5)}
+.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent);pointer-events:none}
+.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(0deg,rgba(0,0,0,.3),transparent);pointer-events:none}
+.reel.spin{animation:reelspin .08s steps(1) infinite}
+@keyframes reelspin{0%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(.95)}}
+.reel.win{border-color:var(--gold);box-shadow:0 0 30px var(--gold),0 0 60px rgba(255,214,10,.4),inset 0 0 20px rgba(255,214,10,.1);animation:reel-win .4s ease-in-out infinite alternate}
+@keyframes reel-win{from{box-shadow:0 0 15px var(--gold)}to{box-shadow:0 0 40px var(--gold),0 0 80px rgba(255,214,10,.5)}}
+.slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;color:var(--dim);letter-spacing:.12em;margin-bottom:14px;min-height:22px}
+.slot-btns{display:flex;gap:10px}
+.btn-slot-pay{flex:1;background:linear-gradient(135deg,rgba(114,9,183,.6),rgba(67,97,238,.6));border:1px solid rgba(114,9,183,.7);border-radius:14px;color:var(--txt);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .2s;box-shadow:0 0 20px rgba(114,9,183,.2)}
+.btn-slot-pay:active{transform:scale(.97);opacity:.8}
+.btn-slot-pay:disabled{opacity:.35;cursor:not-allowed}
+.btn-slot-pay .bs-icon{font-size:1.4rem}
+.btn-slot-cash{flex:1;background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.15));border:1px solid rgba(255,214,10,.35);border-radius:14px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;box-shadow:0 0 15px rgba(255,214,10,.1)}
+.slot-price{font-size:.62rem;color:var(--dim);margin-top:8px;text-align:center;letter-spacing:.06em}
+
+/* Slot lights decoration */
+.slot-lights{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.slot-light{width:8px;height:8px;border-radius:50%;animation:light-blink 1s ease-in-out infinite}
+.slot-light:nth-child(odd){background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.slot-light:nth-child(even){background:var(--orange);box-shadow:0 0 6px var(--orange);animation-delay:.5s}
+@keyframes light-blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+
+.overlay{position:fixed;inset:0;z-index:7000;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.overlay.show{display:flex}
+#lvlUp .ring{width:150px;height:150px;border-radius:50%;border:3px solid var(--cyan);box-shadow:0 0 40px var(--cyan);display:flex;align-items:center;justify-content:center;animation:spin 3s linear infinite}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+#lvlUp .inner{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(67,97,238,.3),var(--bg));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;animation:spin 3s linear reverse infinite}
+#lvlUp .lu-t{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;color:var(--cyan)}
+#lvlUp .lu-e{font-size:2rem}
+.lu-rwd{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--gold);max-width:260px;line-height:1.3}
+.ov-sub{font-size:.78rem;color:var(--dim);max-width:260px;line-height:1.5}
+.ov-btn{background:transparent;border:1px solid rgba(0,245,255,.3);border-radius:20px;color:var(--cyan);font-size:.76rem;padding:9px 28px;cursor:pointer;font-family:'Orbitron',monospace;letter-spacing:.1em}
+#winOv{position:fixed;inset:0;z-index:7500;background:rgba(0,0,0,.93);display:none;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden}
+#winOv.show{display:flex}
+#coinCanvas{position:absolute;inset:0;pointer-events:none;z-index:1}
+.win-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px}
+.win-rays{position:absolute;inset:0;z-index:0;pointer-events:none;animation:rays-spin 8s linear infinite}
+@keyframes rays-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.win-rays::before{content:'';position:absolute;inset:-50%;background:conic-gradient(transparent 0deg,rgba(255,214,10,.06) 10deg,transparent 20deg,transparent 40deg,rgba(255,214,10,.04) 50deg,transparent 60deg)}
+.win-gagne{font-family:'Orbitron',monospace;font-size:2.6rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#fff7a0,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:win-zoom .6s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes win-zoom{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.win-prize-icon{font-size:4rem;animation:prize-bounce .4s ease-out .5s both}
+@keyframes prize-bounce{0%{transform:scale(0);opacity:0}70%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+.win-prize-name{font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:#fff;max-width:280px;line-height:1.3}
+.win-note{font-size:.78rem;color:rgba(255,214,10,.6)}
+.win-btn{background:linear-gradient(135deg,var(--gold),#ff9f1c);border:none;border-radius:25px;color:#000;font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;padding:13px 36px;cursor:pointer}
+#waitOv .wait-icon{font-size:3rem;animation:wspin 2s linear infinite}
+@keyframes wspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.wait-t{font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan)}
+@keyframes ticker-scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+#validateOv{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+#validateOv.show{display:flex}
+.vld-cp-badge{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 16px;max-width:300px;width:100%}
+.vld-cp-icon{font-size:2.2rem;flex-shrink:0}
+.vld-cp-info{flex:1;text-align:left;min-width:0}
+.vld-cp-name{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;color:#fff}
+.vld-cp-sub{font-size:.62rem;color:var(--dim);margin-top:2px}
+.vld-qr-frame{background:#fff;border-radius:20px;padding:12px;box-shadow:0 0 50px rgba(0,245,255,.25)}
+.vld-qr-frame canvas{display:block;border-radius:10px}
+.vld-instruction{font-size:.76rem;color:var(--dim);max-width:240px;line-height:1.6}
+.vld-instruction b{color:var(--cyan)}
+.vld-timer-wrap{width:100%;max-width:280px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.vld-timer-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:2px;transition:width 1s linear}
+.vld-timer-bar.warn{background:linear-gradient(90deg,var(--red),var(--orange))}
+.vld-timer-txt{font-family:'Orbitron',monospace;font-size:.62rem;color:var(--dim)}
+.vld-cancel{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:20px;color:var(--dim);font-size:.68rem;padding:8px 24px;cursor:pointer;font-family:'Orbitron',monospace}
+.vld-confirmed{display:none;flex-direction:column;align-items:center;gap:12px}
+.vld-confirmed.show{display:flex}
+.vld-check{font-size:5rem;animation:check-pop .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes check-pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green)}
+.vld-ok-sub{font-size:.78rem;color:var(--dim)}
+/* ── NAVIGATION BAS D'ÉCRAN ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:1000;
+  background:rgba(5,8,20,.99);
+  border-top:1px solid rgba(0,245,255,.15);
+  display:flex;align-items:center;
+  padding:8px 0 max(8px,env(safe-area-inset-bottom));
+  backdrop-filter:blur(20px);
+  box-shadow:0 -4px 30px rgba(0,0,0,.8)
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:transparent;border:none;cursor:pointer;
+  padding:6px 4px;position:relative;transition:all .2s
+}
+.nav-icon{font-size:1.4rem;transition:transform .2s}
+.nav-label{font-family:'Orbitron',monospace;font-size:.48rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.nav-btn.active .nav-icon{transform:scale(1.15)}
+.nav-btn.active .nav-label{color:var(--cyan)}
+.nav-btn.active::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:30px;height:2px;background:var(--cyan);border-radius:2px;box-shadow:0 0 8px var(--cyan)}
+.nav-badge{
+  position:absolute;top:2px;right:22%;
+  background:var(--red);color:#fff;
+  font-family:'Orbitron',monospace;font-size:.45rem;font-weight:700;
+  min-width:16px;height:16px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 3px;box-shadow:0 0 8px var(--red)
+}
+
+/* ── ONGLETS CONTENU ── */
+.tab-content{display:none;flex-direction:column;gap:14px}
+.tab-content.active{display:flex}
+
+/* Padding bas pour la nav fixe */
+#main{padding-bottom:90px !important}
+body{padding-bottom:0}
+
+.empty-c{text-align:center;padding:28px 16px;color:var(--dim);font-size:.78rem}
+.empty-i{font-size:2rem;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="pts"></div>
+
+<div id="loadOv">
+  <div class="ll">X-GAMES</div>
+  <div class="lb"><div class="lf"></div></div>
+  <div style="font-size:.68rem;color:var(--dim);letter-spacing:.18em">CHARGEMENT...</div>
+</div>
+
+<div id="errScreen">
+  <div style="font-size:3rem">⚠️</div>
+  <div class="err-t">ERREUR</div>
+  <div style="font-size:.8rem;color:var(--dim);max-width:280px;line-height:1.5" id="errMsg"></div>
+  <a href="register.html" style="margin-top:10px;color:var(--cyan);font-size:.78rem;display:block">→ Retour à l'accueil</a>
+</div>
+
+<!-- LEVEL UP -->
+<div class="overlay" id="lvlUp">
+  <div class="ring"><div class="inner"><div class="lu-t">LEVEL UP!</div><div class="lu-e" id="luE">⚡</div></div></div>
+  <div class="lu-rwd" id="luRwd">Récompense débloquée !</div>
+  <div class="ov-sub">Un coupon a été ajouté à ta carte.</div>
+  <button class="ov-btn" onclick="document.getElementById('lvlUp').classList.remove('show')">CONTINUER</button>
+</div>
+
+<!-- WIN JACKPOT -->
+<div id="winOv">
+  <canvas id="coinCanvas"></canvas>
+  <div class="win-rays"></div>
+  <div class="win-content">
+    <div class="win-gagne">GAGNÉ !</div>
+    <div class="win-prize-icon" id="winIcon">🎰</div>
+    <div class="win-prize-name" id="winPrizeName">—</div>
+    <div class="win-note">🎫 Montre le coupon au stand</div>
+    <button class="win-btn" onclick="window.closeWin()">🏆 RÉCUPÉRER MON LOT</button>
+  </div>
+</div>
+
+<!-- WAIT PAYMENT -->
+<div class="overlay" id="waitOv">
+  <div style="font-size:3rem">💵</div>
+  <div class="wait-t">PAYE À LA CAISSE !</div>
+  <div class="ov-sub">
+    Rends-toi au stand et paie <b style="color:var(--gold)">${config?.slotPrice || '2€'}</b> à l'opérateur.<br><br>
+    <span style="font-size:.75rem;color:var(--dim)">L'opérateur validera ta partie et la machine se lancera automatiquement.</span>
+  </div>
+  <div style="margin-top:12px;font-size:1.4rem;animation:wspin 2s linear infinite">⏳</div>
+  <button class="ov-btn" style="margin-top:20px;font-size:.68rem;opacity:.5" onclick="document.getElementById('waitOv').classList.remove('show')">Annuler</button>
+</div>
+
+<!-- QR VALIDATION -->
+<div id="validateOv">
+  <div id="vldMain" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%">
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:rgba(0,245,255,.5);letter-spacing:.2em">Utiliser le coupon</div>
+    <div class="vld-cp-badge">
+      <div class="vld-cp-icon" id="vldIcon">🎁</div>
+      <div class="vld-cp-info">
+        <div class="vld-cp-name" id="vldPrize">—</div>
+        <div class="vld-cp-sub" id="vldType">Récompense</div>
+      </div>
+    </div>
+    <div class="vld-qr-frame" id="vldQrFrame"></div>
+    <div class="vld-instruction">Montre ce QR à <b>l'opérateur du stand</b></div>
+    <div class="vld-timer-wrap"><div class="vld-timer-bar" id="vldTimerBar"></div></div>
+    <div class="vld-timer-txt">Expire dans <span id="vldCountdown">120</span>s</div>
+    <button class="vld-cancel" onclick="window.closeValidate()">Annuler</button>
+  </div>
+  <div class="vld-confirmed" id="vldConfirmed">
+    <div class="vld-check">✅</div>
+    <div class="vld-ok-text">VALIDÉ !</div>
+    <div class="vld-ok-sub">Profite de ta récompense 🎉</div>
+    <button class="vld-cancel" onclick="window.closeValidate()" style="margin-top:8px">FERMER</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="hdr">
+    <div class="hdr-logo">X-GAMES</div>
+    <button class="hdr-back" onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pseudo');window.location.href='register.html'">⬅ Changer</button>
+  </div>
+  <!-- ONGLET : CARTE (défaut) -->
+  <div id="tab-carte" class="tab-content active">
+    <!-- BANDEAU DÉFILANT -->
+    <div id="clientTicker" style="background:linear-gradient(90deg,#b8860b,var(--gold),#b8860b);overflow:hidden;height:26px;display:flex;align-items:center;white-space:nowrap;border-radius:8px;margin-bottom:4px">
+      <div id="clientTickerTxt" style="display:inline-block;animation:ticker-scroll 18s linear infinite;font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;color:#000;letter-spacing:.06em;padding-right:60px">
+        🎯 X-Games — Jeu d'adresse • Gros lots à gagner • 2€ la partie • Tentez votre chance !
+      </div>
+    </div>
+    <div class="profile-card">
+      <div class="ptop">
+        <div class="pavatar" id="pavatar">🎮</div>
+        <div class="pinfo">
+          <div class="pname" id="pname" style="opacity:.5">—</div>
+          <div class="plevel" id="plevel" style="opacity:.5">Connexion…</div>
+          <div class="pbadge" id="pbadge" style="background:linear-gradient(90deg,var(--gold),var(--orange));opacity:.5">—</div>
+        </div>
+      </div>
+      <div class="xp-hdr">
+        <div class="xp-lbl">Barre XP</div>
+        <div class="xp-cnt"><span id="xpCur">0</span> XP</div>
+      </div>
+      <div class="xp-wrap"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+      <div class="xp-milestones" id="xpMilestones"></div>
+      <div class="next-rwd" id="nextRwd" style="display:none">
+        <div class="nr-icon" id="nrIcon">🎁</div>
+        <div class="nr-info">
+          <div class="nr-lbl">Prochaine récompense</div>
+          <div class="nr-name" id="nrName">—</div>
+          <div class="nr-pts" id="nrPts">—</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec-t">Machine à sous</div>
+      <div class="slot-card">
+        <div class="slot-title">🎰 JACKPOT MACHINE 🎰</div>
+        <div class="slot-lights">
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+        </div>
+        <div class="reels">
+          <div class="reel" id="r0">🎯</div>
+          <div class="reel" id="r1">⚡</div>
+          <div class="reel" id="r2">🎮</div>
+        </div>
+        <div class="slot-status" id="slotStatus">Tente ta chance !</div>
+        <div class="slot-btns">
+          <button class="btn-slot-pay" id="btnPay"><div class="bs-icon">🎰</div><div>JOUER — PAYE À LA CAISSE</div></button>
+          <button class="btn-slot-cash" id="btnCash" style="display:none"><div class="bs-icon">🎰</div><div>JOUER (ADMIN)</div></button>
+        </div>
+        <div class="slot-price" id="slotPriceLabel">Partie : 2€</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ONGLET : COUPONS -->
+  <div id="tab-coupons" class="tab-content">
+    <div class="sec-t" style="margin-bottom:14px">🎫 Mes coupons</div>
+    <div class="cp-tabs">
+      <button class="cp-tab on" id="cpTabActive">🎫 Actifs <span class="cp-tab-count" id="cpCountActive">0</span></button>
+      <button class="cp-tab" id="cpTabUsed">✓ Utilisés <span class="cp-tab-count" id="cpCountUsed">0</span></button>
+    </div>
+    <div class="coupon-list" id="couponList"></div>
+  </div>
+
+  <!-- ONGLET : CLASSEMENT -->
+  <div id="tab-scores" class="tab-content">
+    <div class="sec-t" style="margin-bottom:14px">🏆 Top 10 des tireurs</div>
+    <div class="lb-list" id="lbList"></div>
+  </div>
+
+  <!-- ONGLET : MINI-JEU -->
+  <div id="tab-jeu" class="tab-content">
+    <div class="sec-t" style="margin-bottom:8px">🕹️ Jet d'eau — Détruire les balles</div>
+    <div style="font-size:.7rem;color:var(--dim);text-align:center;margin-bottom:10px">Juste pour s'amuser — XP non comptabilisé</div>
+    <div id="game-wrap" style="position:relative;width:100%;max-width:400px;margin:0 auto">
+      <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none"></canvas>
+      <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.85);border-radius:16px;gap:12px">
+        <div style="font-size:2.5rem">🕹️</div>
+        <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900">MINI-JEU</div>
+        <div style="font-size:.75rem;color:var(--dim);text-align:center;max-width:220px;line-height:1.5">Déplace ton jet d'eau et détruis les balles jaunes !</div>
+        <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer">JOUER !</button>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px">
+      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Score : <span id="gameScore" style="color:var(--cyan)">0</span></div>
+      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Record : <span id="gameHigh" style="color:var(--gold)">0</span></div>
+      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Vies : <span id="gameLives">❤️❤️❤️</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION BAS D'ÉCRAN -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-carte" onclick="switchTab('carte')">
+    <div class="nav-icon">🎮</div>
+    <div class="nav-label">Ma Carte</div>
+  </button>
+  <button class="nav-btn" id="nav-coupons" onclick="switchTab('coupons')">
+    <div class="nav-icon">🎫</div>
+    <div class="nav-label">Coupons</div>
+    <div class="nav-badge" id="navBadge" style="display:none">0</div>
+  </button>
+  <button class="nav-btn" id="nav-jeu" onclick="switchTab('jeu')">
+    <div class="nav-icon">🕹️</div>
+    <div class="nav-label">Mini-Jeu</div>
+  </button>
+  <button class="nav-btn" id="nav-scores" onclick="switchTab('scores')">
+    <div class="nav-icon">🏆</div>
+    <div class="nav-label">Classement</div>
+  </button>
+</nav>
+
+<script>
+// Navigation synchrone — disponible immédiatement sans attendre le module
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const content = document.getElementById('tab-' + name);
+  if (content) content.classList.add('active');
+  const btn = document.getElementById('nav-' + name);
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, query, orderBy, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
+  authDomain: "xgames-loyalty.firebaseapp.com",
+  projectId: "xgames-loyalty",
+  storageBucket: "xgames-loyalty.firebasestorage.app",
+  messagingSenderId: "1082099112233",
+  appId: "1:1082099112233:web:bf52d043621ba76061bf38"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const params   = new URLSearchParams(window.location.search);
+const clientId = params.get('id');
+
+// Affiche pseudo + avatar immédiatement depuis localStorage
+const savedPseudo = localStorage.getItem('xgames_pseudo');
+if (savedPseudo) {
+  document.getElementById('pname').textContent   = savedPseudo;
+  document.getElementById('pname').style.opacity = '1';
+  document.getElementById('plevel').textContent  = '☆ Tireur — Niv. 0';
+  document.getElementById('plevel').style.opacity = '0.6';
+  document.getElementById('pbadge').textContent  = '☆ TIREUR';
+  document.getElementById('pbadge').style.opacity = '0.6';
+}
+
+// Redirect if no ID
+if (!clientId) {
+  // Vérifie si un ID est sauvegardé localement
+  const savedId = localStorage.getItem('xgames_client_id');
+  if (savedId) {
+    window.location.href = `client.html?id=${savedId}`;
+  } else {
+    window.location.href = 'register.html';
+  }
+} else {
+  // Sauvegarde l'ID pour la prochaine visite
+  localStorage.setItem('xgames_client_id', clientId);
+}
+
+// Global state
+let clientData  = null;
+let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratuite',icon:'🎯'}] }, sumupLink:'', slotPrice:'2€', cashEnabled:false };
+let prevXP      = null;
+let isSpinning  = false;
+let lastSpinTime = 0;
+const SPIN_COOLDOWN = 90000;
+
+// Coupon state
+let cpShowUsed       = false;
+let currentCoupons   = [];
+let validateTimer    = null;
+let validateUnsub    = null;
+let currentValidateCpId = null;
+const VALID_DURATION = 120;
+
+// Slot symbols
+const SYMBOLS = ['🎯','⚡','🎮','💎','👑','🔥','🌟','🎪'];
+
+// Coin explosion
+let coinCanvas, coinCtx, coins = [], coinAnim = null;
+
+// ── PARTICLES ──
+function mkPts() {
+  const c = ['#00f5ff','#4361ee','#f72585','#7209b7','#ffd60a'];
+  for (let i = 0; i < 22; i++) {
+    const p = document.createElement('div');
+    p.className = 'pt';
+    p.style.cssText = `left:${Math.random()*100}%;background:${c[i%c.length]};--dx:${(Math.random()-.5)*180}px;animation-duration:${5+Math.random()*9}s;animation-delay:${Math.random()*6}s;box-shadow:0 0 4px currentColor`;
+    document.getElementById('pts').appendChild(p);
+  }
+}
+
+// ── FIREBASE LISTENERS ──
+if (clientId) {
+  // Timeout 8s
+  const loadTimeout = setTimeout(() => {
+    document.getElementById('loadOv').style.display = 'none';
+    document.getElementById('errScreen').style.display = 'flex';
+    document.getElementById('errMsg').textContent = 'Connexion Firebase impossible. Vérifie internet et réessaie.';
+  }, 8000);
+
+  // Config listener
+  onSnapshot(doc(db, 'config', 'main'), snap => {
+    if (snap.exists()) {
+      const d = snap.data();
+      if (d.tiers)  config.tiers  = d.tiers;
+      if (d.jackpot) config.jackpot = { ...config.jackpot, ...d.jackpot };
+      if (d.sumupLink) config.sumupLink = d.sumupLink;
+      if (d.slotPrice) config.slotPrice = d.slotPrice;
+      if (typeof d.cashEnabled !== 'undefined') config.cashEnabled = d.cashEnabled;
+      if (d.bandeau) {
+        const t = document.getElementById('clientTickerTxt');
+        if (t) t.textContent = d.bandeau;
+      }
+    }
+    if (clientData) renderXP(clientData);
+    updateSlotUI();
+  });
+
+  // Client listener
+  onSnapshot(doc(db, 'clients', clientId), snap => {
+    clearTimeout(loadTimeout);
+    document.getElementById('loadOv').style.display = 'none';
+    if (!snap.exists()) {
+      document.getElementById('errScreen').style.display = 'flex';
+      document.getElementById('errMsg').textContent = 'Ce compte n\'existe plus. Tu peux créer un nouveau compte sur la page d\'accueil.';
+      // Nettoie le localStorage pour éviter boucle
+      localStorage.removeItem('xgames_client_id');
+      localStorage.removeItem('xgames_pseudo');
+      return;
+    }
+    const data = snap.data();
+    clientData = data;
+    // #main déjà visible
+    if (prevXP !== null && data.xp > prevXP) {
+      const t = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp);
+      if (t) showLevelUp(t);
+      const bar = document.getElementById('xpFill');
+      bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
+    }
+    prevXP = data.xp;
+    renderProfile(data);
+    renderXP(data);
+    renderCoupons(data.coupons || []);
+  }, err => {
+    clearTimeout(loadTimeout);
+    document.getElementById('loadOv').style.display = 'none';
+    document.getElementById('errScreen').style.display = 'flex';
+    document.getElementById('errMsg').textContent = 'Erreur : ' + err.message;
+  });
+
+  // Leaderboard — récupère top 10 et tri côté client
+  onSnapshot(query(collection(db, 'clients'), limit(50)), snap => {
+    const sorted = snap.docs
+      .map(d => ({ ...d.data(), _id: d.id }))
+      .sort((a,b) => {
+        const lvlDiff = (b.level||0) - (a.level||0);
+        return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
+      })
+      .slice(0, 10);
+    renderLeaderboard(sorted);
+  });
+
+  // Slot unlock listener
+  let spinsLeft = 0;
+  onSnapshot(doc(db, 'slots', clientId), snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if (d.status === 'ready' && !isSpinning) {
+      // Remet immédiatement à 'used' pour éviter le rejeu par refresh
+      setDoc(doc(db, 'slots', clientId), { status:'used', clientId }).catch(()=>{});
+      spinsLeft = (d.multiCount || 1) - 1;
+      document.getElementById('waitOv').classList.remove('show');
+      if (d.multiCount > 1) {
+        document.getElementById('slotStatus').textContent = `🎰 ${d.multiCount} lancers offerts !`;
+      }
+      spinReels(d.forced === true, spinsLeft);
+    }
+    // Reprend les lancers restants après refresh
+    if (d.status === 'spinning' && d.spinsLeft > 0 && !isSpinning) {
+      spinsLeft = d.spinsLeft - 1;
+      setDoc(doc(db, 'slots', clientId), { status:'spinning', clientId, spinsLeft }).catch(()=>{});
+      spinReels(false, spinsLeft);
+    }
+  });
+}
+
+
+// ── NIVEAU SYSTEM ──
+const LEVELS = [
+  { name: 'Tireur',   star: '☆',   color: '#9ca3af', minLevel: 0 },
+  { name: 'Sniper',   star: '⭐',   color: '#60a5fa', minLevel: 1 },
+  { name: 'Elite',    star: '⭐⭐',  color: '#34d399', minLevel: 3 },
+  { name: 'Champion', star: '⭐⭐⭐', color: '#fbbf24', minLevel: 6 },
+  { name: 'Maître',   star: '🌟',   color: '#f87171', minLevel: 10 },
+  { name: 'Légende',  star: '💎',   color: '#a78bfa', minLevel: 15 },
+];
+
+function getLevelInfo(level) {
+  let info = LEVELS[0];
+  for (const l of LEVELS) { if (level >= l.minLevel) info = l; }
+  return info;
+}
+
+function renderProfile(data) {
+  const level   = data.level || 0;
+  const lvlInfo = getLevelInfo(level);
+  const pname   = document.getElementById('pname');
+  const plevel  = document.getElementById('plevel');
+  const pbadge  = document.getElementById('pbadge');
+  document.getElementById('pavatar').textContent = data.avatar || '🎮';
+  pname.textContent   = data.pseudo || '—';
+  pname.style.opacity = '1';
+  plevel.textContent  = `${lvlInfo.star} ${lvlInfo.name} — Niv. ${level}`;
+  plevel.style.opacity = '1';
+  pbadge.style.background = `linear-gradient(90deg, ${lvlInfo.color}, ${lvlInfo.color}aa)`;
+  pbadge.textContent  = `${lvlInfo.star} ${lvlInfo.name.toUpperCase()}`;
+  pbadge.style.opacity = '1';
+}
+
+function renderXP(data) {
+  const xp      = data.xp || 0;
+  const level   = data.level || 0;
+  const tiers   = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
+  const maxXP   = tiers.length ? tiers[tiers.length-1].xp : 100;
+  const pct     = Math.min((xp / maxXP) * 100, 100);
+  const lvlInfo = getLevelInfo(level);
+
+  document.getElementById('xpCur').textContent  = xp;
+  document.getElementById('xpFill').style.width = pct + '%';
+  document.getElementById('xpFill').style.background = `linear-gradient(90deg, ${lvlInfo.color}88, ${lvlInfo.color}, #fff)`;
+
+  // Milestones
+  const ms = document.getElementById('xpMilestones');
+  ms.innerHTML = tiers.map(t => `<div class="xm${xp >= t.xp ? ' done' : ''}">${t.xp}</div>`).join('');
+
+  // Prochaine récompense
+  const next = tiers.find(t => t.xp > xp);
+  if (next) {
+    document.getElementById('nextRwd').style.display = 'flex';
+    document.getElementById('nrIcon').textContent = next.icon || '🎁';
+    document.getElementById('nrName').textContent = next.name;
+    document.getElementById('nrPts').textContent  = `Encore ${next.xp - xp} XP`;
+  } else {
+    document.getElementById('nextRwd').style.display = 'none';
+  }
+}
+
+function renderLeaderboard(list) {
+  const el = document.getElementById('lbList');
+  if (!list.length) { el.innerHTML = '<div class="empty-c">Aucun joueur</div>'; return; }
+
+  const top3Styles = [
+    { bg: 'linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.08))', border: 'rgba(255,214,10,.4)', glow: '0 0 20px rgba(255,214,10,.2)' },
+    { bg: 'linear-gradient(135deg,rgba(192,192,192,.12),rgba(148,163,184,.06))', border: 'rgba(192,192,192,.35)', glow: '0 0 15px rgba(192,192,192,.1)' },
+    { bg: 'linear-gradient(135deg,rgba(205,127,50,.12),rgba(180,100,30,.06))', border: 'rgba(205,127,50,.35)', glow: '0 0 15px rgba(205,127,50,.1)' },
+  ];
+  const crowns = ['👑', '🥈', '🥉'];
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+
+  el.innerHTML = list.map((p, i) => {
+    const isMe    = p._id === clientId;
+    const lvlInfo = getLevelInfo(p.level || 0);
+    const style   = i < 3 ? top3Styles[i] : null;
+    const isTop   = i < 3;
+
+    return `<div class="lb-item ${isMe?'me':''}" style="${isTop ? `background:${style.bg};border-color:${style.border};box-shadow:${style.glow};` : ''}${i===0?'transform:scale(1.02);':''}"">
+      <div class="lb-rank r${i+1}" style="font-size:${isTop?'1.3':'0.75'}rem">${isTop ? crowns[i] : medals[i]||i+1}</div>
+      <div class="lb-av" style="font-size:${isTop?'1.4':'1.1'}rem">${p.avatar||'🎮'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="lb-name" style="font-size:${isTop?'.9':'.82'}rem;font-weight:${isTop?'800':'600'}">${p.pseudo||'—'}${isMe?'<span class="lb-you">MOI</span>':''}</div>
+        <div style="font-size:.6rem;color:${lvlInfo.color};margin-top:1px">${lvlInfo.star} ${lvlInfo.name} · Niv.${p.level||0}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="lb-xp" style="font-size:${isTop?'.88':'.75'}rem;color:${isTop?lvlInfo.color:'var(--cyan)'}">${p.xp||0} XP</div>
+        ${isTop ? `<div style="font-size:.55rem;color:${style.border};margin-top:2px">${['TOP 1','TOP 2','TOP 3'][i]}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+function renderCoupons(coupons) {
+  currentCoupons = coupons;
+  const active = coupons.filter(c => !c.used);
+  const used   = coupons.filter(c =>  c.used);
+  document.getElementById('cpCountActive').textContent = active.length;
+  document.getElementById('cpCountUsed').textContent   = used.length;
+  updateCouponBadge(active.length); // Badge sur la nav
+  const list   = document.getElementById('couponList');
+  const toShow = cpShowUsed ? used : active;
+  if (!toShow.length) {
+    list.innerHTML = cpShowUsed
+      ? '<div class="empty-c"><div class="empty-i">✅</div>Aucun coupon utilisé.</div>'
+      : '<div class="empty-c"><div class="empty-i">🎫</div>Aucun coupon actif.<br><span style="font-size:.72rem">Joue et progresse !</span></div>';
+    return;
+  }
+  list.innerHTML = [...toShow].reverse().map(c => {
+    const type   = c.type || 'xp';
+    const isUsed = c.used || false;
+    return `<div class="coupon ${type} ${isUsed?'used':''}">
+      <div class="cp-top">
+        <div class="cp-icon">${c.icon || (type==='slot'?'🎰':'🎁')}</div>
+        <div class="cp-info">
+          <div class="cp-name">${c.name || '—'}</div>
+          <div class="cp-type">${type==='slot'?'🎰 Jackpot':'⭐ Palier XP'}</div>
+          <div class="cp-date">${isUsed ? '✓ Utilisé le '+c.usedDate : 'Gagné le '+(c.earnedAt||'')}</div>
+        </div>
+        ${isUsed ? '<div class="coupon-used-label">UTILISÉ</div>' : ''}
+      </div>
+      ${!isUsed ? `<button class="cp-use-btn" data-cpid="${c.id}">🎁 UTILISER CE COUPON</button>` : ''}
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.cp-use-btn').forEach(btn => {
+    btn.addEventListener('click', () => openValidate(btn.dataset.cpid));
+  });
+}
+
+function updateSlotUI() {
+  document.getElementById('slotPriceLabel').textContent = `Partie : ${config.slotPrice} · Paiement carte`;
+  document.getElementById('btnCash').style.display = config.cashEnabled ? 'flex' : 'none';
+}
+
+function showLevelUp(tier) {
+  document.getElementById('luE').textContent   = tier.icon || '⚡';
+  document.getElementById('luRwd').textContent = (tier.name||'Récompense') + ' débloqué !';
+  document.getElementById('lvlUp').classList.add('show');
+}
+
+
+// ── NAVIGATION PAR ONGLETS ──
+function showTab(name) { switchTab(name); }
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.id.replace('nav-','')));
+});
+
+// Met à jour le badge coupons actifs
+function updateCouponBadge(count) {
+  const badge = document.getElementById('navBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── COUPON TABS ──
+document.getElementById('cpTabActive').addEventListener('click', () => {
+  cpShowUsed = false;
+  document.getElementById('cpTabActive').classList.add('on');
+  document.getElementById('cpTabUsed').classList.remove('on');
+  renderCoupons(currentCoupons);
+});
+document.getElementById('cpTabUsed').addEventListener('click', () => {
+  cpShowUsed = true;
+  document.getElementById('cpTabUsed').classList.add('on');
+  document.getElementById('cpTabActive').classList.remove('on');
+  renderCoupons(currentCoupons);
+});
+
+// ── QR VALIDATION ──
+function genToken() {
+  return 'TKN-' + Date.now() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+function drawValidationQR(url) {
+  // Nettoie l'ancien QR
+  const frame = document.querySelector('.vld-qr-frame');
+  frame.innerHTML = '';
+
+  // Crée un div pour QRCode.js
+  const qrDiv = document.createElement('div');
+  frame.appendChild(qrDiv);
+
+  new QRCode(qrDiv, {
+    text: url,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // Style le QR
+  qrDiv.style.borderRadius = '10px';
+  qrDiv.style.overflow = 'hidden';
+  qrDiv.style.display = 'block';
+}
+
+async function openValidate(couponId) {
+  const coupon = currentCoupons.find(c => c.id === couponId);
+  if (!coupon) return;
+  if (validateUnsub) { validateUnsub(); validateUnsub = null; }
+  clearInterval(validateTimer);
+  currentValidateCpId = couponId;
+  const token     = genToken();
+  const expiresAt = Date.now() + VALID_DURATION * 1000;
+  const baseUrl   = window.location.origin + window.location.pathname.replace('client.html','admin.html');
+  const scanUrl   = `${baseUrl}?scan=1&token=${token}&client=${clientId}&coupon=${encodeURIComponent(coupon.name)}&icon=${encodeURIComponent(coupon.icon||'🎁')}`;
+  await setDoc(doc(db, 'validations', token), {
+    token, clientId, couponId,
+    pseudo: clientData?.pseudo || '—',
+    couponName: coupon.name, couponIcon: coupon.icon || '🎁',
+    couponType: coupon.type || 'xp',
+    expiresAt, validated: false, createdAt: serverTimestamp()
+  });
+  document.getElementById('vldIcon').textContent  = coupon.icon || '🎁';
+  document.getElementById('vldPrize').textContent = coupon.name;
+  document.getElementById('vldType').textContent  = coupon.type === 'slot' ? '🎰 Jackpot' : '⭐ Palier XP';
+  document.getElementById('vldMain').style.display = 'flex';
+  document.getElementById('vldConfirmed').classList.remove('show');
+  document.getElementById('validateOv').classList.add('show');
+  drawValidationQR(scanUrl);
+  let remaining = VALID_DURATION;
+  const bar = document.getElementById('vldTimerBar');
+  bar.style.width = '100%'; bar.className = 'vld-timer-bar';
+  document.getElementById('vldCountdown').textContent = remaining;
+  validateTimer = setInterval(() => {
+    remaining--;
+    document.getElementById('vldCountdown').textContent = remaining;
+    const pct = (remaining / VALID_DURATION) * 100;
+    bar.style.width = pct + '%';
+    if (pct < 30) bar.classList.add('warn');
+    if (remaining <= 0) { clearInterval(validateTimer); window.closeValidate(); }
+  }, 1000);
+  validateUnsub = onSnapshot(doc(db, 'validations', token), async snap => {
+    if (!snap.exists() || snap.data().validated !== true) return;
+    if (validateUnsub) { validateUnsub(); validateUnsub = null; }
+    clearInterval(validateTimer);
+    const updated = currentCoupons.map(c => c.id === couponId ? { ...c, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : c);
+    await updateDoc(doc(db, 'clients', clientId), { coupons: updated });
+    await addDoc(collection(db, 'clients', clientId, 'history'), { type: 'coupon_used', label: `✅ ${coupon.name}`, timestamp: serverTimestamp() });
+    document.getElementById('vldMain').style.display = 'none';
+    document.getElementById('vldConfirmed').classList.add('show');
+    setTimeout(() => window.closeValidate(), 3500);
+  });
+}
+
+window.closeValidate = async () => {
+  document.getElementById('validateOv').classList.remove('show');
+  clearInterval(validateTimer);
+  if (validateUnsub) { validateUnsub(); validateUnsub = null; }
+  currentValidateCpId = null;
+};
+
+// ── SLOT MACHINE ──
+let paymentConfirmed = false; // Token anti-triche
+
+document.getElementById('btnPay').addEventListener('click', () => {
+  const now = Date.now();
+  if (now - lastSpinTime < SPIN_COOLDOWN) {
+    document.getElementById('slotStatus').textContent = `⏳ Attends encore ${Math.ceil((SPIN_COOLDOWN-(now-lastSpinTime))/1000)}s…`;
+    return;
+  }
+  const pseudo = clientData?.pseudo || 'Joueur';
+  // Envoie la demande à l'admin
+  setDoc(doc(db, 'slots', clientId), {
+    status: 'pending', clientId,
+    clientPseudo: pseudo,
+    requestedAt: serverTimestamp(), forced: false
+  }).catch(()=>{});
+  document.getElementById('waitOv').classList.add('show');
+});
+
+document.getElementById('btnCash').addEventListener('click', () => {
+  document.getElementById('slotStatus').textContent = 'Utilise le panel admin.';
+});
+
+function spinReels(autoWin = false, remainingSpins = 0) {
+  if (isSpinning) return;
+  isSpinning = true;
+  lastSpinTime = Date.now();
+  const btn   = document.getElementById('btnPay');
+  btn.disabled = true;
+  const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
+  const won = autoWin || (Math.random() * 100 < winRate);
+  document.getElementById('slotStatus').textContent = remainingSpins > 0 ? `Lancement… (${remainingSpins} restant(s))` : 'Lancement…';
+  const reels = [document.getElementById('r0'), document.getElementById('r1'), document.getElementById('r2')];
+  reels.forEach(r => { r.classList.remove('win'); r.classList.add('spin'); });
+  let elapsed = 0;
+  const interval = setInterval(() => {
+    reels.forEach(r => r.textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]);
+    elapsed++;
+    if (elapsed > 22) {
+      clearInterval(interval);
+      reels.forEach(r => r.classList.remove('spin'));
+      if (won) {
+        const sym = SYMBOLS[Math.floor(Math.random()*4)];
+        reels.forEach(r => { r.textContent = sym; r.classList.add('win'); });
+        handleWin(remainingSpins);
+      } else {
+        reels[0].textContent = SYMBOLS[0]; reels[1].textContent = SYMBOLS[1]; reels[2].textContent = SYMBOLS[2];
+        isSpinning = false;
+        if (remainingSpins > 0) {
+          document.getElementById('slotStatus').textContent = `Pas de chance… ${remainingSpins} lancer(s) restant(s) !`;
+          setDoc(doc(db, 'slots', clientId), { status:'spinning', clientId, spinsLeft: remainingSpins }).catch(()=>{});
+          setTimeout(() => spinReels(false, remainingSpins - 1), 1500);
+        } else {
+          document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
+          btn.disabled = false;
+          setDoc(doc(db, 'slots', clientId), { status:'idle', clientId }).catch(()=>{});
+        }
+      }
+    }
+  }, 75);
+}
+
+async function handleWin(remainingSpins = 0) {
+  const prizes   = config.jackpot?.prizes || [{ name:'Surprise', icon:'🎁' }];
+  const prizeRaw = prizes[Math.floor(Math.random()*prizes.length)];
+  const prize    = typeof prizeRaw === 'string' ? { name:prizeRaw, icon:'🎰' } : prizeRaw;
+  document.getElementById('slotStatus').textContent = '🏆 JACKPOT !';
+  const coupon = { id:'cp-'+Date.now(), type:'slot', name:prize.name, icon:prize.icon||'🎰', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') };
+  await updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() });
+  await addDoc(collection(db, 'clients', clientId, 'history'), { type:'jackpot', label:`🎰 JACKPOT : ${prize.name}`, pseudo:clientData?.pseudo, timestamp:serverTimestamp() });
+  document.getElementById('winIcon').textContent      = prize.icon || '🎰';
+  document.getElementById('winPrizeName').textContent = prize.name;
+  document.getElementById('winOv').classList.add('show');
+  startCoinExplosion();
+  isSpinning = false;
+  document.getElementById('btnPay').disabled = false;
+  // Lance le prochain spin si il en reste
+  if (remainingSpins > 0) {
+    setDoc(doc(db, 'slots', clientId), { status:'spinning', clientId, spinsLeft: remainingSpins }).catch(()=>{});
+    setTimeout(() => spinReels(false, remainingSpins - 1), 3000);
+  } else {
+    setDoc(doc(db, 'slots', clientId), { status:'idle', clientId }).catch(()=>{});
+  }
+}
+
+// ── COIN EXPLOSION ──
+function initCoinCanvas() {
+  coinCanvas = document.getElementById('coinCanvas');
+  coinCtx    = coinCanvas.getContext('2d');
+  function resize() { coinCanvas.width = window.innerWidth; coinCanvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+}
+
+function spawnCoins(count = 80) {
+  const cx = coinCanvas.width / 2, cy = coinCanvas.height / 2;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 4 + Math.random() * 14;
+    coins.push({ x:cx, y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed-(3+Math.random()*6), gravity:0.35+Math.random()*.2, size:8+Math.random()*16, color:['#ffd60a','#ffec6e','#ff9f1c','#fff7a0','#f72585'][Math.floor(Math.random()*5)], rotation:Math.random()*Math.PI*2, rotSpeed:(Math.random()-.5)*.3, alpha:1, scaleY:1, scaleDir:1 });
+  }
+}
+
+function drawCoin(c) {
+  coinCtx.save();
+  coinCtx.globalAlpha = c.alpha;
+  coinCtx.translate(c.x, c.y);
+  coinCtx.rotate(c.rotation);
+  coinCtx.scale(1, c.scaleY);
+  coinCtx.beginPath();
+  coinCtx.ellipse(0, 0, c.size, c.size*.6, 0, 0, Math.PI*2);
+  coinCtx.fillStyle = c.color; coinCtx.fill();
+  coinCtx.fillStyle = 'rgba(0,0,0,.35)';
+  coinCtx.font = `bold ${Math.max(8,c.size*.7)}px Arial`;
+  coinCtx.textAlign = 'center'; coinCtx.textBaseline = 'middle';
+  coinCtx.fillText('€', 0, 0);
+  coinCtx.restore();
+}
+
+function animateCoins() {
+  coinCtx.clearRect(0, 0, coinCanvas.width, coinCanvas.height);
+  coins = coins.filter(c => c.alpha > 0.02);
+  coins.forEach(c => {
+    c.x += c.vx; c.y += c.vy; c.vy += c.gravity; c.vx *= .99;
+    c.rotation += c.rotSpeed;
+    c.scaleY += c.scaleDir * .05;
+    if (c.scaleY > 1) { c.scaleY = 1; c.scaleDir = -1; }
+    if (c.scaleY < .1) { c.scaleY = .1; c.scaleDir = 1; }
+    if (c.y > coinCanvas.height * .8) c.alpha -= .025;
+    drawCoin(c);
+  });
+  if (coins.length > 0) coinAnim = requestAnimationFrame(animateCoins);
+  else coinCtx.clearRect(0, 0, coinCanvas.width, coinCanvas.height);
+}
+
+function startCoinExplosion() {
+  if (coinAnim) cancelAnimationFrame(coinAnim);
+  coins = [];
+  spawnCoins(90);
+  animateCoins();
+  setTimeout(() => spawnCoins(50), 400);
+  setTimeout(() => spawnCoins(40), 900);
+}
+
+function stopCoinExplosion() {
+  if (coinAnim) cancelAnimationFrame(coinAnim);
+  coinAnim = null; coins = [];
+  if (coinCtx) coinCtx.clearRect(0, 0, coinCanvas.width, coinCanvas.height);
+}
+
+window.closeWin = () => {
+  document.getElementById('winOv').classList.remove('show');
+  stopCoinExplosion();
+};
+
+// ── MINI-JEU : JET D'EAU ──────────────────────────────────────
+(function() {
+  const canvas  = document.getElementById('gameCanvas');
+  const ctx     = canvas.getContext('2d');
+  const overlay = document.getElementById('gameOverlay');
+  const startBtn = document.getElementById('startGameBtn');
+
+  let W, H, animId, gameRunning = false;
+  let player, bullets, balls, particles, coins, score, lives, highScore = 0, level;
+  let touchX = null;
+
+  function resize() {
+    const wrap = document.getElementById('game-wrap');
+    W = wrap.offsetWidth;
+    H = Math.min(W * 1.4, window.innerHeight * 0.55);
+    canvas.width  = W;
+    canvas.height = H;
+  }
+
+  function initGame() {
+    resize();
+    score  = 0;
+    lives  = 3;
+    level  = 1;
+    player = { x: W/2, y: H - 60, w: 44, h: 28, speed: 5 };
+    bullets   = [];
+    balls     = [];
+    particles = [];
+    coins     = [];
+    spawnBalls();
+    updateHUD();
+  }
+
+  function spawnBalls() {
+    const count = 4 + level * 2;
+    for (let i = 0; i < count; i++) {
+      balls.push({
+        x: 30 + (i % 8) * ((W - 60) / 8),
+        y: 40 + Math.floor(i / 8) * 48,
+        r: 14,
+        vx: (Math.random() < 0.5 ? 1 : -1) * (0.8 + level * 0.3),
+        vy: 0.4 + Math.random() * 0.4,
+        hue: 45 + Math.random() * 20, // jaune/or
+        hp: 1
+      });
+    }
+  }
+
+  // Son
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function beep(freq, dur) {
+    try {
+      const ac = getAudioCtx();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.frequency.value = freq; o.type = 'square';
+      g.gain.setValueAtTime(0.15, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+      o.start(); o.stop(ac.currentTime + dur);
+    } catch(e) {}
+  }
+
+  function shoot() {
+    if (!gameRunning) return;
+    bullets.push({ x: player.x, y: player.y - player.h/2, w: 6, h: 18, vy: -10 });
+    beep(880, 0.08);
+  }
+
+  // Particules explosion
+  function explode(x, y, color) {
+    for (let i = 0; i < 16; i++) {
+      const a = (Math.PI * 2 / 16) * i;
+      const sp = 2 + Math.random() * 4;
+      particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, r: 3+Math.random()*4, life: 1, color });
+    }
+    // Pièces
+    for (let i = 0; i < 4; i++) {
+      coins.push({ x, y, vx: (Math.random()-0.5)*5, vy: -3-Math.random()*4, gy: 0.25, life: 1, r: 7 });
+    }
+    beep(220, 0.2);
+  }
+
+  // Score flottant
+  let floats = [];
+  function floatScore(x, y, val) {
+    floats.push({ x, y, val: '+' + val + ' XP', life: 1, vy: -1.5 });
+  }
+
+  function updateHUD() {
+    document.getElementById('gameScore').textContent = score;
+    document.getElementById('gameHigh').textContent  = highScore;
+    document.getElementById('gameLives').textContent = '❤️'.repeat(Math.max(0,lives));
+  }
+
+  function gameOver(win) {
+    gameRunning = false;
+    cancelAnimationFrame(animId);
+    if (score > highScore) highScore = score;
+    updateHUD();
+    overlay.style.display = 'flex';
+    overlay.innerHTML = `
+      <div style="font-size:2rem">${win ? '🏆' : '💥'}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.95rem;color:${win?'var(--gold)':'var(--red)'};font-weight:900">${win ? 'BRAVO !' : 'GAME OVER'}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--cyan)">Score : ${score}</div>
+      ${score >= highScore && score > 0 ? '<div style="font-size:.7rem;color:var(--gold)">🏅 Nouveau record !</div>' : ''}
+      <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:\'Orbitron\',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>`;
+    document.getElementById('startGameBtn').addEventListener('click', startGame);
+  }
+
+  function startGame() {
+    overlay.style.display = 'none';
+    initGame();
+    gameRunning = true;
+    loop();
+  }
+
+  // Contrôles tactile
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); touchX = e.touches[0].clientX; }, { passive:false });
+  canvas.addEventListener('touchmove',  e => { e.preventDefault(); touchX = e.touches[0].clientX; }, { passive:false });
+  canvas.addEventListener('touchend',   e => { shoot(); touchX = null; });
+  canvas.addEventListener('click', e => { if(gameRunning) shoot(); });
+
+  // Clavier
+  const keys = {};
+  window.addEventListener('keydown', e => { keys[e.key] = true; if(e.key===' ') shoot(); });
+  window.addEventListener('keyup',   e => { keys[e.key] = false; });
+
+  function loop() {
+    if (!gameRunning) return;
+    animId = requestAnimationFrame(loop);
+    update();
+    draw();
+  }
+
+  function update() {
+    // Mouvement joueur
+    if (touchX !== null) {
+      const rect = canvas.getBoundingClientRect();
+      const tx = (touchX - rect.left) * (W / rect.width);
+      player.x += (tx - player.x) * 0.15;
+    }
+    if (keys['ArrowLeft']  || keys['a']) player.x -= player.speed;
+    if (keys['ArrowRight'] || keys['d']) player.x += player.speed;
+    player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x));
+
+    // Balles
+    balls.forEach(b => {
+      b.x += b.vx; b.y += b.vy;
+      if (b.x < b.r || b.x > W - b.r) b.vx *= -1;
+      if (b.y < b.r) b.vy *= -1;
+      // Balle touche le bas → perd une vie
+      if (b.y > H + b.r) {
+        b.y = b.r * 2;
+        b.x = 30 + Math.random() * (W - 60);
+        lives--;
+        beep(150, 0.3);
+        updateHUD();
+        if (lives <= 0) { gameOver(false); return; }
+      }
+      // Collision joueur
+      const dx = b.x - player.x, dy = b.y - player.y;
+      if (Math.sqrt(dx*dx+dy*dy) < b.r + 20) {
+        explode(b.x, b.y, `hsl(${b.hue},100%,60%)`);
+        b.y = b.r; b.x = 30 + Math.random()*(W-60);
+        lives--;
+        beep(150, 0.3);
+        updateHUD();
+        if (lives <= 0) { gameOver(false); return; }
+      }
+    });
+
+    // Projectiles
+    bullets = bullets.filter(bul => bul.y > -20);
+    bullets.forEach(bul => {
+      bul.y += bul.vy;
+      // Collision balle
+      balls.forEach((b, bi) => {
+        const dx = bul.x - b.x, dy = bul.y - b.y;
+        if (Math.sqrt(dx*dx+dy*dy) < b.r + 4) {
+          explode(b.x, b.y, `hsl(${b.hue},100%,60%)`);
+          floatScore(b.x, b.y, 10);
+          score += 10;
+          balls.splice(bi, 1);
+          bul.y = -100;
+          updateHUD();
+        }
+      });
+    });
+
+    // Particules
+    particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.04; });
+    particles = particles.filter(p => p.life > 0);
+
+    // Pièces
+    coins.forEach(c => { c.x+=c.vx; c.y+=c.vy; c.vy+=c.gy; c.life-=0.02; });
+    coins = coins.filter(c => c.life > 0 && c.y < H + 20);
+
+    // Scores flottants
+    floats.forEach(f => { f.y+=f.vy; f.life-=0.025; });
+    floats = floats.filter(f => f.life > 0);
+
+    // Niveau suivant
+    if (balls.length === 0) {
+      level++;
+      score += 50;
+      beep(660, 0.3);
+      updateHUD();
+      spawnBalls();
+    }
+  }
+
+  function draw() {
+    // Fond
+    ctx.fillStyle = '#000814';
+    ctx.fillRect(0, 0, W, H);
+
+    // Fond étoilé
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    for (let i = 0; i < 40; i++) {
+      const sx = ((i * 137 + 23) % W);
+      const sy = ((i * 97  + 11) % H);
+      ctx.fillRect(sx, sy, 1, 1);
+    }
+
+    // Texte X-GAMES fond
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.font = `bold ${W*0.18}px 'Orbitron', monospace`;
+    ctx.fillStyle = '#00f5ff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('X-GAMES', W/2, H/2);
+    ctx.restore();
+
+    // Pièces
+    coins.forEach(c => {
+      ctx.save();
+      ctx.globalAlpha = c.life;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
+      ctx.fillStyle = '#ffd60a';
+      ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,.4)';
+      ctx.font = `bold ${c.r}px Arial`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('€', c.x, c.y);
+      ctx.restore();
+    });
+
+    // Balles jaunes
+    balls.forEach(b => {
+      ctx.save();
+      const grd = ctx.createRadialGradient(b.x-3, b.y-3, 2, b.x, b.y, b.r);
+      grd.addColorStop(0, `hsl(${b.hue},100%,80%)`);
+      grd.addColorStop(1, `hsl(${b.hue},100%,45%)`);
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+      ctx.fillStyle = grd;
+      ctx.shadowColor = `hsl(${b.hue},100%,60%)`;
+      ctx.shadowBlur  = 10;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Projectiles jet d'eau
+    bullets.forEach(bul => {
+      const grd = ctx.createLinearGradient(bul.x, bul.y, bul.x, bul.y + bul.h);
+      grd.addColorStop(0, 'rgba(0,245,255,0)');
+      grd.addColorStop(0.3, 'rgba(100,220,255,.9)');
+      grd.addColorStop(1, 'rgba(0,200,255,.4)');
+      ctx.beginPath();
+      ctx.roundRect(bul.x - bul.w/2, bul.y, bul.w, bul.h, 4);
+      ctx.fillStyle = grd;
+      ctx.shadowColor = '#00f5ff';
+      ctx.shadowBlur  = 8;
+      ctx.fill();
+      ctx.shadowBlur  = 0;
+    });
+
+    // Joueur — jet d'eau (tuyau)
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    // Base
+    const pg = ctx.createLinearGradient(-player.w/2, 0, player.w/2, 0);
+    pg.addColorStop(0, '#1a3a5c');
+    pg.addColorStop(0.5, '#2a5a8c');
+    pg.addColorStop(1, '#1a3a5c');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.roundRect(-player.w/2, -player.h/2, player.w, player.h, 8);
+    ctx.fill();
+    // Tuyau
+    ctx.fillStyle = '#4a9aba';
+    ctx.beginPath();
+    ctx.roundRect(-6, -player.h/2 - 14, 12, 16, 4);
+    ctx.fill();
+    // Buse
+    ctx.fillStyle = '#00f5ff';
+    ctx.beginPath();
+    ctx.arc(0, -player.h/2 - 14, 5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowColor = '#00f5ff';
+    ctx.shadowBlur  = 10;
+    ctx.fill();
+    // Reflet
+    ctx.fillStyle = 'rgba(255,255,255,.2)';
+    ctx.beginPath();
+    ctx.roundRect(-player.w/2+4, -player.h/2+4, player.w/3, player.h/3, 4);
+    ctx.fill();
+    ctx.restore();
+
+    // Particules
+    particles.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur  = 6;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Scores flottants
+    floats.forEach(f => {
+      ctx.save();
+      ctx.globalAlpha = f.life;
+      ctx.font = `bold 13px 'Orbitron', monospace`;
+      ctx.fillStyle = '#ffd60a';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#ffd60a';
+      ctx.shadowBlur  = 8;
+      ctx.fillText(f.val, f.x, f.y);
+      ctx.restore();
+    });
+
+    // Niveau
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.font = `bold 11px 'Orbitron', monospace`;
+    ctx.fillStyle = '#00f5ff';
+    ctx.textAlign = 'right';
+    ctx.fillText('LVL ' + level, W - 8, 16);
+    ctx.restore();
+  }
+
+  startBtn.addEventListener('click', startGame);
+  resize();
+  window.addEventListener('resize', () => { if (!gameRunning) resize(); });
+
+  // Dessine l'écran d'attente
+  draw();
+})();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+  if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+}
+mkPts();
+initCoinCanvas();
+</script>
+</body>
+</html>

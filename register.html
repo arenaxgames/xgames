@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X-Games">
+<meta name="theme-color" content="#000814">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>X-Games · Rejoindre</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000814;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;
+  --pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;
+  --orange:#ff9f1c;--txt:#e0e7ff;--dim:#4a5568
+}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',Arial,sans-serif;overflow-x:hidden}
+
+/* ── FOND CASINO ANIMÉ ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 20%,rgba(114,9,183,.25) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(67,97,238,.2) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(255,214,10,.05) 0%,transparent 70%);
+  pointer-events:none;z-index:0;animation:bg-pulse 4s ease-in-out infinite alternate
+}
+@keyframes bg-pulse{
+  from{opacity:.7}to{opacity:1}
+}
+/* Grille style casino */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(0,245,255,.015) 40px,rgba(0,245,255,.015) 41px),
+    repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,245,255,.015) 40px,rgba(0,245,255,.015) 41px);
+  pointer-events:none;z-index:0
+}
+
+/* ── PIÈCES QUI TOMBENT ── */
+#coins-bg{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.falling-coin{
+  position:absolute;top:-60px;font-size:1.4rem;
+  animation:fall-coin linear infinite;
+  filter:drop-shadow(0 0 6px var(--gold));
+  will-change:transform
+}
+@keyframes fall-coin{
+  0%{transform:translateY(-60px) rotate(0deg);opacity:0}
+  5%{opacity:.8}
+  95%{opacity:.6}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+
+/* ── PARTICULES ── */
+#pts{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.pt{position:absolute;width:2px;height:2px;border-radius:50%;animation:fl linear infinite}
+@keyframes fl{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) translateX(var(--dx));opacity:0}}
+
+/* ── LOADING ── */
+#loadingOv{display:none}
+
+/* ── MAIN ── */
+#main{position:relative;z-index:2;min-height:100vh;padding:20px 16px 40px;max-width:430px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:0}
+
+/* ── LOGO CASINO ── */
+.logo-wrap{text-align:center;padding:24px 0 18px;position:relative}
+.logo-casino-top{display:flex;justify-content:center;gap:8px;margin-bottom:10px}
+.casino-star{font-size:1.2rem;animation:star-pulse 2s ease-in-out infinite}
+.casino-star:nth-child(2){animation-delay:.3s}
+.casino-star:nth-child(3){animation-delay:.6s}
+@keyframes star-pulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 4px var(--gold))}50%{transform:scale(1.2);filter:drop-shadow(0 0 12px var(--gold))}}
+.logo{
+  font-family:'Orbitron',monospace;font-size:2.8rem;font-weight:900;
+  background:linear-gradient(135deg,var(--gold),#fff7a0,var(--orange),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 20px rgba(255,214,10,.6));
+  letter-spacing:.15em;
+  animation:logo-glow 2s ease-in-out infinite alternate
+}
+@keyframes logo-glow{
+  from{filter:drop-shadow(0 0 15px rgba(255,214,10,.4))}
+  to{filter:drop-shadow(0 0 35px rgba(255,214,10,.8)) drop-shadow(0 0 60px rgba(255,214,10,.3))}
+}
+.logo-sub{font-size:.68rem;color:rgba(255,214,10,.5);letter-spacing:.3em;text-transform:uppercase;margin-top:6px}
+.logo-tagline{
+  font-size:.85rem;color:var(--cyan);margin-top:10px;
+  font-style:italic;letter-spacing:.05em;
+  text-shadow:0 0 15px rgba(0,245,255,.4)
+}
+/* Lumières déco */
+.casino-lights{display:flex;justify-content:center;gap:6px;margin-top:12px}
+.clight{width:7px;height:7px;border-radius:50%;animation:clight-blink 1.2s ease-in-out infinite}
+.clight:nth-child(odd){background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.clight:nth-child(even){background:var(--orange);box-shadow:0 0 6px var(--orange);animation-delay:.6s}
+@keyframes clight-blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── CARTES ── */
+.card{
+  background:linear-gradient(135deg,rgba(8,12,28,.97),rgba(12,18,40,.97));
+  border:1px solid rgba(0,245,255,.15);
+  border-radius:20px;padding:22px 18px;width:100%;margin-bottom:12px;
+  position:relative;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,245,255,.05),inset 0 0 30px rgba(0,0,0,.3)
+}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.card-title{font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.5);margin-bottom:14px;text-align:center}
+
+/* ── INPUTS ── */
+.inp-label{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;display:block}
+.inp{
+  width:100%;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.12);
+  border-radius:10px;color:var(--txt);font-size:1rem;padding:12px 14px;
+  outline:none;font-family:'Rajdhani',sans-serif;
+  transition:border-color .2s,box-shadow .2s;margin-bottom:12px
+}
+.inp:focus{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,245,255,.12)}
+.inp::placeholder{color:var(--dim)}
+
+/* ── BOUTONS ── */
+.btn-primary{
+  width:100%;
+  background:linear-gradient(135deg,var(--gold),var(--orange));
+  border:none;border-radius:12px;color:#000;
+  font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;
+  padding:14px;cursor:pointer;letter-spacing:.08em;
+  transition:all .2s;margin-top:4px;
+  box-shadow:0 0 20px rgba(255,214,10,.3)
+}
+.btn-primary:active{opacity:.8;transform:scale(.99)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-secondary{
+  width:100%;background:transparent;border:1px solid rgba(0,245,255,.2);
+  border-radius:12px;color:var(--cyan);font-family:'Orbitron',monospace;
+  font-size:.75rem;font-weight:700;padding:12px;cursor:pointer;
+  letter-spacing:.08em;transition:all .2s;margin-top:8px
+}
+.btn-secondary:active{background:rgba(0,245,255,.08)}
+
+/* ── AVATAR GRID ── */
+.avatar-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.av-btn{
+  aspect-ratio:1;border-radius:10px;border:2px solid rgba(0,245,255,.08);
+  background:rgba(0,0,0,.4);font-size:1.4rem;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center
+}
+.av-btn.sel{border-color:var(--gold);background:rgba(255,214,10,.08);box-shadow:0 0 12px rgba(255,214,10,.3)}
+.av-btn:active{transform:scale(.88)}
+
+/* ── FEEDBACK ── */
+.msg{font-size:.78rem;text-align:center;padding:8px 12px;border-radius:8px;margin-top:10px;display:none}
+.msg.ok{background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.2);color:var(--green);display:block}
+.msg.err{background:rgba(255,0,110,.1);border:1px solid rgba(255,0,110,.2);color:var(--red);display:block}
+
+/* ── DIVIDER ── */
+.divider{display:flex;align-items:center;gap:10px;margin:14px 0;width:100%}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,214,10,.12)}
+.divider span{font-size:.62rem;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+
+/* ── INSTALL BANNER ── */
+.install-card{
+  background:rgba(255,214,10,.04);border:1px solid rgba(255,214,10,.15);
+  border-radius:14px;padding:14px 16px;width:100%;margin-bottom:14px
+}
+.install-card p{font-size:.76rem;color:var(--dim);line-height:1.6}
+.install-card b{color:var(--gold)}
+
+/* ── PWA INSTALL PROMPT ── */
+#pwaPrompt{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:linear-gradient(135deg,rgba(10,15,30,.98),rgba(13,21,48,.98));
+  border:1px solid rgba(255,214,10,.3);border-radius:16px;
+  padding:14px 18px;z-index:9000;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 0 40px rgba(255,214,10,.15);
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+  max-width:340px;width:90%
+}
+#pwaPrompt.show{transform:translateX(-50%) translateY(0)}
+.pwa-icon{font-size:2rem;flex-shrink:0}
+.pwa-info{flex:1;min-width:0}
+.pwa-title{font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:700}
+.pwa-sub{font-size:.65rem;color:var(--dim);margin-top:2px}
+.pwa-btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.pwa-install{background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;padding:7px 12px;cursor:pointer}
+.pwa-dismiss{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--dim);font-size:.6rem;padding:6px 12px;cursor:pointer;font-family:'Rajdhani',sans-serif}
+
+/* ── STATS MINI ── */
+.mini-stats{display:flex;justify-content:center;gap:20px;margin:0 0 16px;padding:12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,214,10,.1);border-radius:12px;width:100%}
+.mini-stat{text-align:center}
+.mini-stat-v{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--gold)}
+.mini-stat-l{font-size:.55rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+</style>
+</head>
+<body>
+
+<!-- PIÈCES QUI TOMBENT -->
+<div id="coins-bg"></div>
+<div id="pts"></div>
+
+<!-- LOADING -->
+<div id="loadingOv">
+  <div class="ll">🎰 X-GAMES 🎰</div>
+  <div class="lb"><div class="lf"></div></div>
+  <div class="load-sub">Bienvenue au stand !</div>
+</div>
+
+<!-- PWA INSTALL PROMPT -->
+<div id="pwaPrompt">
+  <div class="pwa-icon">🎮</div>
+  <div class="pwa-info">
+    <div class="pwa-title">Installer X-Games</div>
+    <div class="pwa-sub">Accède directement depuis ton écran d'accueil</div>
+  </div>
+  <div class="pwa-btns">
+    <button class="pwa-install" id="pwaInstallBtn">INSTALLER</button>
+    <button class="pwa-dismiss" id="pwaDismissBtn">Plus tard</button>
+  </div>
+</div>
+
+<div id="main">
+  <!-- LOGO CASINO -->
+  <div class="logo-wrap">
+    <div class="logo-casino-top">
+      <span class="casino-star">⭐</span>
+      <span class="casino-star">🎰</span>
+      <span class="casino-star">⭐</span>
+    </div>
+    <div class="logo">X-GAMES</div>
+    <div class="logo-sub">Stand de jeu · Fête foraine</div>
+    <div class="logo-tagline">✦ Joue · Progresse · Gagne ✦</div>
+    <div class="casino-lights">
+      <div class="clight"></div><div class="clight"></div><div class="clight"></div>
+      <div class="clight"></div><div class="clight"></div><div class="clight"></div>
+      <div class="clight"></div><div class="clight"></div>
+    </div>
+  </div>
+
+
+
+  <!-- POPUP INSTALLATION -->
+
+<!-- POPUP INSTALL -->
+<div id="installPopup" style="position:fixed;bottom:-200px;left:50%;transform:translateX(-50%);width:90%;max-width:380px;background:linear-gradient(135deg,rgba(10,15,30,.98),rgba(13,21,48,.98));border:1px solid rgba(0,245,255,.4);border-radius:18px;padding:16px 18px;z-index:9999;box-shadow:0 0 40px rgba(0,245,255,.2);transition:bottom .5s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:12px">
+  <div style="font-size:2rem;flex-shrink:0">📲</div>
+  <div style="flex:1">
+    <div style="font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;color:var(--cyan);margin-bottom:4px">INSTALLER X-GAMES</div>
+    <div id="installPopupTxt" style="font-size:.68rem;color:var(--txt);line-height:1.6"></div>
+  </div>
+  <button onclick="document.getElementById('installPopup').style.bottom='-200px'" style="background:transparent;border:none;color:var(--dim);font-size:1.2rem;cursor:pointer;flex-shrink:0">✕</button>
+</div>
+
+  <div class="card" id="returnCard">
+    <div class="card-title">⚡ J'ai déjà un compte</div>
+    <label class="inp-label">Ton pseudo (sans emoji)</label>
+    <input class="inp" id="returnPseudo" type="text" placeholder="Ex: DragonBall99" maxlength="20" autocomplete="off">
+    <button class="btn-primary" id="returnBtn">ACCÉDER À MA CARTE ⚡</button>
+    <div class="msg" id="returnMsg"></div>
+  </div>
+
+  <div class="divider"><span>✦ Ou ✦</span></div>
+
+  <!-- NOUVELLE CARTE -->
+  <div class="card" id="newCard">
+    <div class="card-title">🎮 Créer ma carte</div>
+    <label class="inp-label">Choisis un pseudo</label>
+    <input class="inp" id="newPseudo" type="text" placeholder="Ex: DragonBall99" maxlength="18" autocomplete="off">
+    <label class="inp-label">Choisis ton avatar</label>
+    <div class="avatar-grid" id="avatarGrid"></div>
+    <button class="btn-primary" id="createBtn">CRÉER MA CARTE 🎮</button>
+    <div class="msg" id="createMsg"></div>
+  </div>
+
+  <div class="install-card" id="installHint" style="display:none">
+    <p>📲 <b>Installe l'app</b> sur ton écran d'accueil :<br>
+    iPhone : <b>⎙ Partager</b> → <b>Sur l'écran d'accueil</b><br>
+    Android : <b>⋮ Menu</b> → <b>Ajouter à l'écran d'accueil</b></p>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
+  authDomain: "xgames-loyalty.firebaseapp.com",
+  projectId: "xgames-loyalty",
+  storageBucket: "xgames-loyalty.firebasestorage.app",
+  messagingSenderId: "1082099112233",
+  appId: "1:1082099112233:web:bf52d043621ba76061bf38"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── PIÈCES QUI TOMBENT ──
+function spawnFallingCoins() {
+  const container = document.getElementById('coins-bg');
+  const symbols   = ['🪙','💰','⭐','🎰','💎'];
+  for (let i = 0; i < 12; i++) {
+    const coin = document.createElement('div');
+    coin.className = 'falling-coin';
+    coin.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    coin.style.cssText = `
+      left:${Math.random()*100}%;
+      animation-duration:${4 + Math.random()*8}s;
+      animation-delay:${Math.random()*6}s;
+      font-size:${0.9 + Math.random()*1}rem;
+      opacity:${0.3 + Math.random()*0.4}
+    `;
+    container.appendChild(coin);
+  }
+}
+
+// ── PARTICULES ──
+function mkParticles() {
+  const cols = ['#00f5ff','#4361ee','#f72585','#7209b7','#ffd60a'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'pt';
+    p.style.cssText = `left:${Math.random()*100}%;background:${cols[i%cols.length]};--dx:${(Math.random()-.5)*180}px;animation-duration:${5+Math.random()*8}s;animation-delay:${Math.random()*5}s;box-shadow:0 0 4px currentColor`;
+    document.getElementById('pts').appendChild(p);
+  }
+}
+
+// ── AVATARS ──
+const AVATARS = ['🎯','🔥','⚡','💎','👑','🎮','🏆','🦁','🐉','🌟'];
+let selAvatar = AVATARS[0];
+function buildAvatars() {
+  const g = document.getElementById('avatarGrid');
+  AVATARS.forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'av-btn' + (a === selAvatar ? ' sel' : '');
+    b.textContent = a;
+    b.addEventListener('click', () => {
+      selAvatar = a;
+      g.querySelectorAll('.av-btn').forEach(x => x.classList.toggle('sel', x.textContent === a));
+    });
+    g.appendChild(b);
+  });
+}
+
+// ── FILTRE MOTS VULGAIRES ──
+const BAD_WORDS = ['merde','putain','connard','salope','bite','con','fdp','enculé','pute','baise','chier','cul','sexe','nazi','hitler'];
+function containsBadWord(str) {
+  const s = str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return BAD_WORDS.some(w => s.includes(w));
+}
+
+function genId() { return 'XG-' + Math.floor(10000 + Math.random()*90000); }
+
+function showMsg(id, txt, type) {
+  const el = document.getElementById(id);
+  el.textContent = txt;
+  el.className = 'msg ' + type;
+  setTimeout(() => el.className = 'msg', 4000);
+}
+
+// Stats retirées - données internes
+
+// ── RETURNING PLAYER ──
+document.getElementById('returnBtn').addEventListener('click', async () => {
+  const pseudo = document.getElementById('returnPseudo').value.trim();
+  if (!pseudo) { showMsg('returnMsg', 'Entre ton pseudo', 'err'); return; }
+  const q    = query(collection(db,'clients'), where('pseudo','==',pseudo));
+  const snap = await getDocs(q);
+  if (snap.empty) { showMsg('returnMsg', 'Pseudo introuvable. Crée une nouvelle carte !', 'err'); return; }
+  const clientDoc = snap.docs[0];
+  localStorage.setItem('xgames_client_id', clientDoc.id);
+  localStorage.setItem('xgames_pseudo', pseudo);
+  window.location.href = `client.html?id=${clientDoc.id}`;
+});
+document.getElementById('returnPseudo').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('returnBtn').click();
+});
+
+// ── NEW PLAYER ──
+document.getElementById('createBtn').addEventListener('click', async () => {
+  const pseudo = document.getElementById('newPseudo').value.trim();
+  if (!pseudo || pseudo.length < 2) { showMsg('createMsg', 'Pseudo trop court (min 2 caractères)', 'err'); return; }
+  if (pseudo.length > 18)           { showMsg('createMsg', 'Pseudo trop long (max 18)', 'err'); return; }
+  if (containsBadWord(pseudo))      { showMsg('createMsg', 'Ce pseudo n\'est pas autorisé', 'err'); return; }
+
+  const btn = document.getElementById('createBtn');
+  btn.textContent = '⏳ Création en cours...';
+  btn.disabled = true;
+
+  try {
+    const q        = query(collection(db,'clients'), where('pseudo','==',pseudo));
+    const existing = await getDocs(q);
+    if (!existing.empty) {
+      showMsg('createMsg', 'Ce pseudo est déjà pris !', 'err');
+      btn.textContent = 'CRÉER MA CARTE 🎮'; btn.disabled = false;
+      return;
+    }
+
+    const id  = genId();
+    const ref = doc(collection(db,'clients'));
+    await setDoc(ref, {
+      id, pseudo, avatar: selAvatar,
+      xp: 0, level: 0, coupons: [], cycleCount: 0, totalEuros: 0,
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+    });
+    localStorage.setItem('xgames_client_id', ref.id);
+    localStorage.setItem('xgames_pseudo', pseudo);
+    window.location.href = `client.html?id=${ref.id}`;
+  } catch(e) {
+    showMsg('createMsg', 'Erreur : ' + e.message, 'err');
+    btn.textContent = 'CRÉER MA CARTE 🎮'; btn.disabled = false;
+  }
+});
+document.getElementById('newPseudo').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('createBtn').click();
+});
+
+// ── AUTO-RECONNEXION ──
+const savedId = localStorage.getItem('xgames_client_id');
+if (savedId) {
+  window.location.href = `client.html?id=${savedId}`;
+}
+
+// ── BANNIÈRE INSTALLATION ──
+const isIos     = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = /android/i.test(navigator.userAgent);
+const isMobile  = isIos || isAndroid;
+// Affiche seulement sur mobile et si pas déjà installé
+const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+if (isMobile && !isStandalone) {
+  const txt = isIos
+    ? 'Appuie sur <b style="color:var(--gold)">⎙ Partager</b> puis <b style="color:var(--gold)">"Sur l\'écran d\'accueil"</b>'
+    : 'Appuie sur <b style="color:var(--gold)">⋮</b> puis <b style="color:var(--gold)">"Ajouter à l\'écran d\'accueil"</b>';
+  document.getElementById('installPopupTxt').innerHTML = txt;
+  setTimeout(() => {
+    document.getElementById('installPopup').style.bottom = '20px';
+  }, 2000);
+}
+
+// ── iOS INSTALL HINT ──
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone)
+  document.getElementById('installHint').style.display = 'block';
+
+// ── PWA INSTALL PROMPT (Android Chrome) ──
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  setTimeout(() => document.getElementById('pwaPrompt').classList.add('show'), 2000);
+});
+document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('pwaPrompt').classList.remove('show');
+});
+document.getElementById('pwaDismissBtn').addEventListener('click', () => {
+  document.getElementById('pwaPrompt').classList.remove('show');
+});
+
+// ── SW ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+  if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+}
+
+// ── INIT ──
+spawnFallingCoins();
+mkParticles();
+buildAvatars();
+</script>
+</body>
+</html>
