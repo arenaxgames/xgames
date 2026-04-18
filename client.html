@@ -395,43 +395,38 @@ body{padding-bottom:0}
 
     <!-- JET D'EAU -->
     <div id="gameJet">
-      <div class="sec-t" style="margin-bottom:8px">💧 Jet d'eau — Détruire les balles</div>
-      <div style="font-size:.7rem;color:var(--dim);text-align:center;margin-bottom:10px">Juste pour s'amuser — XP non comptabilisé</div>
       <div id="game-wrap" style="position:relative;width:100%;max-width:400px;margin:0 auto">
-        <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none"></canvas>
-        <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.85);border-radius:16px;gap:12px">
-          <div style="font-size:2.5rem">💧</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900">JET D'EAU</div>
-          <div style="font-size:.75rem;color:var(--dim);text-align:center;max-width:220px;line-height:1.5">Déplace ton jet d'eau et détruis les balles jaunes !</div>
-          <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer">JOUER !</button>
+        <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none;background:#000814"></canvas>
+        <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px">
+          <div style="font-size:3rem">💧</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900;letter-spacing:.1em">JET D'EAU</div>
+          <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Déplace le jet et détruis les balles jaunes !</div>
+          <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
         </div>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px">
-        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Score : <span id="gameScore" style="color:var(--cyan)">0</span></div>
-        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Record : <span id="gameHigh" style="color:var(--gold)">0</span></div>
-        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Vies : <span id="gameLives">❤️❤️❤️</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Score <span id="gameScore" style="color:var(--cyan)">0</span></span>
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Record <span id="gameHigh" style="color:var(--gold)">0</span></span>
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Vies <span id="gameLives">❤️❤️❤️</span></span>
       </div>
     </div>
 
     <!-- SERPENT -->
     <div id="gameSnake" style="display:none">
-      <div class="sec-t" style="margin-bottom:8px">🐍 Serpent</div>
-      <div style="font-size:.7rem;color:var(--dim);text-align:center;margin-bottom:10px">Mange les pommes sans te mordre !</div>
       <div style="position:relative;width:100%;max-width:400px;margin:0 auto">
         <canvas id="snakeCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(6,214,160,.2);display:block;background:#000814"></canvas>
-        <div id="snakeOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.85);border-radius:16px;gap:12px">
-          <div style="font-size:2.5rem">🐍</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--green);font-weight:900">SERPENT</div>
-          <div style="font-size:.75rem;color:var(--dim);text-align:center;max-width:220px;line-height:1.5">Glisse pour diriger le serpent !</div>
-          <button id="startSnakeBtn" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer">JOUER !</button>
+        <div id="snakeOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px">
+          <div style="font-size:3rem">🐍</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--green);font-weight:900;letter-spacing:.1em">SERPENT</div>
+          <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Glisse pour diriger le serpent et mange les pommes !</div>
+          <button id="startSnakeBtn" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
         </div>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px">
-        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Score : <span id="snakeScore" style="color:var(--green)">0</span></div>
-        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Record : <span id="snakeHigh" style="color:var(--gold)">0</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Score <span id="snakeScore" style="color:var(--green)">0</span></span>
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Record <span id="snakeHigh" style="color:var(--gold)">0</span></span>
       </div>
-      <!-- Contrôles tactiles -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:160px;margin:12px auto 0">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:150px;margin:12px auto 0">
         <div></div>
         <button onclick="snakeDir('UP')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▲</button>
         <div></div>
@@ -1534,10 +1529,10 @@ window.closeWin = () => {
   document.addEventListener('touchend',e=>{
     if(!running)return;
     const dx=e.changedTouches[0].clientX-tx0, dy=e.changedTouches[0].clientY-ty0;
-    if(Math.abs(dx)>Math.abs(dy)) snakeDir(dx>0?'RIGHT':'LEFT');
-    else snakeDir(dy>0?'DOWN':'UP');
+    if(Math.abs(dx)>Math.abs(dy)) window._snakeDir(dx>0?'RIGHT':'LEFT');
+    else window._snakeDir(dy>0?'DOWN':'UP');
   },{passive:true});
-  window.addEventListener('keydown',e=>{const m={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT'};if(m[e.key]){e.preventDefault();snakeDir(m[e.key]);}});
+  window.addEventListener('keydown',e=>{const m={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT'};if(m[e.key]){e.preventDefault();window._snakeDir(m[e.key]);}});
   document.getElementById('startSnakeBtn').addEventListener('click',()=>{initSnake();startSnake();});
 })();
 
