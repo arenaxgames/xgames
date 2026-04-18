@@ -526,22 +526,10 @@ function setStars(n) {
   });
 }
 function submitAvis() {
-  var fb = document.getElementById('avisFb');
   if (window._submitAvisModule) {
     window._submitAvisModule();
   } else {
-    fb.innerHTML = '<span style="color:#ffd60a">⏳ Connexion en cours…</span>';
-    var tries = 0;
-    var wait = setInterval(function() {
-      tries++;
-      if (window._submitAvisModule) {
-        clearInterval(wait);
-        window._submitAvisModule();
-      } else if (tries > 10) {
-        clearInterval(wait);
-        fb.innerHTML = '<span style="color:#ff006e">Erreur de connexion. Rafraîchis la page.</span>';
-      }
-    }, 500);
+    document.getElementById('avisFb').innerHTML = '<span style="color:#ffd60a">⏳ Chargement… réessaie dans 2s.</span>';
   }
 }
 
@@ -630,7 +618,7 @@ function drawSnake() {
   // Filigrane X-GAMES
   ctx.save();
   ctx.globalAlpha = 0.04;
-  ctx.font = 'bold ' + Math.floor(W/4) + 'px Orbitron, monospace';
+  ctx.font = 'bold ' + Math.floor(W/6) + 'px Orbitron, monospace';
   ctx.fillStyle = '#00f5ff';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -702,6 +690,28 @@ const db   = getFirestore(app);
 const params   = new URLSearchParams(window.location.search);
 const clientId = params.get('id');
 
+// ── AVIS — défini immédiatement pour être disponible dès le chargement ──
+window._submitAvisModule = async function() {
+  const n = window._selectedStars || 0;
+  const fb = document.getElementById('avisFb');
+  if (n === 0) { fb.innerHTML = '<span style="color:#ff006e">⭐ Sélectionne une note d\'abord !</span>'; return; }
+  if (!clientData) { fb.innerHTML = '<span style="color:#ff006e">Connexion Firebase en cours, réessaie.</span>'; return; }
+  fb.innerHTML = '<span style="color:#ffd60a">⏳ Envoi…</span>';
+  try {
+    await addDoc(collection(db, 'avis'), {
+      clientId, pseudo: clientData.pseudo, avatar: clientData.avatar || '🎮',
+      stars: n, message: document.getElementById('avisMsg').value.trim(),
+      approved: false, createdAt: serverTimestamp()
+    });
+    fb.innerHTML = '<span style="color:#06d6a0">✅ Merci ! Publié après validation.</span>';
+    document.getElementById('avisMsg').value = '';
+    if (window.setStars) window.setStars(0);
+    window._selectedStars = 0;
+  } catch(e) {
+    fb.innerHTML = '<span style="color:#ff006e">Erreur : ' + e.message + '</span>';
+  }
+};
+
 // Affiche pseudo + avatar immédiatement depuis localStorage
 const savedPseudo = localStorage.getItem('xgames_pseudo');
 if (savedPseudo) {
@@ -733,6 +743,7 @@ let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratui
 let prevXP      = null;
 let isSpinning  = false;
 let lastSpinTime = 0;
+let availableSpins = 0; // Lancers jackpot disponibles
 const SPIN_COOLDOWN = 90000;
 
 // Coupon state
@@ -832,8 +843,6 @@ if (clientId) {
   });
 
   // Slot listener — le client appuie sur LANCER lui-même
-let availableSpins = 0;
-
   onSnapshot(doc(db, 'slots', clientId), snap => {
     if (!snap.exists()) return;
     const d = snap.data();
@@ -1660,34 +1669,6 @@ window.setStars = function(n) {
     s.style.opacity   = parseInt(s.dataset.v) <= n ? '1' : '0.3';
     s.style.transform = parseInt(s.dataset.v) <= n ? 'scale(1.1)' : 'scale(1)';
   });
-};
-
-window._submitAvisModule = async function() {
-  if (!clientData) return;
-  const n = window._selectedStars || 0;
-  if (n === 0) {
-    document.getElementById('avisFb').innerHTML = '<span style="color:#ff006e">⭐ Sélectionne une note d\'abord !</span>';
-    return;
-  }
-  const msg = document.getElementById('avisMsg').value.trim();
-  const fb  = document.getElementById('avisFb');
-  fb.innerHTML = '<span style="color:#ffd60a">⏳ Envoi en cours…</span>';
-  try {
-    await addDoc(collection(db, 'avis'), {
-      clientId:  clientId,
-      pseudo:    clientData.pseudo,
-      avatar:    clientData.avatar || '🎮',
-      stars:     n,
-      message:   msg,
-      approved:  false,
-      createdAt: serverTimestamp()
-    });
-    fb.innerHTML = '<span style="color:#06d6a0">✅ Merci ! Ton avis sera publié après validation.</span>';
-    document.getElementById('avisMsg').value = '';
-    setStars(0);
-  } catch(e) {
-    fb.innerHTML = '<span style="color:#ff006e">Erreur : ' + e.message + '</span>';
-  }
 };
 
 // Charge les avis approuvés
