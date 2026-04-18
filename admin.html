@@ -995,11 +995,30 @@ function renderConfig(c) {
   const prizes = jackpot.prizes || [];
 
   c.innerHTML = `
+    <!-- ══ PERSONNALISATION ══ -->
+    <div class="st">🎨 Personnalisation du stand</div>
+    <div class="card">
+      <label class="lbl">Nom du stand</label>
+      <input class="inp" id="standNameInp" placeholder="X-Games" value="${config.standName || 'X-Games'}">
+      <label class="lbl" style="margin-top:10px">Couleur principale</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="color" id="primaryColorInp" value="${config.primaryColor || '#00f5ff'}" style="width:50px;height:36px;border:none;border-radius:8px;cursor:pointer;background:transparent">
+        <span style="font-size:.72rem;color:var(--dim)">Couleur des accents (cyan par défaut)</span>
+      </div>
+      <label class="lbl" style="margin-top:10px">Couleur secondaire</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="color" id="secondColorInp" value="${config.secondColor || '#f72585'}" style="width:50px;height:36px;border:none;border-radius:8px;cursor:pointer;background:transparent">
+        <span style="font-size:.72rem;color:var(--dim)">Couleur des accents rose (par défaut)</span>
+      </div>
+      <button class="btn btn-primary btn-full" id="saveCustomBtn" style="margin-top:12px">💾 SAUVEGARDER LA PERSONNALISATION</button>
+      <div class="fb" id="customFb"></div>
+    </div>
+
     <!-- ══ BANDEAU DÉFILANT ══ -->
     <div class="st" style="margin-top:18px">📢 Bandeau défilant</div>
     <div class="card">
       <p style="font-size:.72rem;color:var(--dim);margin-bottom:12px;line-height:1.5">
-        Ce texte défile en bas de l'écran admin. Utilise-le pour afficher des infos sur ton stand.
+        Ce texte défile dans l'appli client.
       </p>
       <textarea class="inp" id="bandeauInp" rows="3" placeholder="Ex: 🎯 X-Games — Jeu d'adresse • Gros lots à gagner • 2€ la partie • Tentez votre chance !" style="resize:vertical;font-size:.8rem;line-height:1.5">${config.bandeau || '🎯 X-Games — Jeu d\'adresse • Gros lots à gagner • 2€ la partie • Tentez votre chance !'}</textarea>
       <button class="btn btn-primary btn-full" id="saveBandeauBtn" style="margin-top:10px">💾 SAUVEGARDER LE BANDEAU</button>
@@ -1115,6 +1134,16 @@ function renderConfig(c) {
     rebuildTiers();
     // Scroll to bottom
     document.getElementById('tiersContainer').lastElementChild?.scrollIntoView({ behavior:'smooth' });
+  });
+
+  document.getElementById('saveCustomBtn').addEventListener('click', async () => {
+    const standName = document.getElementById('standNameInp').value.trim() || 'X-Games';
+    const primaryColor = document.getElementById('primaryColorInp').value;
+    const secondColor = document.getElementById('secondColorInp').value;
+    await setDoc(doc(db,'config','main'), { standName, primaryColor, secondColor }, { merge:true });
+    document.getElementById('customFb').className='fb ok';
+    document.getElementById('customFb').textContent='✓ Personnalisation sauvegardée !';
+    toast('Personnalisation mise à jour');
   });
 
   document.getElementById('saveBandeauBtn').addEventListener('click', async () => {

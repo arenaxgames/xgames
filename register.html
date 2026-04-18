@@ -411,6 +411,15 @@ document.getElementById('createBtn').addEventListener('click', async () => {
       xp: 0, level: 0, coupons: [], cycleCount: 0, totalEuros: 0,
       createdAt: serverTimestamp(), updatedAt: serverTimestamp()
     });
+    // Parrainage — donne 1 XP au parrain UNE SEULE FOIS à la création
+    const refId = new URLSearchParams(window.location.search).get('ref');
+    if (refId && refId !== ref.id) {
+      const parrain = await getDocs(query(collection(db,'clients'), where('id','==',refId)));
+      if (!parrain.empty) {
+        const parrainDoc = parrain.docs[0];
+        await updateDoc(doc(db,'clients',parrainDoc.id), { xp: (parrainDoc.data().xp||0) + 1, updatedAt: serverTimestamp() });
+      }
+    }
     localStorage.setItem('xgames_client_id', ref.id);
     localStorage.setItem('xgames_pseudo', pseudo);
     window.location.href = `client.html?id=${ref.id}`;
