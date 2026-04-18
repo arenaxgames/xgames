@@ -379,6 +379,27 @@ body{padding-bottom:0}
     <div class="coupon-list" id="couponList"></div>
   </div>
 
+  <!-- ONGLET : AVIS -->
+  <div id="tab-avis" class="tab-content">
+    <div class="sec-t" style="margin-bottom:14px">⭐ Laisser un avis</div>
+    <div class="profile-card">
+      <div style="font-size:.75rem;color:var(--dim);margin-bottom:12px;text-align:center">Ton avis sera publié après validation</div>
+      <!-- Étoiles -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px" id="starRow">
+        <span class="star-btn" data-v="1" onclick="setStars(1)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="2" onclick="setStars(2)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="3" onclick="setStars(3)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="4" onclick="setStars(4)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="5" onclick="setStars(5)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+      </div>
+      <textarea id="avisMsg" placeholder="Ton commentaire (optionnel)…" style="width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.15);border-radius:10px;color:var(--txt);font-size:.85rem;padding:12px;font-family:'Rajdhani',sans-serif;resize:none;outline:none;margin-bottom:10px" rows="3"></textarea>
+      <button onclick="submitAvis()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:12px;color:#000;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;padding:12px;cursor:pointer">⭐ PUBLIER MON AVIS</button>
+      <div id="avisFb" style="font-size:.75rem;text-align:center;margin-top:10px;min-height:20px"></div>
+    </div>
+    <div class="sec-t" style="margin-top:14px;margin-bottom:10px">📢 Avis publiés</div>
+    <div id="avisList"></div>
+  </div>
+
   <!-- ONGLET : CLASSEMENT -->
   <div id="tab-scores" class="tab-content">
     <div class="sec-t" style="margin-bottom:14px">🏆 Top 10 des tireurs</div>
@@ -401,7 +422,7 @@ body{padding-bottom:0}
           <div style="font-size:3rem">💧</div>
           <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900;letter-spacing:.1em">JET D'EAU</div>
           <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Déplace le jet et détruis les balles jaunes !</div>
-          <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
+          <button id="startGameBtn" onclick="if(window._startJetGame)window._startJetGame()" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
@@ -419,7 +440,7 @@ body{padding-bottom:0}
           <div style="font-size:3rem">🐍</div>
           <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--green);font-weight:900;letter-spacing:.1em">SERPENT</div>
           <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Glisse pour diriger le serpent et mange les pommes !</div>
-          <button id="startSnakeBtn" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
+          <button id="startSnakeBtn" onclick="if(window._startSnakeGame)window._startSnakeGame()" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
@@ -452,6 +473,10 @@ body{padding-bottom:0}
   <button class="nav-btn" id="nav-jeu" onclick="switchTab('jeu')">
     <div class="nav-icon">🕹️</div>
     <div class="nav-label">Mini-Jeu</div>
+  </button>
+  <button class="nav-btn" id="nav-avis" onclick="switchTab('avis')">
+    <div class="nav-icon">⭐</div>
+    <div class="nav-label">Avis</div>
   </button>
   <button class="nav-btn" id="nav-scores" onclick="switchTab('scores')">
     <div class="nav-icon">🏆</div>
@@ -1090,7 +1115,7 @@ window.closeWin = () => {
 
   function resize() {
     const wrap = document.getElementById('game-wrap');
-    W = wrap.offsetWidth;
+    W = wrap.offsetWidth || document.getElementById('tab-jeu').offsetWidth || 360;
     H = Math.min(W * 1.4, window.innerHeight * 0.55);
     canvas.width  = W;
     canvas.height = H;
@@ -1429,6 +1454,7 @@ window.closeWin = () => {
     ctx.restore();
   }
 
+  window._startJetGame = startGame;
   startBtn.addEventListener('click', startGame);
   resize();
   window.addEventListener('resize', () => { if (!gameRunning) resize(); });
@@ -1438,6 +1464,65 @@ window.closeWin = () => {
 })();
 
 // ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
+
+// ── SYSTÈME D'AVIS ──
+let selectedStars = 0;
+
+window.setStars = function(n) {
+  selectedStars = n;
+  document.querySelectorAll('.star-btn').forEach(s => {
+    s.style.opacity = parseInt(s.dataset.v) <= n ? '1' : '0.3';
+    s.style.transform = parseInt(s.dataset.v) <= n ? 'scale(1.1)' : 'scale(1)';
+  });
+};
+
+window.submitAvis = async function() {
+  if (!clientData) return;
+  if (selectedStars === 0) {
+    document.getElementById('avisFb').innerHTML = '<span style="color:var(--red)">Sélectionne une note !</span>';
+    return;
+  }
+  const msg = document.getElementById('avisMsg').value.trim();
+  const fb  = document.getElementById('avisFb');
+  try {
+    await addDoc(collection(db, 'avis'), {
+      clientId:  clientId,
+      pseudo:    clientData.pseudo,
+      avatar:    clientData.avatar || '🎮',
+      stars:     selectedStars,
+      message:   msg,
+      approved:  false,
+      createdAt: serverTimestamp()
+    });
+    fb.innerHTML = '<span style="color:var(--green)">✅ Merci ! Ton avis sera publié après validation.</span>';
+    document.getElementById('avisMsg').value = '';
+    window.setStars(0);
+    selectedStars = 0;
+  } catch(e) {
+    fb.innerHTML = `<span style="color:var(--red)">Erreur : ${e.message}</span>`;
+  }
+};
+
+// Charge les avis approuvés
+onSnapshot(query(collection(db, 'avis'), orderBy('createdAt', 'desc'), limit(20)), snap => {
+  const list = document.getElementById('avisList');
+  if (!list) return;
+  const approved = snap.docs.map(d => ({...d.data(), _id: d.id})).filter(a => a.approved);
+  if (!approved.length) {
+    list.innerHTML = '<div class="empty-c"><div class="empty-i">💬</div>Aucun avis pour le moment.</div>';
+    return;
+  }
+  list.innerHTML = approved.map(a => `
+    <div style="background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="font-size:1.2rem">${a.avatar||'🎮'}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700">${a.pseudo||'—'}</div>
+        <div style="margin-left:auto;font-size:.9rem">${'⭐'.repeat(a.stars||0)}</div>
+      </div>
+      ${a.message ? `<div style="font-size:.78rem;color:var(--dim);line-height:1.5">${a.message}</div>` : ''}
+    </div>`).join('');
+});
+
 
 // ── JEU DU SERPENT ──
 (function() {
@@ -1533,7 +1618,8 @@ window.closeWin = () => {
     else window._snakeDir(dy>0?'DOWN':'UP');
   },{passive:true});
   window.addEventListener('keydown',e=>{const m={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT'};if(m[e.key]){e.preventDefault();window._snakeDir(m[e.key]);}});
-  document.getElementById('startSnakeBtn').addEventListener('click',()=>{initSnake();startSnake();});
+  window._startSnakeGame = function() { initSnake(); startSnake(); };
+  document.getElementById('startSnakeBtn').addEventListener('click', window._startSnakeGame);
 })();
 
 if ('serviceWorker' in navigator) {

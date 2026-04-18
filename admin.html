@@ -222,6 +222,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <button class="tab" data-t="coupons">🎫 Coupons</button>
     <button class="tab" data-t="config">⚙️ Config</button>
     <button class="tab" data-t="stats">📊 Stats</button>
+    <button class="tab" data-t="avis">⭐ Avis</button>
   </div>
   <div class="content" id="admContent"></div>
 </div>
@@ -389,6 +390,18 @@ function initAdmin() {
   // Handle QR scan from URL
   handleScanFromURL();
 
+  // Listener avis
+  onSnapshot(query(collection(db, 'avis'), orderBy('createdAt', 'desc')), snap => {
+    window._allAvis = snap.docs.map(d => ({...d.data(), _id: d.id}));
+    if (curTab === 'avis') renderTab('avis');
+    // Badge sur l'onglet
+    const pending = window._allAvis.filter(a => !a.approved).length;
+    const tab = document.querySelector('[data-t=avis]');
+    if (tab) tab.innerHTML = pending > 0
+      ? `⭐ Avis <span style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:.6rem;margin-left:4px">${pending}</span>`
+      : '⭐ Avis';
+  });
+
   renderTab('clients');
 }
 
@@ -409,6 +422,7 @@ function renderTab(t) {
   else if (t === 'coupons') renderCoupons(c);
   else if (t === 'config') renderConfig(c);
   else if (t === 'stats') renderStats(c);
+  else if (t === 'avis')  renderAvis(c);
 }
 
 // ═══════════════════════════════════════
@@ -1277,6 +1291,46 @@ function renderStats(c) {
 
     <button class="btn btn-green btn-full" style="margin-top:14px" onclick="exportData()">📥 EXPORTER LES DONNÉES (CSV)</button>`;
 }
+
+function renderAvis(c) {
+  const all = window._allAvis || [];
+  const pending  = all.filter(a => !a.approved);
+  const approved = all.filter(a =>  a.approved);
+  c.innerHTML = `
+    <div class="st">En attente de validation (${pending.length})</div>
+    ${pending.length ? pending.map(a => `
+      <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.2);border-radius:12px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="font-size:1.1rem">${a.avatar||'🎮'}</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700">${a.pseudo||'—'}</div>
+          <div style="margin-left:auto">${'⭐'.repeat(a.stars||0)}</div>
+        </div>
+        ${a.message ? `<div style="font-size:.76rem;color:var(--dim);margin-bottom:8px">"${a.message}"</div>` : ''}
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-green btn-sm" style="flex:1" onclick="approveAvis('${a._id}')">✅ Publier</button>
+          <button class="btn btn-red btn-sm" onclick="deleteAvis('${a._id}')">🗑 Supprimer</button>
+        </div>
+      </div>`).join('') : '<div class="empty-s"><div class="empty-si">⭐</div>Aucun avis en attente</div>'}
+    <div class="st" style="margin-top:14px">Publiés (${approved.length})</div>
+    ${approved.map(a => `
+      <div style="background:rgba(10,15,30,.7);border:1px solid rgba(0,245,255,.08);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+        <div style="font-size:1rem">${a.avatar||'🎮'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.75rem;font-weight:700">${a.pseudo||'—'} — ${'⭐'.repeat(a.stars||0)}</div>
+          ${a.message ? `<div style="font-size:.65rem;color:var(--dim)">"${a.message}"</div>` : ''}
+        </div>
+        <button class="btn btn-red btn-sm" onclick="deleteAvis('${a._id}')">🗑</button>
+      </div>`).join('')}`;
+}
+
+window.approveAvis = async (id) => {
+  await updateDoc(doc(db,'avis',id), { approved: true });
+  toast('Avis publié');
+};
+window.deleteAvis = async (id) => {
+  await deleteDoc(doc(db,'avis',id));
+  toast('Avis supprimé');
+};
 
 function exportData() {
   const rows = [['Pseudo','Avatar','XP','Niveau','Euros dépensés','Coupons actifs','Date inscription']];
