@@ -331,7 +331,7 @@ body{padding-bottom:0}
         </div>
       </div>
       <div class="xp-hdr">
-        <div class="xp-lbl">Barre XP</div>
+        <div class="xp-lbl">Barre XP <span style="font-size:.55rem;opacity:.5;font-family:'Rajdhani',sans-serif;font-weight:400;letter-spacing:.05em">· 1€ = 1 XP</span></div>
         <div class="xp-cnt"><span id="xpCur">0</span> XP</div>
       </div>
       <div class="xp-wrap"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
@@ -360,9 +360,13 @@ body{padding-bottom:0}
           <div class="reel" id="r2">🎮</div>
         </div>
         <div class="slot-status" id="slotStatus">Tente ta chance !</div>
-        <div class="slot-btns">
+        <!-- Lancers disponibles -->
+        <div id="spinsAvailable" style="display:none;text-align:center;margin:8px 0">
+          <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);margin-bottom:6px">🎰 Lancers disponibles : <span id="spinsCount" style="font-size:1rem;font-weight:900">0</span></div>
+          <button id="btnLancer" onclick="lancerJackpot()" style="width:100%;background:linear-gradient(135deg,#ffd60a,#ff9f1c);border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:14px;cursor:pointer;letter-spacing:.05em">🎰 LANCER !</button>
+        </div>
+        <div class="slot-btns" id="slotBtns">
           <button class="btn-slot-pay" id="btnPay"><div class="bs-icon">🎰</div><div>JOUER — PAYE À LA CAISSE</div></button>
-          <button class="btn-slot-cash" id="btnCash" style="display:none"><div class="bs-icon">🎰</div><div>JOUER (ADMIN)</div></button>
         </div>
         <div class="slot-price" id="slotPriceLabel">Partie : 2€</div>
       </div>
@@ -513,6 +517,7 @@ function selectGame(name) {
 var _selectedStars = 0;
 function setStars(n) {
   _selectedStars = n;
+  window._selectedStars = n;
   document.querySelectorAll('.star-btn').forEach(function(s) {
     var v = parseInt(s.dataset.v);
     s.style.opacity   = v <= n ? '1'   : '0.3';
@@ -523,7 +528,7 @@ function setStars(n) {
 function submitAvis() {
   var fb = document.getElementById('avisFb');
   if (window._submitAvisModule) {
-    window._submitAvisModule(_selectedStars);
+    window._submitAvisModule();
   } else {
     fb.innerHTML = '<span style="color:#ffd60a">⏳ Connexion en cours…</span>';
     var tries = 0;
@@ -531,7 +536,7 @@ function submitAvis() {
       tries++;
       if (window._submitAvisModule) {
         clearInterval(wait);
-        window._submitAvisModule(_selectedStars);
+        window._submitAvisModule();
       } else if (tries > 10) {
         clearInterval(wait);
         fb.innerHTML = '<span style="color:#ff006e">Erreur de connexion. Rafraîchis la page.</span>';
@@ -580,6 +585,20 @@ function placeSnakeFood() {
   while (snake.some(function(s){return s.x===sFood.x && s.y===sFood.y;}));
 }
 
+var _sAC = null;
+function snakeBeep(freq, dur, type) {
+  try {
+    if (!_sAC) _sAC = new (window.AudioContext||window.webkitAudioContext)();
+    if (_sAC.state==='suspended') _sAC.resume();
+    var o=_sAC.createOscillator(), g=_sAC.createGain();
+    o.connect(g); g.connect(_sAC.destination);
+    o.frequency.value=freq; o.type=type||'square';
+    g.gain.setValueAtTime(0.12,_sAC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,_sAC.currentTime+dur);
+    o.start(); o.stop(_sAC.currentTime+dur);
+  } catch(e){}
+}
+
 function tickSnake() {
   var cv   = document.getElementById('snakeCanvas');
   var cols = Math.floor(cv.width  / CELL);
@@ -592,6 +611,7 @@ function tickSnake() {
   if (head.x===sFood.x && head.y===sFood.y) {
     snakeScore += 10;
     document.getElementById('snakeScore').textContent = snakeScore;
+    snakeBeep(660, 0.1, 'sine'); // Son manger
     placeSnakeFood();
   } else { snake.pop(); }
   drawSnake();
@@ -601,23 +621,41 @@ function drawSnake() {
   var cv  = document.getElementById('snakeCanvas');
   var ctx = cv.getContext('2d');
   var W = cv.width, H = cv.height;
+  // Fond
   ctx.fillStyle = '#000814'; ctx.fillRect(0,0,W,H);
+  // Grille
   ctx.strokeStyle = 'rgba(6,214,160,.06)'; ctx.lineWidth = 1;
   for(var x=0;x<W;x+=CELL){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
   for(var y=0;y<H;y+=CELL){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // Filigrane X-GAMES
+  ctx.save();
+  ctx.globalAlpha = 0.04;
+  ctx.font = 'bold ' + Math.floor(W/4) + 'px Orbitron, monospace';
+  ctx.fillStyle = '#00f5ff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('X-GAMES', W/2, H/2);
+  ctx.restore();
+  // Serpent
   snake.forEach(function(s,i){
     ctx.fillStyle = i===0 ? '#00ffcc' : '#06d6a0';
     ctx.shadowColor = '#06d6a0'; ctx.shadowBlur = i===0?12:4;
     ctx.beginPath(); ctx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,4); ctx.fill();
     ctx.shadowBlur = 0;
   });
+  // Nourriture
   ctx.fillStyle='#f72585'; ctx.shadowColor='#f72585'; ctx.shadowBlur=10;
   ctx.beginPath(); ctx.arc(sFood.x*CELL+CELL/2,sFood.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2); ctx.fill();
   ctx.shadowBlur=0;
+  // Score en haut
+  ctx.fillStyle='rgba(0,245,255,.5)'; ctx.font='bold 11px Orbitron,monospace';
+  ctx.textAlign='right'; ctx.textBaseline='top';
+  ctx.fillText('LVL '+(Math.floor(snakeScore/50)+1), W-6, 4);
 }
 
 function snakeGameOver() {
   clearInterval(snakeLoop); sRunning=false;
+  snakeBeep(200, 0.4, 'sawtooth'); // Son mort
   if (snakeScore>snakeHigh){snakeHigh=snakeScore;document.getElementById('snakeHigh').textContent=snakeHigh;}
   var ov = document.getElementById('snakeOverlay');
   ov.style.display='flex';
@@ -793,29 +831,55 @@ if (clientId) {
     renderLeaderboard(sorted);
   });
 
-  // Slot unlock listener
-  let spinsLeft = 0;
+  // Slot listener — le client appuie sur LANCER lui-même
+let availableSpins = 0;
+
   onSnapshot(doc(db, 'slots', clientId), snap => {
     if (!snap.exists()) return;
     const d = snap.data();
-    if (d.status === 'ready' && !isSpinning) {
-      // Remet immédiatement à 'used' pour éviter le rejeu par refresh
-      setDoc(doc(db, 'slots', clientId), { status:'used', clientId }).catch(()=>{});
-      spinsLeft = (d.multiCount || 1) - 1;
+
+    if (d.status === 'ready') {
+      // Mémorise le nb de lancers et passe à 'armed' une seule fois
+      availableSpins = d.multiCount || 1;
+      setDoc(doc(db, 'slots', clientId), { ...d, status:'armed', multiCount: availableSpins }).catch(()=>{});
       document.getElementById('waitOv').classList.remove('show');
-      if (d.multiCount > 1) {
-        document.getElementById('slotStatus').textContent = `🎰 ${d.multiCount} lancers offerts !`;
-      }
-      spinReels(d.forced === true, spinsLeft);
+      updateSpinsUI();
     }
-    // Reprend les lancers restants après refresh
-    if (d.status === 'spinning' && d.spinsLeft > 0 && !isSpinning) {
-      spinsLeft = d.spinsLeft - 1;
-      setDoc(doc(db, 'slots', clientId), { status:'spinning', clientId, spinsLeft }).catch(()=>{});
-      spinReels(false, spinsLeft);
+    // Sur 'armed' après refresh : relit le nb restant depuis Firebase
+    if (d.status === 'armed' && availableSpins === 0) {
+      availableSpins = d.multiCount || 0;
+      updateSpinsUI();
+    }
+    if (d.status === 'idle' || d.status === 'used') {
+      availableSpins = 0;
+      updateSpinsUI();
     }
   });
 }
+
+function updateSpinsUI() {
+  const spinsDiv = document.getElementById('spinsAvailable');
+  const slotBtns = document.getElementById('slotBtns');
+  const countEl  = document.getElementById('spinsCount');
+  if (availableSpins > 0 && !isSpinning) {
+    spinsDiv.style.display = 'block';
+    slotBtns.style.display = 'none';
+    countEl.textContent = availableSpins;
+  } else if (!isSpinning) {
+    spinsDiv.style.display = 'none';
+    slotBtns.style.display = 'flex';
+  }
+}
+
+window.lancerJackpot = function() {
+  if (availableSpins <= 0 || isSpinning) return;
+  availableSpins--;
+  // Sauvegarde le nb restant dans Firebase
+  const newStatus = availableSpins > 0 ? 'armed' : 'used';
+  setDoc(doc(db, 'slots', clientId), { status: newStatus, clientId, multiCount: availableSpins }).catch(()=>{});
+  updateSpinsUI();
+  spinReels(false);
+};
 
 
 // ── NIVEAU SYSTEM ──
@@ -1101,46 +1165,39 @@ document.getElementById('btnCash').addEventListener('click', () => {
   document.getElementById('slotStatus').textContent = 'Utilise le panel admin.';
 });
 
-function spinReels(autoWin = false, remainingSpins = 0) {
+function spinReels(autoWin = false) {
   if (isSpinning) return;
   isSpinning = true;
-  lastSpinTime = Date.now();
-  const btn   = document.getElementById('btnPay');
-  btn.disabled = true;
+  document.getElementById('spinsAvailable').style.display = 'none';
+  document.getElementById('slotBtns').style.display = 'none';
   const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
   const won = autoWin || (Math.random() * 100 < winRate);
-  document.getElementById('slotStatus').textContent = remainingSpins > 0 ? `Lancement… (${remainingSpins} restant(s))` : 'Lancement…';
+  document.getElementById('slotStatus').textContent = 'Lancement…';
   const reels = [document.getElementById('r0'), document.getElementById('r1'), document.getElementById('r2')];
   reels.forEach(r => { r.classList.remove('win'); r.classList.add('spin'); });
+  // Tourne pendant 2s (26 ticks × 75ms = ~2s)
   let elapsed = 0;
   const interval = setInterval(() => {
     reels.forEach(r => r.textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]);
     elapsed++;
-    if (elapsed > 22) {
+    if (elapsed > 26) {
       clearInterval(interval);
       reels.forEach(r => r.classList.remove('spin'));
       if (won) {
         const sym = SYMBOLS[Math.floor(Math.random()*4)];
         reels.forEach(r => { r.textContent = sym; r.classList.add('win'); });
-        handleWin(remainingSpins);
+        handleWin();
       } else {
-        reels[0].textContent = SYMBOLS[0]; reels[1].textContent = SYMBOLS[1]; reels[2].textContent = SYMBOLS[2];
+        reels[0].textContent = SYMBOLS[1]; reels[1].textContent = SYMBOLS[3]; reels[2].textContent = SYMBOLS[5];
+        document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
         isSpinning = false;
-        if (remainingSpins > 0) {
-          document.getElementById('slotStatus').textContent = `Pas de chance… ${remainingSpins} lancer(s) restant(s) !`;
-          setDoc(doc(db, 'slots', clientId), { status:'spinning', clientId, spinsLeft: remainingSpins }).catch(()=>{});
-          setTimeout(() => spinReels(false, remainingSpins - 1), 1500);
-        } else {
-          document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
-          btn.disabled = false;
-          setDoc(doc(db, 'slots', clientId), { status:'idle', clientId }).catch(()=>{});
-        }
+        updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
       }
     }
   }, 75);
 }
 
-async function handleWin(remainingSpins = 0) {
+async function handleWin() {
   const prizes   = config.jackpot?.prizes || [{ name:'Surprise', icon:'🎁' }];
   const prizeRaw = prizes[Math.floor(Math.random()*prizes.length)];
   const prize    = typeof prizeRaw === 'string' ? { name:prizeRaw, icon:'🎰' } : prizeRaw;
@@ -1150,17 +1207,13 @@ async function handleWin(remainingSpins = 0) {
   await addDoc(collection(db, 'clients', clientId, 'history'), { type:'jackpot', label:`🎰 JACKPOT : ${prize.name}`, pseudo:clientData?.pseudo, timestamp:serverTimestamp() });
   document.getElementById('winIcon').textContent      = prize.icon || '🎰';
   document.getElementById('winPrizeName').textContent = prize.name;
-  document.getElementById('winOv').classList.add('show');
-  startCoinExplosion();
-  isSpinning = false;
-  document.getElementById('btnPay').disabled = false;
-  // Lance le prochain spin si il en reste
-  if (remainingSpins > 0) {
-    setDoc(doc(db, 'slots', clientId), { status:'spinning', clientId, spinsLeft: remainingSpins }).catch(()=>{});
-    setTimeout(() => spinReels(false, remainingSpins - 1), 3000);
-  } else {
-    setDoc(doc(db, 'slots', clientId), { status:'idle', clientId }).catch(()=>{});
-  }
+  // Attend 2s avant d'afficher le popup pour laisser l'animation
+  setTimeout(() => {
+    document.getElementById('winOv').classList.add('show');
+    startCoinExplosion();
+    isSpinning = false;
+    updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
+  }, 2000);
 }
 
 // ── COIN EXPLOSION ──
@@ -1609,15 +1662,16 @@ window.setStars = function(n) {
   });
 };
 
-window._submitAvisModule = async function(stars) {
+window._submitAvisModule = async function() {
   if (!clientData) return;
-  const n = stars || _selectedStars || 0;
+  const n = window._selectedStars || 0;
   if (n === 0) {
-    document.getElementById('avisFb').innerHTML = '<span style="color:#ff006e">Sélectionne une note !</span>';
+    document.getElementById('avisFb').innerHTML = '<span style="color:#ff006e">⭐ Sélectionne une note d\'abord !</span>';
     return;
   }
   const msg = document.getElementById('avisMsg').value.trim();
   const fb  = document.getElementById('avisFb');
+  fb.innerHTML = '<span style="color:#ffd60a">⏳ Envoi en cours…</span>';
   try {
     await addDoc(collection(db, 'avis'), {
       clientId:  clientId,
