@@ -836,31 +836,44 @@ function jetGameOver() {
 document.addEventListener('keydown', function(e){ jetKeys[e.key]=true; if(e.key===' ')jetShoot(); });
 document.addEventListener('keyup',   function(e){ jetKeys[e.key]=false; });
 
-// Touch jet d'eau — glisser pour bouger, tap pour tirer
-var _jtx=0, _jty=0, _jtActive=false, _jtMoved=false;
+// Touch jet d'eau — doigt = position du jet, tap = tirer
+var _jtActive = false, _jtStartX = 0, _jtStartTime = 0;
 document.addEventListener('touchstart', function(e){
   if(!jetRunning) return;
-  var cv=document.getElementById('gameCanvas');
+  var cv = document.getElementById('gameCanvas');
   if(!cv) return;
-  var rect=cv.getBoundingClientRect();
-  var tx=e.touches[0].clientX, ty=e.touches[0].clientY;
-  if(tx>=rect.left&&tx<=rect.right&&ty>=rect.top&&ty<=rect.bottom){
-    _jtx=tx; _jty=ty; _jtActive=true; _jtMoved=false;
+  var rect = cv.getBoundingClientRect();
+  var tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+  if(tx >= rect.left && tx <= rect.right && ty >= rect.top && ty <= rect.bottom){
+    _jtActive = true;
+    _jtStartX = tx;
+    _jtStartTime = Date.now();
+    // Déplace immédiatement le jet à la position du doigt
+    var relX = (tx - rect.left) * (jetW / rect.width);
+    if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW - jetPlayer.w/2, relX));
+    e.preventDefault();
   }
-},{passive:true});
+},{passive:false});
+
 document.addEventListener('touchmove', function(e){
-  if(!jetRunning||!_jtActive) return;
-  var dx=e.touches[0].clientX-_jtx;
-  if(Math.abs(dx)>3) _jtMoved=true;
-  _jtx=e.touches[0].clientX;
-  if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x+dx));
+  if(!jetRunning || !_jtActive) return;
+  var cv = document.getElementById('gameCanvas');
+  if(!cv) return;
+  var rect = cv.getBoundingClientRect();
+  var tx = e.touches[0].clientX;
+  // Suit le doigt en temps réel
+  var relX = (tx - rect.left) * (jetW / rect.width);
+  if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW - jetPlayer.w/2, relX));
   e.preventDefault();
 },{passive:false});
+
 document.addEventListener('touchend', function(e){
   if(!_jtActive) return;
-  // Tap court sans mouvement = tir
-  if(!_jtMoved && jetRunning) jetShoot();
-  _jtActive=false; _jtMoved=false;
+  _jtActive = false;
+  // Tap court (< 200ms et < 10px de déplacement) = tir
+  var dt = Date.now() - _jtStartTime;
+  var dx = Math.abs(e.changedTouches[0].clientX - _jtStartX);
+  if(dt < 200 && dx < 10 && jetRunning) jetShoot();
 },{passive:true});
 
 // Swipe tactile serpent
