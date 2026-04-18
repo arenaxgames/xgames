@@ -1226,7 +1226,6 @@ function renderCoupons(coupons) {
 
 function updateSlotUI() {
   document.getElementById('slotPriceLabel').textContent = `Partie : ${config.slotPrice}`;
-  document.getElementById('btnCash').style.display = config.cashEnabled ? 'flex' : 'none';
 }
 
 function showLevelUp(tier) {
@@ -1357,14 +1356,13 @@ window.closeValidate = async () => {
 // ── SLOT MACHINE ──
 let paymentConfirmed = false; // Token anti-triche
 
-document.getElementById('btnPay').addEventListener('click', () => {
+document.getElementById('btnPay')?.addEventListener('click', () => {
   const now = Date.now();
   if (now - lastSpinTime < SPIN_COOLDOWN) {
     document.getElementById('slotStatus').textContent = `⏳ Attends encore ${Math.ceil((SPIN_COOLDOWN-(now-lastSpinTime))/1000)}s…`;
     return;
   }
   const pseudo = clientData?.pseudo || 'Joueur';
-  // Envoie la demande à l'admin
   setDoc(doc(db, 'slots', clientId), {
     status: 'pending', clientId,
     clientPseudo: pseudo,
@@ -1373,15 +1371,13 @@ document.getElementById('btnPay').addEventListener('click', () => {
   document.getElementById('waitOv').classList.add('show');
 });
 
-document.getElementById('btnCash').addEventListener('click', () => {
-  document.getElementById('slotStatus').textContent = 'Utilise le panel admin.';
-});
-
 function spinReels(autoWin = false) {
   if (isSpinning) return;
   isSpinning = true;
-  document.getElementById('spinsAvailable').style.display = 'none';
-  document.getElementById('slotBtns').style.display = 'none';
+  const spinsDiv = document.getElementById('spinsAvailable');
+  const slotBtns = document.getElementById('slotBtns');
+  if (spinsDiv) spinsDiv.style.display = 'none';
+  if (slotBtns) slotBtns.style.display = 'none';
   const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
   const won = autoWin || (Math.random() * 100 < winRate);
   document.getElementById('slotStatus').textContent = 'Lancement…';
