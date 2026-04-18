@@ -1513,20 +1513,35 @@ onSnapshot(query(collection(db, 'avis'), limit(50)), snap => {
   if (!list) return;
   const all  = snap.docs.map(d => ({...d.data(), _id: d.id}));
   const avis = all.filter(a => a.approved === true);
-  console.log('Avis total:', all.length, 'approuvés:', avis.length, all.map(a=>({pseudo:a.pseudo,approved:a.approved})));
+  list.innerHTML = '';
   if (!avis.length) {
-    list.innerHTML = '<div class="empty-c"><div class="empty-i">💬</div>Aucun avis publié.</div>';
+    list.innerHTML = '<div class="empty-c"><div class="empty-i">\u{1F4AC}</div>Aucun avis publié.</div>';
     return;
   }
-  list.innerHTML = avis.map(a => `
-    <div style="background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <div style="font-size:1.2rem">${a.avatar||'🎮'}</div>
-        <div style="font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700">${a.pseudo||'—'}</div>
-        <div style="margin-left:auto;font-size:.9rem">${'⭐'.repeat(a.stars||0)}</div>
-      </div>
-      ${a.message ? `<div style="font-size:.78rem;color:var(--dim);line-height:1.5">${a.message}</div>` : ''}
-    </div>`).join('');
+  avis.forEach(a => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px;margin-bottom:8px';
+    const top = document.createElement('div');
+    top.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+    const av = document.createElement('div');
+    av.style.fontSize = '1.2rem';
+    av.textContent = a.avatar || '🎮';
+    const nm = document.createElement('div');
+    nm.style.cssText = "font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700";
+    nm.textContent = a.pseudo || '—';
+    const st = document.createElement('div');
+    st.style.cssText = 'margin-left:auto;font-size:.9rem';
+    st.textContent = '⭐'.repeat(a.stars || 0);
+    top.appendChild(av); top.appendChild(nm); top.appendChild(st);
+    card.appendChild(top);
+    if (a.message) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'font-size:.78rem;color:#4a5568;line-height:1.5';
+      msg.textContent = a.message;
+      card.appendChild(msg);
+    }
+    list.appendChild(card);
+  });
 });
 
 
