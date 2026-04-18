@@ -794,13 +794,29 @@ function jetDraw() {
   jetCtx.fillText('X-GAMES',jetW/2,jetH/2); jetCtx.restore();
 }
 
+var _jetAC = null;
+function jetBeep(freq, dur) {
+  try {
+    if (!_jetAC) _jetAC = new (window.AudioContext||window.webkitAudioContext)();
+    if (_jetAC.state==='suspended') _jetAC.resume();
+    var o=_jetAC.createOscillator(), g=_jetAC.createGain();
+    o.connect(g); g.connect(_jetAC.destination);
+    o.frequency.value=freq; o.type='sine';
+    g.gain.setValueAtTime(0.1,_jetAC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,_jetAC.currentTime+dur);
+    o.start(); o.stop(_jetAC.currentTime+dur);
+  } catch(e){}
+}
+
 function jetShoot() {
   if (!jetRunning) return;
   jetBullets.push({x:jetPlayer.x, y:jetPlayer.y-jetPlayer.h/2});
+  jetBeep(440, 0.06);
 }
 
 function jetGameOver() {
   jetRunning = false; cancelAnimationFrame(jetAnimId);
+  jetBeep(150, 0.5);
   if (jetScore>jetHigh) {
     jetHigh=jetScore;
     if (window._db && window._clientId) {
@@ -820,23 +836,28 @@ function jetGameOver() {
 document.addEventListener('keydown', function(e){ jetKeys[e.key]=true; if(e.key===' ')jetShoot(); });
 document.addEventListener('keyup',   function(e){ jetKeys[e.key]=false; });
 
-// Touch jet d'eau
-var _jtx=0;
+// Touch jet d'eau — déplacement fluide
+var _jtx=0, _jtActive=false;
 document.addEventListener('touchstart', function(e){
   if(!jetRunning) return;
   var cv=document.getElementById('gameCanvas');
-  if(cv && e.target===cv){ _jtx=e.touches[0].clientX; }
+  if(!cv) return;
+  var rect=cv.getBoundingClientRect();
+  var tx=e.touches[0].clientX, ty=e.touches[0].clientY;
+  if(tx>=rect.left&&tx<=rect.right&&ty>=rect.top&&ty<=rect.bottom){
+    _jtx=tx; _jtActive=true;
+  }
 },{passive:true});
 document.addEventListener('touchmove', function(e){
-  if(!jetRunning) return;
-  var cv=document.getElementById('gameCanvas');
-  if(cv && e.target===cv){
-    var dx=e.touches[0].clientX-_jtx; _jtx=e.touches[0].clientX;
-    jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x+dx));
-    e.preventDefault();
-  }
+  if(!jetRunning||!_jtActive) return;
+  var dx=e.touches[0].clientX-_jtx;
+  _jtx=e.touches[0].clientX;
+  if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x+dx));
+  e.preventDefault();
 },{passive:false});
 document.addEventListener('touchend', function(e){
+  if(!_jtActive) return;
+  _jtActive=false;
   if(jetRunning) jetShoot();
 },{passive:true});
 
