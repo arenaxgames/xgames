@@ -136,11 +136,29 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .slot-price{font-size:.62rem;color:var(--dim);margin-top:8px;text-align:center;letter-spacing:.06em}
 
 /* Slot lights decoration */
-.slot-lights{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
-.slot-light{width:8px;height:8px;border-radius:50%;animation:light-blink 1s ease-in-out infinite}
-.slot-light:nth-child(odd){background:var(--gold);box-shadow:0 0 6px var(--gold)}
-.slot-light:nth-child(even){background:var(--orange);box-shadow:0 0 6px var(--orange);animation-delay:.5s}
-@keyframes light-blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+.slot-lights-top{display:flex;justify-content:center;gap:5px;margin-bottom:14px}
+.slot-light{width:9px;height:9px;border-radius:50%;animation:light-blink .8s ease-in-out infinite}
+.slot-light:nth-child(odd){background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.slot-light:nth-child(even){background:var(--pink);box-shadow:0 0 8px var(--pink);animation-delay:.4s}
+.slot-light:nth-child(3n){background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation-delay:.2s}
+@keyframes light-blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.6)}}
+
+/* ENSEIGNE VEGAS */
+.vegas-sign{text-align:center;margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(20,0,40,.95),rgba(10,0,30,.98));border:2px solid rgba(255,214,10,.3);border-radius:18px;position:relative;overflow:hidden}
+.vegas-sign::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,214,10,.02) 10px,rgba(255,214,10,.02) 20px)}
+.vegas-marquee{display:flex;justify-content:center;gap:4px;margin-bottom:6px}
+.vegas-letter{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;display:inline-block;animation:vegas-letter-blink 1.2s ease-in-out infinite}
+.vegas-letter:nth-child(1){color:#ff006e;text-shadow:0 0 20px #ff006e,0 0 40px #ff006e;animation-delay:0s}
+.vegas-letter:nth-child(2){color:#ffd60a;text-shadow:0 0 20px #ffd60a,0 0 40px #ffd60a;animation-delay:.1s}
+.vegas-letter:nth-child(3){color:#00f5ff;text-shadow:0 0 20px #00f5ff,0 0 40px #00f5ff;animation-delay:.2s}
+.vegas-letter:nth-child(4){color:#f72585;text-shadow:0 0 20px #f72585,0 0 40px #f72585;animation-delay:.3s}
+.vegas-letter:nth-child(5){color:#ffd60a;text-shadow:0 0 20px #ffd60a,0 0 40px #ffd60a;animation-delay:.4s}
+.vegas-letter:nth-child(6){color:#00f5ff;text-shadow:0 0 20px #00f5ff,0 0 40px #00f5ff;animation-delay:.5s}
+.vegas-letter:nth-child(7){color:#ff006e;text-shadow:0 0 20px #ff006e,0 0 40px #ff006e;animation-delay:.6s}
+@keyframes vegas-letter-blink{0%,100%{opacity:1;transform:scale(1)}40%{opacity:.3;transform:scale(.9)}}
+.vegas-sub{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--gold);letter-spacing:.25em;margin-bottom:4px;animation:glow-pulse 2s ease-in-out infinite}
+.vegas-tagline{font-family:'Rajdhani',sans-serif;font-size:.82rem;color:var(--txt);opacity:.8}
+@keyframes glow-pulse{0%,100%{text-shadow:0 0 10px var(--gold)}50%{text-shadow:0 0 25px var(--gold),0 0 50px rgba(255,214,10,.5)}}
 
 .overlay{position:fixed;inset:0;z-index:7000;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
 .overlay.show{display:flex}
@@ -346,10 +364,18 @@ body{padding-bottom:0}
       </div>
     </div>
     <div>
-      <div class="sec-t">Machine à sous</div>
+      <!-- ENSEIGNE VEGAS -->
+      <div class="vegas-sign">
+        <div class="vegas-marquee">
+          <span class="vegas-letter">J</span><span class="vegas-letter">A</span><span class="vegas-letter">C</span><span class="vegas-letter">K</span><span class="vegas-letter">P</span><span class="vegas-letter">O</span><span class="vegas-letter">T</span>
+        </div>
+        <div class="vegas-sub">✦ TENTEZ VOTRE CHANCE ✦</div>
+        <div class="vegas-tagline">🏆 Gagnez des SUPER LOTS ! 🏆</div>
+      </div>
+
       <div class="slot-card">
-        <div class="slot-title">🎰 JACKPOT MACHINE 🎰</div>
-        <div class="slot-lights">
+        <div class="slot-lights-top">
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
@@ -360,15 +386,38 @@ body{padding-bottom:0}
           <div class="reel" id="r2">🎮</div>
         </div>
         <div class="slot-status" id="slotStatus">Tente ta chance !</div>
-        <!-- Lancers disponibles -->
+
+        <!-- LANCER QUOTIDIEN GRATUIT -->
+        <div id="dailySpinBanner" style="display:none;background:linear-gradient(135deg,rgba(6,214,160,.15),rgba(0,245,255,.1));border:1px solid rgba(6,214,160,.4);border-radius:12px;padding:10px;text-align:center;margin-bottom:10px">
+          <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--green);font-weight:700">🎁 LANCER GRATUIT DU JOUR !</div>
+          <div style="font-size:.68rem;color:var(--dim);margin-top:3px">Reviens demain pour un nouveau lancer offert</div>
+          <button onclick="useDailySpin()" style="margin-top:8px;width:100%;background:linear-gradient(135deg,var(--green),var(--cyan));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;padding:10px;cursor:pointer">🎰 UTILISER MON LANCER GRATUIT</button>
+        </div>
+
+        <!-- Lancers admin disponibles -->
         <div id="spinsAvailable" style="display:none;text-align:center;margin:8px 0">
           <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);margin-bottom:6px">🎰 Lancers disponibles : <span id="spinsCount" style="font-size:1rem;font-weight:900">0</span></div>
-          <button id="btnLancer" onclick="lancerJackpot()" style="width:100%;background:linear-gradient(135deg,#ffd60a,#ff9f1c);border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:14px;cursor:pointer;letter-spacing:.05em">🎰 LANCER !</button>
+          <button onclick="lancerJackpot()" style="width:100%;background:linear-gradient(135deg,#ffd60a,#ff9f1c);border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:14px;cursor:pointer;letter-spacing:.05em">🎰 LANCER !</button>
         </div>
+
         <div class="slot-btns" id="slotBtns">
           <button class="btn-slot-pay" id="btnPay"><div class="bs-icon">🎰</div><div>JOUER — PAYE À LA CAISSE</div></button>
         </div>
         <div class="slot-price" id="slotPriceLabel">Partie : 2€</div>
+        <div class="slot-lights-top" style="margin-top:12px;margin-bottom:0">
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+        </div>
+      </div>
+
+      <!-- PARRAINAGE -->
+      <div class="profile-card" style="margin-top:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--cyan);font-weight:700;margin-bottom:8px">🤝 PARRAINAGE — +1 XP PAR PARTAGE</div>
+        <div style="font-size:.72rem;color:var(--dim);margin-bottom:10px;line-height:1.5">Partage ton lien et gagne 1 XP à chaque ami qui s'inscrit !</div>
+        <button onclick="shareReferral()" style="width:100%;background:linear-gradient(135deg,var(--blue),var(--violet));border:none;border-radius:12px;color:#fff;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;padding:12px;cursor:pointer">📤 PARTAGER MON LIEN</button>
+        <div id="referralFb" style="font-size:.7rem;text-align:center;margin-top:8px;min-height:16px"></div>
       </div>
     </div>
   </div>
@@ -1013,6 +1062,13 @@ if (clientId) {
         const t = document.getElementById('clientTickerTxt');
         if (t) t.textContent = d.bandeau;
       }
+      // Personnalisation couleurs et nom
+      if (d.primaryColor) document.documentElement.style.setProperty('--cyan', d.primaryColor);
+      if (d.secondColor)  document.documentElement.style.setProperty('--pink', d.secondColor);
+      if (d.standName) {
+        const logo = document.querySelector('.hdr-logo');
+        if (logo) logo.textContent = d.standName;
+      }
     }
     if (clientData) renderXP(clientData);
     updateSlotUI();
@@ -1032,7 +1088,7 @@ if (clientId) {
     }
     const data = snap.data();
     clientData = data;
-    // Charge les records des mini-jeux
+    checkDailySpin(data);
     if (data.scores) {
       if (data.scores.jet > 0) {
         document.getElementById('gameHigh').textContent = data.scores.jet;
@@ -1508,8 +1564,53 @@ window._stopCoinExplosion = stopCoinExplosion;
 
 // ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
 
-// ── SYSTÈME D'AVIS ──
-// setStars défini dans script sync au-dessus
+// ── LANCER QUOTIDIEN GRATUIT ──
+function checkDailySpin(data) {
+  const now = new Date();
+  const todayStr = now.getUTCFullYear() + '-' + (now.getUTCMonth()+1) + '-' + now.getUTCDate();
+  const lastDaily = data.lastDailySpin || '';
+  const banner = document.getElementById('dailySpinBanner');
+  if (banner) banner.style.display = (lastDaily !== todayStr) ? 'block' : 'none';
+}
+
+window.useDailySpin = async function() {
+  if (!clientData) return;
+  // Relit depuis Firebase pour éviter toute manipulation locale
+  const snap = await getDoc(doc(db, 'clients', clientId));
+  if (!snap.exists()) return;
+  const freshData = snap.data();
+  // Utilise la date serveur Firebase — impossible à manipuler côté client
+  const now = new Date();
+  const todayStr = now.getUTCFullYear() + '-' + (now.getUTCMonth()+1) + '-' + now.getUTCDate();
+  if (freshData.lastDailySpin === todayStr) {
+    document.getElementById('dailySpinBanner').style.display = 'none';
+    return;
+  }
+  await updateDoc(doc(db, 'clients', clientId), { lastDailySpin: todayStr, lastDailySpinAt: serverTimestamp() });
+  document.getElementById('dailySpinBanner').style.display = 'none';
+  availableSpins++;
+  updateSpinsUI();
+};
+
+// ── PARRAINAGE ──
+window.shareReferral = function() {
+  const url = window.location.origin + window.location.pathname.replace('client.html','register.html') + '?ref=' + clientId;
+  const fb = document.getElementById('referralFb');
+  if (navigator.share) {
+    navigator.share({ title: 'X-Games — Carte fidélité', text: '🎯 Rejoins X-Games et tente ta chance au jackpot !', url })
+      .then(() => {
+        if (fb) { fb.innerHTML = '<span style="color:var(--green)">✅ Lien partagé ! Tu gagneras 1 XP quand ton ami s\'inscrit.</span>'; setTimeout(()=>{ if(fb) fb.innerHTML=''; }, 4000); }
+      }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      if (fb) { fb.innerHTML = '<span style="color:var(--cyan)">📋 Lien copié ! Partage-le à tes amis.</span>'; setTimeout(()=>{ if(fb) fb.innerHTML=''; }, 3000); }
+    });
+  }
+};
+
+// Vérifie le parrainage — XP donné UNE SEULE FOIS au parrain via register.html
+// Le clientId courant est le nouveau client, refId est le parrain
+// Ce code s'exécute dans register.html via le param ref, pas ici
 
 // Charge les avis approuvés uniquement
 onSnapshot(query(collection(db, 'avis'), limit(50)), snap => {
