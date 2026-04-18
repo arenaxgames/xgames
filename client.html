@@ -836,8 +836,8 @@ function jetGameOver() {
 document.addEventListener('keydown', function(e){ jetKeys[e.key]=true; if(e.key===' ')jetShoot(); });
 document.addEventListener('keyup',   function(e){ jetKeys[e.key]=false; });
 
-// Touch jet d'eau — déplacement fluide
-var _jtx=0, _jtActive=false;
+// Touch jet d'eau — glisser pour bouger, tap pour tirer
+var _jtx=0, _jty=0, _jtActive=false, _jtMoved=false;
 document.addEventListener('touchstart', function(e){
   if(!jetRunning) return;
   var cv=document.getElementById('gameCanvas');
@@ -845,20 +845,22 @@ document.addEventListener('touchstart', function(e){
   var rect=cv.getBoundingClientRect();
   var tx=e.touches[0].clientX, ty=e.touches[0].clientY;
   if(tx>=rect.left&&tx<=rect.right&&ty>=rect.top&&ty<=rect.bottom){
-    _jtx=tx; _jtActive=true;
+    _jtx=tx; _jty=ty; _jtActive=true; _jtMoved=false;
   }
 },{passive:true});
 document.addEventListener('touchmove', function(e){
   if(!jetRunning||!_jtActive) return;
   var dx=e.touches[0].clientX-_jtx;
+  if(Math.abs(dx)>3) _jtMoved=true;
   _jtx=e.touches[0].clientX;
   if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x+dx));
   e.preventDefault();
 },{passive:false});
 document.addEventListener('touchend', function(e){
   if(!_jtActive) return;
-  _jtActive=false;
-  if(jetRunning) jetShoot();
+  // Tap court sans mouvement = tir
+  if(!_jtMoved && jetRunning) jetShoot();
+  _jtActive=false; _jtMoved=false;
 },{passive:true});
 
 // Swipe tactile serpent
@@ -1513,11 +1515,11 @@ window.setStars = function(n) {
 onSnapshot(query(collection(db, 'avis'), limit(50)), snap => {
   const list = document.getElementById('avisList');
   if (!list) return;
-  const avis = snap.docs
-    .map(d => ({...d.data(), _id: d.id}))
-    .filter(a => a.approved === true);
+  const all  = snap.docs.map(d => ({...d.data(), _id: d.id}));
+  const avis = all.filter(a => a.approved === true);
+  console.log('Avis total:', all.length, 'approuvés:', avis.length, all.map(a=>({pseudo:a.pseudo,approved:a.approved})));
   if (!avis.length) {
-    list.innerHTML = '<div class="empty-c"><div class="empty-i">💬</div>Aucun avis pour le moment.</div>';
+    list.innerHTML = '<div class="empty-c"><div class="empty-i">💬</div>Aucun avis publié.</div>';
     return;
   }
   list.innerHTML = avis.map(a => `
