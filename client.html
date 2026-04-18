@@ -1496,16 +1496,7 @@ window._stopCoinExplosion = stopCoinExplosion;
 // ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
 
 // ── SYSTÈME D'AVIS ──
-let selectedStars = 0;
-
-window.setStars = function(n) {
-  selectedStars = n;
-  window._pendingStars = n;
-  document.querySelectorAll('.star-btn').forEach(s => {
-    s.style.opacity   = parseInt(s.dataset.v) <= n ? '1' : '0.3';
-    s.style.transform = parseInt(s.dataset.v) <= n ? 'scale(1.1)' : 'scale(1)';
-  });
-};
+// setStars défini dans script sync au-dessus
 
 // Charge les avis approuvés uniquement
 onSnapshot(query(collection(db, 'avis'), limit(50)), snap => {
