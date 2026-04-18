@@ -521,8 +521,23 @@ function setStars(n) {
   });
 }
 function submitAvis() {
-  if (window._submitAvisModule) window._submitAvisModule(_selectedStars);
-  else alert('Connexion en cours, réessaie dans 2 secondes.');
+  var fb = document.getElementById('avisFb');
+  if (window._submitAvisModule) {
+    window._submitAvisModule(_selectedStars);
+  } else {
+    fb.innerHTML = '<span style="color:#ffd60a">⏳ Connexion en cours…</span>';
+    var tries = 0;
+    var wait = setInterval(function() {
+      tries++;
+      if (window._submitAvisModule) {
+        clearInterval(wait);
+        window._submitAvisModule(_selectedStars);
+      } else if (tries > 10) {
+        clearInterval(wait);
+        fb.innerHTML = '<span style="color:#ff006e">Erreur de connexion. Rafraîchis la page.</span>';
+      }
+    }, 500);
+  }
 }
 
 // ── SERPENT ──
