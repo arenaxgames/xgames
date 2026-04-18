@@ -1216,12 +1216,12 @@ async function handleWin() {
   await addDoc(collection(db, 'clients', clientId, 'history'), { type:'jackpot', label:`🎰 JACKPOT : ${prize.name}`, pseudo:clientData?.pseudo, timestamp:serverTimestamp() });
   document.getElementById('winIcon').textContent      = prize.icon || '🎰';
   document.getElementById('winPrizeName').textContent = prize.name;
-  // Attend 2s avant d'afficher le popup pour laisser l'animation
+  isSpinning = false; // Libéré avant le délai pour que closeWin fonctionne
+  // Attend 2s pour laisser l'animation tourner avant d'afficher le popup
   setTimeout(() => {
     document.getElementById('winOv').classList.add('show');
     startCoinExplosion();
-    isSpinning = false;
-    updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
+    updateSpinsUI();
   }, 2000);
 }
 
@@ -1293,6 +1293,8 @@ function stopCoinExplosion() {
 window.closeWin = () => {
   document.getElementById('winOv').classList.remove('show');
   stopCoinExplosion();
+  isSpinning = false;
+  updateSpinsUI();
 };
 
 // ── MINI-JEU : JET D'EAU ──────────────────────────────────────
@@ -1675,7 +1677,7 @@ window.setStars = function(n) {
 onSnapshot(query(collection(db, 'avis'), orderBy('createdAt', 'desc'), limit(20)), snap => {
   const list = document.getElementById('avisList');
   if (!list) return;
-  const approved = snap.docs.map(d => ({...d.data(), _id: d.id})).filter(a => a.approved);
+  const approved = snap.docs.map(d => ({...d.data(), _id: d.id})).filter(a => a.approved === true);
   if (!approved.length) {
     list.innerHTML = '<div class="empty-c"><div class="empty-i">💬</div>Aucun avis pour le moment.</div>';
     return;
