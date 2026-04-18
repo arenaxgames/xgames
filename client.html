@@ -421,12 +421,12 @@ body{padding-bottom:0}
     <!-- JET D'EAU -->
     <div id="gameJet">
       <div id="game-wrap" style="position:relative;width:100%;max-width:400px;margin:0 auto">
-        <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none;background:#000814"></canvas>
-        <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px">
+        <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none;background:#000814;min-height:280px"></canvas>
+        <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px;min-height:280px">
           <div style="font-size:3rem">💧</div>
           <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900;letter-spacing:.1em">JET D'EAU</div>
           <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Déplace le jet et détruis les balles jaunes !</div>
-          <button id="startGameBtn" onclick="startJetGame()" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
+          <button onclick="startJetGame()" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:14px 30px;cursor:pointer;margin-top:4px;z-index:10;position:relative">▶ JOUER</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
@@ -693,14 +693,152 @@ function closeWin() {
   updateSpinsUI();
 }
 
+// ── JET D'EAU — entièrement en sync comme le serpent ──
+var jetCanvas, jetCtx, jetRunning = false, jetAnimId;
+var jetW, jetH, jetScore = 0, jetHigh = 0, jetLives = 3, jetLevel = 1;
+var jetPlayer, jetBullets, jetBalls, jetTouchX = null;
+var jetKeys = {};
+
 function startJetGame() {
-  if (window._startJetGame) {
-    window._startJetGame();
-  } else {
-    // Réessaie après chargement module
-    setTimeout(function() { if (window._startJetGame) window._startJetGame(); }, 300);
+  jetCanvas = document.getElementById('gameCanvas');
+  jetCtx = jetCanvas.getContext('2d');
+  jetW = Math.min(window.innerWidth - 28, 400);
+  jetH = Math.min(jetW * 1.4, window.innerHeight * 0.55);
+  jetCanvas.width = jetW; jetCanvas.height = jetH;
+  document.getElementById('gameOverlay').style.display = 'none';
+  jetScore = 0; jetLives = 3; jetLevel = 1;
+  jetPlayer = { x: jetW/2, y: jetH-60, w: 44, h: 28, speed: 6 };
+  jetBullets = []; jetBalls = [];
+  jetSpawnBalls();
+  jetRunning = true;
+  cancelAnimationFrame(jetAnimId);
+  jetLoop();
+}
+
+function jetSpawnBalls() {
+  var count = 4 + jetLevel * 2;
+  for (var i = 0; i < count; i++) {
+    jetBalls.push({
+      x: 30 + (i%8) * ((jetW-60)/8),
+      y: 40 + Math.floor(i/8) * 48,
+      r: 14,
+      vx: (Math.random()<0.5?1:-1) * (0.8 + jetLevel*0.3),
+      vy: 0.4 + Math.random()*0.4
+    });
   }
 }
+
+function jetLoop() {
+  if (!jetRunning) return;
+  jetAnimId = requestAnimationFrame(jetLoop);
+  jetUpdate();
+  jetDraw();
+}
+
+function jetUpdate() {
+  if (jetKeys['ArrowLeft']||jetKeys['a']) jetPlayer.x -= jetPlayer.speed;
+  if (jetKeys['ArrowRight']||jetKeys['d']) jetPlayer.x += jetPlayer.speed;
+  jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x));
+  jetBullets.forEach(function(b){ b.y -= 10; });
+  jetBullets = jetBullets.filter(function(b){ return b.y > 0; });
+  jetBalls.forEach(function(b){
+    b.x += b.vx; b.y += b.vy;
+    if (b.x<b.r||b.x>jetW-b.r) b.vx=-b.vx;
+    if (b.y<b.r) b.vy=-b.vy;
+    if (b.y>jetH-b.r) { jetLives--; b.y=b.r; b.vy=-Math.abs(b.vy); if(jetLives<=0){jetGameOver();return;} }
+  });
+  // Collisions balles/bullets
+  jetBullets = jetBullets.filter(function(bul){
+    var hit = false;
+    jetBalls = jetBalls.filter(function(ball){
+      if (Math.hypot(bul.x-ball.x, bul.y-ball.y) < ball.r+6) { hit=true; jetScore+=10; return false; }
+      return true;
+    });
+    return !hit;
+  });
+  if (!jetBalls.length) { jetLevel++; jetSpawnBalls(); }
+  document.getElementById('gameScore').textContent = jetScore;
+  document.getElementById('gameLives').textContent = '❤️'.repeat(Math.max(0,jetLives));
+  document.getElementById('gameHigh').textContent = Math.max(jetHigh, jetScore);
+}
+
+function jetDraw() {
+  jetCtx.fillStyle='#000814'; jetCtx.fillRect(0,0,jetW,jetH);
+  // Grille
+  jetCtx.strokeStyle='rgba(0,245,255,.04)'; jetCtx.lineWidth=1;
+  for(var x=0;x<jetW;x+=30){jetCtx.beginPath();jetCtx.moveTo(x,0);jetCtx.lineTo(x,jetH);jetCtx.stroke();}
+  for(var y=0;y<jetH;y+=30){jetCtx.beginPath();jetCtx.moveTo(0,y);jetCtx.lineTo(jetW,y);jetCtx.stroke();}
+  // Balles
+  jetBalls.forEach(function(b){
+    jetCtx.beginPath(); jetCtx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    jetCtx.fillStyle='#ffd60a'; jetCtx.shadowColor='#ffd60a'; jetCtx.shadowBlur=12;
+    jetCtx.fill(); jetCtx.shadowBlur=0;
+  });
+  // Bullets
+  jetBullets.forEach(function(b){
+    jetCtx.fillStyle='#00f5ff'; jetCtx.shadowColor='#00f5ff'; jetCtx.shadowBlur=8;
+    jetCtx.fillRect(b.x-3,b.y-8,6,16); jetCtx.shadowBlur=0;
+  });
+  // Joueur
+  var grd = jetCtx.createLinearGradient(jetPlayer.x-jetPlayer.w/2,0,jetPlayer.x+jetPlayer.w/2,0);
+  grd.addColorStop(0,'#1a3a5c'); grd.addColorStop(0.5,'#2a6a9c'); grd.addColorStop(1,'#1a3a5c');
+  jetCtx.fillStyle=grd;
+  jetCtx.beginPath(); jetCtx.roundRect(jetPlayer.x-jetPlayer.w/2,jetPlayer.y-jetPlayer.h/2,jetPlayer.w,jetPlayer.h,8); jetCtx.fill();
+  // Tuyau
+  jetCtx.fillStyle='#00f5ff'; jetCtx.shadowColor='#00f5ff'; jetCtx.shadowBlur=6;
+  jetCtx.fillRect(jetPlayer.x-4, jetPlayer.y-jetPlayer.h/2-14, 8, 15); jetCtx.shadowBlur=0;
+  // Filigrane X-GAMES
+  jetCtx.save(); jetCtx.globalAlpha=0.04;
+  jetCtx.font='bold '+Math.floor(jetW/6)+'px Orbitron,monospace';
+  jetCtx.fillStyle='#00f5ff'; jetCtx.textAlign='center'; jetCtx.textBaseline='middle';
+  jetCtx.fillText('X-GAMES',jetW/2,jetH/2); jetCtx.restore();
+}
+
+function jetShoot() {
+  if (!jetRunning) return;
+  jetBullets.push({x:jetPlayer.x, y:jetPlayer.y-jetPlayer.h/2});
+}
+
+function jetGameOver() {
+  jetRunning = false; cancelAnimationFrame(jetAnimId);
+  if (jetScore>jetHigh) {
+    jetHigh=jetScore;
+    if (window._db && window._clientId) {
+      try{ window._updateDoc(window._doc(window._db,'clients',window._clientId),{'scores.jet':jetHigh}); }catch(e){}
+    }
+  }
+  var ov = document.getElementById('gameOverlay');
+  ov.style.display='flex';
+  ov.innerHTML='<div style="font-size:2rem">💥</div>'
+    +'<div style="font-family:Orbitron,monospace;font-size:.9rem;color:#ff006e;font-weight:900">GAME OVER</div>'
+    +'<div style="font-family:Orbitron,monospace;font-size:.8rem;color:#00f5ff">Score : '+jetScore+'</div>'
+    +(jetScore>=jetHigh&&jetScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
+    +'<button onclick="startJetGame()" style="background:linear-gradient(135deg,#00f5ff,#4361ee);border:none;border-radius:20px;color:#000;font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>';
+}
+
+// Contrôles jet d'eau
+document.addEventListener('keydown', function(e){ jetKeys[e.key]=true; if(e.key===' ')jetShoot(); });
+document.addEventListener('keyup',   function(e){ jetKeys[e.key]=false; });
+
+// Touch jet d'eau
+var _jtx=0;
+document.addEventListener('touchstart', function(e){
+  if(!jetRunning) return;
+  var cv=document.getElementById('gameCanvas');
+  if(cv && e.target===cv){ _jtx=e.touches[0].clientX; }
+},{passive:true});
+document.addEventListener('touchmove', function(e){
+  if(!jetRunning) return;
+  var cv=document.getElementById('gameCanvas');
+  if(cv && e.target===cv){
+    var dx=e.touches[0].clientX-_jtx; _jtx=e.touches[0].clientX;
+    jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x+dx));
+    e.preventDefault();
+  }
+},{passive:false});
+document.addEventListener('touchend', function(e){
+  if(jetRunning) jetShoot();
+},{passive:true});
 
 // Swipe tactile serpent
 var _tx=0, _ty=0;
@@ -1335,371 +1473,6 @@ function stopCoinExplosion() {
 }
 
 window._stopCoinExplosion = stopCoinExplosion;
-
-// ── MINI-JEU : JET D'EAU ──────────────────────────────────────
-(function() {
-  const canvas  = document.getElementById('gameCanvas');
-  const ctx     = canvas.getContext('2d');
-  const overlay = document.getElementById('gameOverlay');
-  const startBtn = document.getElementById('startGameBtn');
-
-  let W, H, animId, gameRunning = false;
-  let player, bullets, balls, particles, coins, score, lives, highScore = 0, level;
-  let touchX = null;
-
-  function resize() {
-    W = Math.min(window.innerWidth - 28, 400);
-    H = Math.min(W * 1.4, window.innerHeight * 0.55);
-    canvas.width  = W;
-    canvas.height = H;
-  }
-
-  function initGame() {
-    resize();
-    score  = 0;
-    lives  = 3;
-    level  = 1;
-    player = { x: W/2, y: H - 60, w: 44, h: 28, speed: 5 };
-    bullets   = [];
-    balls     = [];
-    particles = [];
-    coins     = [];
-    spawnBalls();
-    updateHUD();
-  }
-
-  function spawnBalls() {
-    const count = 4 + level * 2;
-    for (let i = 0; i < count; i++) {
-      balls.push({
-        x: 30 + (i % 8) * ((W - 60) / 8),
-        y: 40 + Math.floor(i / 8) * 48,
-        r: 14,
-        vx: (Math.random() < 0.5 ? 1 : -1) * (0.8 + level * 0.3),
-        vy: 0.4 + Math.random() * 0.4,
-        hue: 45 + Math.random() * 20, // jaune/or
-        hp: 1
-      });
-    }
-  }
-
-  // Son
-  let audioCtx = null;
-  function getAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return audioCtx;
-  }
-  function beep(freq, dur) {
-    try {
-      const ac = getAudioCtx();
-      const o = ac.createOscillator(), g = ac.createGain();
-      o.connect(g); g.connect(ac.destination);
-      o.frequency.value = freq; o.type = 'square';
-      g.gain.setValueAtTime(0.15, ac.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-      o.start(); o.stop(ac.currentTime + dur);
-    } catch(e) {}
-  }
-
-  function shoot() {
-    if (!gameRunning) return;
-    bullets.push({ x: player.x, y: player.y - player.h/2, w: 6, h: 18, vy: -10 });
-    beep(880, 0.08);
-  }
-
-  // Particules explosion
-  function explode(x, y, color) {
-    for (let i = 0; i < 16; i++) {
-      const a = (Math.PI * 2 / 16) * i;
-      const sp = 2 + Math.random() * 4;
-      particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, r: 3+Math.random()*4, life: 1, color });
-    }
-    // Pièces
-    for (let i = 0; i < 4; i++) {
-      coins.push({ x, y, vx: (Math.random()-0.5)*5, vy: -3-Math.random()*4, gy: 0.25, life: 1, r: 7 });
-    }
-    beep(220, 0.2);
-  }
-
-  // Score flottant
-  let floats = [];
-  function floatScore(x, y, val) {
-    floats.push({ x, y, val: '+' + val + ' XP', life: 1, vy: -1.5 });
-  }
-
-  function updateHUD() {
-    document.getElementById('gameScore').textContent = score;
-    document.getElementById('gameHigh').textContent  = highScore;
-    document.getElementById('gameLives').textContent = '❤️'.repeat(Math.max(0,lives));
-  }
-
-  function gameOver(win) {
-    gameRunning = false;
-    cancelAnimationFrame(animId);
-    const isNewRecord = score > highScore;
-    if (isNewRecord) {
-      highScore = score;
-      updateDoc(doc(db, 'clients', clientId), { 'scores.jet': highScore }).catch(()=>{});
-    }
-    updateHUD();
-    overlay.style.display = 'flex';
-    overlay.innerHTML = `
-      <div style="font-size:2rem">${win ? '🏆' : '💥'}</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.95rem;color:${win?'var(--gold)':'var(--red)'};font-weight:900">${win ? 'BRAVO !' : 'GAME OVER'}</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--cyan)">Score : ${score}</div>
-      ${isNewRecord && score > 0 ? '<div style="font-size:.7rem;color:var(--gold)">🏅 Nouveau record !</div>' : ''}
-      <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:\'Orbitron\',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>`;
-    document.getElementById('startGameBtn').addEventListener('click', startGame);
-  }
-
-  function startGame() {
-    overlay.style.display = 'none';
-    initGame();
-    gameRunning = true;
-    loop();
-  }
-
-  // Contrôles tactile
-  canvas.addEventListener('touchstart', e => { e.preventDefault(); touchX = e.touches[0].clientX; }, { passive:false });
-  canvas.addEventListener('touchmove',  e => { e.preventDefault(); touchX = e.touches[0].clientX; }, { passive:false });
-  canvas.addEventListener('touchend',   e => { shoot(); touchX = null; });
-  canvas.addEventListener('click', e => { if(gameRunning) shoot(); });
-
-  // Clavier
-  const keys = {};
-  window.addEventListener('keydown', e => { keys[e.key] = true; if(e.key===' ') shoot(); });
-  window.addEventListener('keyup',   e => { keys[e.key] = false; });
-
-  function loop() {
-    if (!gameRunning) return;
-    animId = requestAnimationFrame(loop);
-    update();
-    draw();
-  }
-
-  function update() {
-    // Mouvement joueur
-    if (touchX !== null) {
-      const rect = canvas.getBoundingClientRect();
-      const tx = (touchX - rect.left) * (W / rect.width);
-      player.x += (tx - player.x) * 0.15;
-    }
-    if (keys['ArrowLeft']  || keys['a']) player.x -= player.speed;
-    if (keys['ArrowRight'] || keys['d']) player.x += player.speed;
-    player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x));
-
-    // Balles
-    balls.forEach(b => {
-      b.x += b.vx; b.y += b.vy;
-      if (b.x < b.r || b.x > W - b.r) b.vx *= -1;
-      if (b.y < b.r) b.vy *= -1;
-      // Balle touche le bas → perd une vie
-      if (b.y > H + b.r) {
-        b.y = b.r * 2;
-        b.x = 30 + Math.random() * (W - 60);
-        lives--;
-        beep(150, 0.3);
-        updateHUD();
-        if (lives <= 0) { gameOver(false); return; }
-      }
-      // Collision joueur
-      const dx = b.x - player.x, dy = b.y - player.y;
-      if (Math.sqrt(dx*dx+dy*dy) < b.r + 20) {
-        explode(b.x, b.y, `hsl(${b.hue},100%,60%)`);
-        b.y = b.r; b.x = 30 + Math.random()*(W-60);
-        lives--;
-        beep(150, 0.3);
-        updateHUD();
-        if (lives <= 0) { gameOver(false); return; }
-      }
-    });
-
-    // Projectiles
-    bullets = bullets.filter(bul => bul.y > -20);
-    bullets.forEach(bul => {
-      bul.y += bul.vy;
-      // Collision balle
-      balls.forEach((b, bi) => {
-        const dx = bul.x - b.x, dy = bul.y - b.y;
-        if (Math.sqrt(dx*dx+dy*dy) < b.r + 4) {
-          explode(b.x, b.y, `hsl(${b.hue},100%,60%)`);
-          floatScore(b.x, b.y, 10);
-          score += 10;
-          balls.splice(bi, 1);
-          bul.y = -100;
-          updateHUD();
-        }
-      });
-    });
-
-    // Particules
-    particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.1; p.life-=0.04; });
-    particles = particles.filter(p => p.life > 0);
-
-    // Pièces
-    coins.forEach(c => { c.x+=c.vx; c.y+=c.vy; c.vy+=c.gy; c.life-=0.02; });
-    coins = coins.filter(c => c.life > 0 && c.y < H + 20);
-
-    // Scores flottants
-    floats.forEach(f => { f.y+=f.vy; f.life-=0.025; });
-    floats = floats.filter(f => f.life > 0);
-
-    // Niveau suivant
-    if (balls.length === 0) {
-      level++;
-      score += 50;
-      beep(660, 0.3);
-      updateHUD();
-      spawnBalls();
-    }
-  }
-
-  function draw() {
-    // Fond
-    ctx.fillStyle = '#000814';
-    ctx.fillRect(0, 0, W, H);
-
-    // Fond étoilé
-    ctx.fillStyle = 'rgba(255,255,255,.5)';
-    for (let i = 0; i < 40; i++) {
-      const sx = ((i * 137 + 23) % W);
-      const sy = ((i * 97  + 11) % H);
-      ctx.fillRect(sx, sy, 1, 1);
-    }
-
-    // Texte X-GAMES fond
-    ctx.save();
-    ctx.globalAlpha = 0.06;
-    ctx.font = `bold ${W*0.18}px 'Orbitron', monospace`;
-    ctx.fillStyle = '#00f5ff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('X-GAMES', W/2, H/2);
-    ctx.restore();
-
-    // Pièces
-    coins.forEach(c => {
-      ctx.save();
-      ctx.globalAlpha = c.life;
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
-      ctx.fillStyle = '#ffd60a';
-      ctx.fill();
-      ctx.fillStyle = 'rgba(0,0,0,.4)';
-      ctx.font = `bold ${c.r}px Arial`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('€', c.x, c.y);
-      ctx.restore();
-    });
-
-    // Balles jaunes
-    balls.forEach(b => {
-      ctx.save();
-      const grd = ctx.createRadialGradient(b.x-3, b.y-3, 2, b.x, b.y, b.r);
-      grd.addColorStop(0, `hsl(${b.hue},100%,80%)`);
-      grd.addColorStop(1, `hsl(${b.hue},100%,45%)`);
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-      ctx.fillStyle = grd;
-      ctx.shadowColor = `hsl(${b.hue},100%,60%)`;
-      ctx.shadowBlur  = 10;
-      ctx.fill();
-      ctx.restore();
-    });
-
-    // Projectiles jet d'eau
-    bullets.forEach(bul => {
-      const grd = ctx.createLinearGradient(bul.x, bul.y, bul.x, bul.y + bul.h);
-      grd.addColorStop(0, 'rgba(0,245,255,0)');
-      grd.addColorStop(0.3, 'rgba(100,220,255,.9)');
-      grd.addColorStop(1, 'rgba(0,200,255,.4)');
-      ctx.beginPath();
-      ctx.roundRect(bul.x - bul.w/2, bul.y, bul.w, bul.h, 4);
-      ctx.fillStyle = grd;
-      ctx.shadowColor = '#00f5ff';
-      ctx.shadowBlur  = 8;
-      ctx.fill();
-      ctx.shadowBlur  = 0;
-    });
-
-    // Joueur — jet d'eau (tuyau)
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    // Base
-    const pg = ctx.createLinearGradient(-player.w/2, 0, player.w/2, 0);
-    pg.addColorStop(0, '#1a3a5c');
-    pg.addColorStop(0.5, '#2a5a8c');
-    pg.addColorStop(1, '#1a3a5c');
-    ctx.fillStyle = pg;
-    ctx.beginPath();
-    ctx.roundRect(-player.w/2, -player.h/2, player.w, player.h, 8);
-    ctx.fill();
-    // Tuyau
-    ctx.fillStyle = '#4a9aba';
-    ctx.beginPath();
-    ctx.roundRect(-6, -player.h/2 - 14, 12, 16, 4);
-    ctx.fill();
-    // Buse
-    ctx.fillStyle = '#00f5ff';
-    ctx.beginPath();
-    ctx.arc(0, -player.h/2 - 14, 5, 0, Math.PI*2);
-    ctx.fill();
-    ctx.shadowColor = '#00f5ff';
-    ctx.shadowBlur  = 10;
-    ctx.fill();
-    // Reflet
-    ctx.fillStyle = 'rgba(255,255,255,.2)';
-    ctx.beginPath();
-    ctx.roundRect(-player.w/2+4, -player.h/2+4, player.w/3, player.h/3, 4);
-    ctx.fill();
-    ctx.restore();
-
-    // Particules
-    particles.forEach(p => {
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI*2);
-      ctx.fillStyle = p.color;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur  = 6;
-      ctx.fill();
-      ctx.restore();
-    });
-
-    // Scores flottants
-    floats.forEach(f => {
-      ctx.save();
-      ctx.globalAlpha = f.life;
-      ctx.font = `bold 13px 'Orbitron', monospace`;
-      ctx.fillStyle = '#ffd60a';
-      ctx.textAlign = 'center';
-      ctx.shadowColor = '#ffd60a';
-      ctx.shadowBlur  = 8;
-      ctx.fillText(f.val, f.x, f.y);
-      ctx.restore();
-    });
-
-    // Niveau
-    ctx.save();
-    ctx.globalAlpha = 0.5;
-    ctx.font = `bold 11px 'Orbitron', monospace`;
-    ctx.fillStyle = '#00f5ff';
-    ctx.textAlign = 'right';
-    ctx.fillText('LVL ' + level, W - 8, 16);
-    ctx.restore();
-  }
-
-  window._resizeJet = resize;
-  window._startJetGame = startGame;
-  startBtn.addEventListener('click', startGame);
-  resize();
-  window.addEventListener('resize', () => { if (!gameRunning) resize(); });
-
-  // Dessine l'écran d'attente
-  draw();
-})();
 
 // ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
 
