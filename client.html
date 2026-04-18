@@ -266,7 +266,7 @@ body{padding-bottom:0}
     <div class="win-prize-icon" id="winIcon">🎰</div>
     <div class="win-prize-name" id="winPrizeName">—</div>
     <div class="win-note">🎫 Montre le coupon au stand</div>
-    <button class="win-btn" onclick="window.closeWin()">🏆 RÉCUPÉRER MON LOT</button>
+    <button class="win-btn" onclick="closeWin()">🏆 RÉCUPÉRER MON LOT</button>
   </div>
 </div>
 
@@ -426,7 +426,7 @@ body{padding-bottom:0}
           <div style="font-size:3rem">💧</div>
           <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900;letter-spacing:.1em">JET D'EAU</div>
           <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Déplace le jet et détruis les balles jaunes !</div>
-          <button id="startGameBtn" onclick="if(window._startJetGame)window._startJetGame()" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
+          <button id="startGameBtn" onclick="startJetGame()" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
@@ -643,14 +643,21 @@ function drawSnake() {
 
 function snakeGameOver() {
   clearInterval(snakeLoop); sRunning=false;
-  snakeBeep(200, 0.4, 'sawtooth'); // Son mort
-  if (snakeScore>snakeHigh){snakeHigh=snakeScore;document.getElementById('snakeHigh').textContent=snakeHigh;}
+  snakeBeep(200, 0.4, 'sawtooth');
+  var isNewRecord = snakeScore > snakeHigh;
+  if (isNewRecord) {
+    snakeHigh = snakeScore;
+    document.getElementById('snakeHigh').textContent = snakeHigh;
+    if (window._db && window._clientId) {
+      try { window._updateDoc(window._doc(window._db,'clients',window._clientId),{'scores.snake':snakeHigh}); } catch(e){}
+    }
+  }
   var ov = document.getElementById('snakeOverlay');
   ov.style.display='flex';
   ov.innerHTML='<div style="font-size:2rem">💀</div>'
     +'<div style="font-family:Orbitron,monospace;font-size:.9rem;color:#ff006e;font-weight:900">GAME OVER</div>'
     +'<div style="font-family:Orbitron,monospace;font-size:.8rem;color:#06d6a0">Score : '+snakeScore+'</div>'
-    +(snakeScore>=snakeHigh&&snakeScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
+    +(isNewRecord&&snakeScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
     +'<button onclick="startSnakeGame()" style="background:linear-gradient(135deg,#06d6a0,#4361ee);border:none;border-radius:20px;color:#000;font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>';
 }
 
@@ -658,6 +665,41 @@ function snakeDir(d) {
   if (!sRunning) return;
   var m={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
   var nd=m[d]; if(nd.x!==-sDir.x||nd.y!==-sDir.y) sNextDir=nd;
+}
+
+// ── JACKPOT UI — en sync pour être disponible immédiatement ──
+var isSpinning = false;
+var availableSpins = 0;
+
+function updateSpinsUI() {
+  var spinsDiv = document.getElementById('spinsAvailable');
+  var slotBtns = document.getElementById('slotBtns');
+  var countEl  = document.getElementById('spinsCount');
+  if (!spinsDiv || !slotBtns) return;
+  if (availableSpins > 0 && !isSpinning) {
+    spinsDiv.style.display = 'block';
+    slotBtns.style.display = 'none';
+    if (countEl) countEl.textContent = availableSpins;
+  } else if (!isSpinning) {
+    spinsDiv.style.display = 'none';
+    slotBtns.style.display = 'flex';
+  }
+}
+
+function closeWin() {
+  document.getElementById('winOv').classList.remove('show');
+  if (window._stopCoinExplosion) window._stopCoinExplosion();
+  isSpinning = false;
+  updateSpinsUI();
+}
+
+function startJetGame() {
+  if (window._startJetGame) {
+    window._startJetGame();
+  } else {
+    // Réessaie après chargement module
+    setTimeout(function() { if (window._startJetGame) window._startJetGame(); }, 300);
+  }
 }
 
 // Swipe tactile serpent
@@ -674,7 +716,7 @@ document.addEventListener('touchend', function(e){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, query, orderBy, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, query, orderBy, where, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
@@ -689,6 +731,12 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const params   = new URLSearchParams(window.location.search);
 const clientId = params.get('id');
+
+// Expose pour les scripts sync
+window._db = db;
+window._clientId = clientId;
+window._doc = doc;
+window._updateDoc = updateDoc;
 
 // ── AVIS — défini immédiatement pour être disponible dès le chargement ──
 window._submitAvisModule = async function() {
@@ -741,9 +789,7 @@ if (!clientId) {
 let clientData  = null;
 let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratuite',icon:'🎯'}] }, sumupLink:'', slotPrice:'2€', cashEnabled:false };
 let prevXP      = null;
-let isSpinning  = false;
 let lastSpinTime = 0;
-let availableSpins = 0; // Lancers jackpot disponibles
 const SPIN_COOLDOWN = 90000;
 
 // Coupon state
@@ -812,6 +858,16 @@ if (clientId) {
     }
     const data = snap.data();
     clientData = data;
+    // Charge les records des mini-jeux
+    if (data.scores) {
+      if (data.scores.jet > 0) {
+        document.getElementById('gameHigh').textContent = data.scores.jet;
+      }
+      if (data.scores.snake > 0) {
+        snakeHigh = data.scores.snake;
+        document.getElementById('snakeHigh').textContent = snakeHigh;
+      }
+    }
     // #main déjà visible
     if (prevXP !== null && data.xp > prevXP) {
       const t = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp);
@@ -864,20 +920,6 @@ if (clientId) {
       updateSpinsUI();
     }
   });
-}
-
-function updateSpinsUI() {
-  const spinsDiv = document.getElementById('spinsAvailable');
-  const slotBtns = document.getElementById('slotBtns');
-  const countEl  = document.getElementById('spinsCount');
-  if (availableSpins > 0 && !isSpinning) {
-    spinsDiv.style.display = 'block';
-    slotBtns.style.display = 'none';
-    countEl.textContent = availableSpins;
-  } else if (!isSpinning) {
-    spinsDiv.style.display = 'none';
-    slotBtns.style.display = 'flex';
-  }
 }
 
 window.lancerJackpot = function() {
@@ -1290,12 +1332,7 @@ function stopCoinExplosion() {
   if (coinCtx) coinCtx.clearRect(0, 0, coinCanvas.width, coinCanvas.height);
 }
 
-window.closeWin = () => {
-  document.getElementById('winOv').classList.remove('show');
-  stopCoinExplosion();
-  isSpinning = false;
-  updateSpinsUI();
-};
+window._stopCoinExplosion = stopCoinExplosion;
 
 // ── MINI-JEU : JET D'EAU ──────────────────────────────────────
 (function() {
@@ -1309,11 +1346,16 @@ window.closeWin = () => {
   let touchX = null;
 
   function resize() {
+    // Force le tab-jeu visible pour mesurer
+    const tabJeu = document.getElementById('tab-jeu');
+    const wasHidden = !tabJeu.classList.contains('active');
+    if (wasHidden) { tabJeu.style.visibility = 'hidden'; tabJeu.style.display = 'flex'; }
     const wrap = document.getElementById('game-wrap');
-    W = wrap.offsetWidth || document.getElementById('tab-jeu').offsetWidth || 360;
+    W = wrap.offsetWidth || window.innerWidth - 28;
     H = Math.min(W * 1.4, window.innerHeight * 0.55);
     canvas.width  = W;
     canvas.height = H;
+    if (wasHidden) { tabJeu.style.display = ''; tabJeu.style.visibility = ''; }
   }
 
   function initGame() {
@@ -1399,14 +1441,18 @@ window.closeWin = () => {
   function gameOver(win) {
     gameRunning = false;
     cancelAnimationFrame(animId);
-    if (score > highScore) highScore = score;
+    const isNewRecord = score > highScore;
+    if (isNewRecord) {
+      highScore = score;
+      updateDoc(doc(db, 'clients', clientId), { 'scores.jet': highScore }).catch(()=>{});
+    }
     updateHUD();
     overlay.style.display = 'flex';
     overlay.innerHTML = `
       <div style="font-size:2rem">${win ? '🏆' : '💥'}</div>
       <div style="font-family:'Orbitron',monospace;font-size:.95rem;color:${win?'var(--gold)':'var(--red)'};font-weight:900">${win ? 'BRAVO !' : 'GAME OVER'}</div>
       <div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--cyan)">Score : ${score}</div>
-      ${score >= highScore && score > 0 ? '<div style="font-size:.7rem;color:var(--gold)">🏅 Nouveau record !</div>' : ''}
+      ${isNewRecord && score > 0 ? '<div style="font-size:.7rem;color:var(--gold)">🏅 Nouveau record !</div>' : ''}
       <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:\'Orbitron\',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>`;
     document.getElementById('startGameBtn').addEventListener('click', startGame);
   }
@@ -1673,16 +1719,16 @@ window.setStars = function(n) {
   });
 };
 
-// Charge les avis approuvés
-onSnapshot(query(collection(db, 'avis'), orderBy('createdAt', 'desc'), limit(20)), snap => {
+// Charge les avis approuvés uniquement
+onSnapshot(query(collection(db, 'avis'), where('approved','==',true), limit(20)), snap => {
   const list = document.getElementById('avisList');
   if (!list) return;
-  const approved = snap.docs.map(d => ({...d.data(), _id: d.id})).filter(a => a.approved === true);
-  if (!approved.length) {
+  const avis = snap.docs.map(d => ({...d.data(), _id: d.id}));
+  if (!avis.length) {
     list.innerHTML = '<div class="empty-c"><div class="empty-i">💬</div>Aucun avis pour le moment.</div>';
     return;
   }
-  list.innerHTML = approved.map(a => `
+  list.innerHTML = avis.map(a => `
     <div style="background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <div style="font-size:1.2rem">${a.avatar||'🎮'}</div>
