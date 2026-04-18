@@ -507,10 +507,22 @@ function selectGame(name) {
   bSnake.style.color      = name==='snake' ? '#000' : '#06d6a0';
   bJet.style.border   = name==='jet'   ? 'none' : '1px solid rgba(0,245,255,.2)';
   bSnake.style.border = name==='snake' ? 'none' : '1px solid rgba(6,214,160,.2)';
+  // Force resize quand on affiche un jeu
+  if (name === 'snake' && window._initSnake) setTimeout(window._initSnake, 50);
+  if (name === 'jet'   && window._resizeJet) setTimeout(window._resizeJet, 50);
 }
 
-function snakeDir(d) {
-  if (window._snakeDir) window._snakeDir(d);
+function snakeDir(d)    { if (window._snakeDir)        window._snakeDir(d); }
+function setStars(n)    { if (window.setStars)          window.setStars(n); else _setStars(n); }
+function submitAvis()   { if (window.submitAvis)        window.submitAvis(); }
+
+// Fallback setStars si module pas encore chargé
+function _setStars(n) {
+  window._pendingStars = n;
+  document.querySelectorAll('.star-btn').forEach(s => {
+    s.style.opacity   = parseInt(s.dataset.v) <= n ? '1' : '0.3';
+    s.style.transform = parseInt(s.dataset.v) <= n ? 'scale(1.1)' : 'scale(1)';
+  });
 }
 </script>
 
@@ -1454,6 +1466,7 @@ window.closeWin = () => {
     ctx.restore();
   }
 
+  window._resizeJet = resize;
   window._startJetGame = startGame;
   startBtn.addEventListener('click', startGame);
   resize();
@@ -1470,15 +1483,17 @@ let selectedStars = 0;
 
 window.setStars = function(n) {
   selectedStars = n;
+  window._pendingStars = n;
   document.querySelectorAll('.star-btn').forEach(s => {
-    s.style.opacity = parseInt(s.dataset.v) <= n ? '1' : '0.3';
+    s.style.opacity   = parseInt(s.dataset.v) <= n ? '1' : '0.3';
     s.style.transform = parseInt(s.dataset.v) <= n ? 'scale(1.1)' : 'scale(1)';
   });
 };
 
 window.submitAvis = async function() {
   if (!clientData) return;
-  if (selectedStars === 0) {
+  const stars = selectedStars || window._pendingStars || 0;
+  if (stars === 0) {
     document.getElementById('avisFb').innerHTML = '<span style="color:var(--red)">Sélectionne une note !</span>';
     return;
   }
@@ -1489,7 +1504,7 @@ window.submitAvis = async function() {
       clientId:  clientId,
       pseudo:    clientData.pseudo,
       avatar:    clientData.avatar || '🎮',
-      stars:     selectedStars,
+      stars:     stars,
       message:   msg,
       approved:  false,
       createdAt: serverTimestamp()
@@ -1618,6 +1633,7 @@ onSnapshot(query(collection(db, 'avis'), orderBy('createdAt', 'desc'), limit(20)
     else window._snakeDir(dy>0?'DOWN':'UP');
   },{passive:true});
   window.addEventListener('keydown',e=>{const m={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT'};if(m[e.key]){e.preventDefault();window._snakeDir(m[e.key]);}});
+  window._initSnake = initSnake;
   window._startSnakeGame = function() { initSnake(); startSnake(); };
   document.getElementById('startSnakeBtn').addEventListener('click', window._startSnakeGame);
 })();
