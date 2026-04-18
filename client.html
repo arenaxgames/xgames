@@ -387,21 +387,58 @@ body{padding-bottom:0}
 
   <!-- ONGLET : MINI-JEU -->
   <div id="tab-jeu" class="tab-content">
-    <div class="sec-t" style="margin-bottom:8px">🕹️ Jet d'eau — Détruire les balles</div>
-    <div style="font-size:.7rem;color:var(--dim);text-align:center;margin-bottom:10px">Juste pour s'amuser — XP non comptabilisé</div>
-    <div id="game-wrap" style="position:relative;width:100%;max-width:400px;margin:0 auto">
-      <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none"></canvas>
-      <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.85);border-radius:16px;gap:12px">
-        <div style="font-size:2.5rem">🕹️</div>
-        <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900">MINI-JEU</div>
-        <div style="font-size:.75rem;color:var(--dim);text-align:center;max-width:220px;line-height:1.5">Déplace ton jet d'eau et détruis les balles jaunes !</div>
-        <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer">JOUER !</button>
+    <!-- Sélecteur de jeu -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="btnGameJet" onclick="selectGame('jet')" style="flex:1;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:10px;cursor:pointer">💧 Jet d'eau</button>
+      <button id="btnGameSnake" onclick="selectGame('snake')" style="flex:1;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.2);border-radius:10px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:10px;cursor:pointer">🐍 Serpent</button>
+    </div>
+
+    <!-- JET D'EAU -->
+    <div id="gameJet">
+      <div class="sec-t" style="margin-bottom:8px">💧 Jet d'eau — Détruire les balles</div>
+      <div style="font-size:.7rem;color:var(--dim);text-align:center;margin-bottom:10px">Juste pour s'amuser — XP non comptabilisé</div>
+      <div id="game-wrap" style="position:relative;width:100%;max-width:400px;margin:0 auto">
+        <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none"></canvas>
+        <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.85);border-radius:16px;gap:12px">
+          <div style="font-size:2.5rem">💧</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900">JET D'EAU</div>
+          <div style="font-size:.75rem;color:var(--dim);text-align:center;max-width:220px;line-height:1.5">Déplace ton jet d'eau et détruis les balles jaunes !</div>
+          <button id="startGameBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer">JOUER !</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px">
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Score : <span id="gameScore" style="color:var(--cyan)">0</span></div>
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Record : <span id="gameHigh" style="color:var(--gold)">0</span></div>
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Vies : <span id="gameLives">❤️❤️❤️</span></div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px">
-      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Score : <span id="gameScore" style="color:var(--cyan)">0</span></div>
-      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Record : <span id="gameHigh" style="color:var(--gold)">0</span></div>
-      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Vies : <span id="gameLives">❤️❤️❤️</span></div>
+
+    <!-- SERPENT -->
+    <div id="gameSnake" style="display:none">
+      <div class="sec-t" style="margin-bottom:8px">🐍 Serpent</div>
+      <div style="font-size:.7rem;color:var(--dim);text-align:center;margin-bottom:10px">Mange les pommes sans te mordre !</div>
+      <div style="position:relative;width:100%;max-width:400px;margin:0 auto">
+        <canvas id="snakeCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(6,214,160,.2);display:block;background:#000814"></canvas>
+        <div id="snakeOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.85);border-radius:16px;gap:12px">
+          <div style="font-size:2.5rem">🐍</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--green);font-weight:900">SERPENT</div>
+          <div style="font-size:.75rem;color:var(--dim);text-align:center;max-width:220px;line-height:1.5">Glisse pour diriger le serpent !</div>
+          <button id="startSnakeBtn" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer">JOUER !</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px">
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Score : <span id="snakeScore" style="color:var(--green)">0</span></div>
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim)">Record : <span id="snakeHigh" style="color:var(--gold)">0</span></div>
+      </div>
+      <!-- Contrôles tactiles -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:160px;margin:12px auto 0">
+        <div></div>
+        <button onclick="snakeDir('UP')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▲</button>
+        <div></div>
+        <button onclick="snakeDir('LEFT')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">◀</button>
+        <button onclick="snakeDir('DOWN')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▼</button>
+        <button onclick="snakeDir('RIGHT')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▶</button>
+      </div>
     </div>
   </div>
 </div>
@@ -744,7 +781,7 @@ function renderCoupons(coupons) {
 }
 
 function updateSlotUI() {
-  document.getElementById('slotPriceLabel').textContent = `Partie : ${config.slotPrice} · Paiement carte`;
+  document.getElementById('slotPriceLabel').textContent = `Partie : ${config.slotPrice}`;
   document.getElementById('btnCash').style.display = config.cashEnabled ? 'flex' : 'none';
 }
 
@@ -1386,6 +1423,113 @@ window.closeWin = () => {
 
   // Dessine l'écran d'attente
   draw();
+})();
+
+// ── SÉLECTEUR DE JEU ──
+function selectGame(name) {
+  document.getElementById('gameJet').style.display   = name === 'jet'   ? 'block' : 'none';
+  document.getElementById('gameSnake').style.display = name === 'snake' ? 'block' : 'none';
+  document.getElementById('btnGameJet').style.background   = name === 'jet'   ? 'linear-gradient(135deg,var(--cyan),var(--blue))' : 'rgba(0,245,255,.1)';
+  document.getElementById('btnGameJet').style.color        = name === 'jet'   ? '#000' : 'var(--cyan)';
+  document.getElementById('btnGameSnake').style.background = name === 'snake' ? 'linear-gradient(135deg,var(--green),var(--blue))' : 'rgba(6,214,160,.1)';
+  document.getElementById('btnGameSnake').style.color      = name === 'snake' ? '#000' : 'var(--green)';
+}
+
+// ── JEU DU SERPENT ──
+(function() {
+  const CELL = 20;
+  let snakeCanvas, snakeCtx, snakeLoop;
+  let snake, dir, nextDir, food, running, snakeScore, snakeHighScore = 0;
+
+  function initSnake() {
+    snakeCanvas = document.getElementById('snakeCanvas');
+    const W = Math.min(document.getElementById('gameSnake').offsetWidth || 360, 400);
+    const cols = Math.floor(W / CELL);
+    const rows = Math.floor(W * 1.2 / CELL);
+    snakeCanvas.width  = cols * CELL;
+    snakeCanvas.height = rows * CELL;
+    snakeCtx = snakeCanvas.getContext('2d');
+  }
+
+  function startSnake() {
+    if (!snakeCanvas) initSnake();
+    const cols = Math.floor(snakeCanvas.width  / CELL);
+    const rows = Math.floor(snakeCanvas.height / CELL);
+    snake = [{ x: Math.floor(cols/2), y: Math.floor(rows/2) }];
+    dir = { x: 1, y: 0 }; nextDir = { x: 1, y: 0 };
+    snakeScore = 0; running = true;
+    document.getElementById('snakeScore').textContent = 0;
+    document.getElementById('snakeOverlay').style.display = 'none';
+    placeFood();
+    clearInterval(snakeLoop);
+    snakeLoop = setInterval(tickSnake, 150);
+  }
+
+  function placeFood() {
+    const cols = Math.floor(snakeCanvas.width  / CELL);
+    const rows = Math.floor(snakeCanvas.height / CELL);
+    do { food = { x: Math.floor(Math.random()*cols), y: Math.floor(Math.random()*rows) }; }
+    while (snake.some(s => s.x === food.x && s.y === food.y));
+  }
+
+  function tickSnake() {
+    const cols = Math.floor(snakeCanvas.width / CELL);
+    const rows = Math.floor(snakeCanvas.height / CELL);
+    dir = { ...nextDir };
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows) return gameOverSnake();
+    if (snake.some(s => s.x === head.x && s.y === head.y)) return gameOverSnake();
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+      snakeScore += 10;
+      document.getElementById('snakeScore').textContent = snakeScore;
+      placeFood();
+    } else { snake.pop(); }
+    drawSnake();
+  }
+
+  function drawSnake() {
+    const W = snakeCanvas.width, H = snakeCanvas.height;
+    snakeCtx.fillStyle = '#000814'; snakeCtx.fillRect(0,0,W,H);
+    snakeCtx.strokeStyle = 'rgba(6,214,160,.05)'; snakeCtx.lineWidth = 1;
+    for (let x=0;x<W;x+=CELL){snakeCtx.beginPath();snakeCtx.moveTo(x,0);snakeCtx.lineTo(x,H);snakeCtx.stroke();}
+    for (let y=0;y<H;y+=CELL){snakeCtx.beginPath();snakeCtx.moveTo(0,y);snakeCtx.lineTo(W,y);snakeCtx.stroke();}
+    snake.forEach((s,i) => {
+      snakeCtx.fillStyle = i===0 ? '#00ffcc' : '#06d6a0';
+      snakeCtx.shadowColor = '#06d6a0'; snakeCtx.shadowBlur = i===0?10:4;
+      snakeCtx.beginPath();
+      snakeCtx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,4);
+      snakeCtx.fill(); snakeCtx.shadowBlur=0;
+    });
+    snakeCtx.fillStyle='#f72585'; snakeCtx.shadowColor='#f72585'; snakeCtx.shadowBlur=10;
+    snakeCtx.beginPath(); snakeCtx.arc(food.x*CELL+CELL/2,food.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2); snakeCtx.fill();
+    snakeCtx.shadowBlur=0;
+  }
+
+  function gameOverSnake() {
+    clearInterval(snakeLoop); running=false;
+    if (snakeScore>snakeHighScore){snakeHighScore=snakeScore;document.getElementById('snakeHigh').textContent=snakeHighScore;}
+    const ov=document.getElementById('snakeOverlay'); ov.style.display='flex';
+    ov.innerHTML=`<div style="font-size:2rem">💀</div><div style="font-family:'Orbitron',monospace;font-size:.9rem;color:var(--red);font-weight:900">GAME OVER</div><div style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--green)">Score : ${snakeScore}</div><button id="startSnakeBtn" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>`;
+    document.getElementById('startSnakeBtn').addEventListener('click', startSnake);
+  }
+
+  window.snakeDir = function(d) {
+    if (!running) return;
+    const map={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
+    const nd=map[d]; if(nd.x!==-dir.x||nd.y!==-dir.y) nextDir=nd;
+  };
+
+  let tx0=0,ty0=0;
+  document.addEventListener('touchstart',e=>{if(!running)return;tx0=e.touches[0].clientX;ty0=e.touches[0].clientY;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!running)return;
+    const dx=e.changedTouches[0].clientX-tx0, dy=e.changedTouches[0].clientY-ty0;
+    if(Math.abs(dx)>Math.abs(dy)) snakeDir(dx>0?'RIGHT':'LEFT');
+    else snakeDir(dy>0?'DOWN':'UP');
+  },{passive:true});
+  window.addEventListener('keydown',e=>{const m={ArrowUp:'UP',ArrowDown:'DOWN',ArrowLeft:'LEFT',ArrowRight:'RIGHT'};if(m[e.key]){e.preventDefault();snakeDir(m[e.key]);}});
+  document.getElementById('startSnakeBtn').addEventListener('click',()=>{initSnake();startSnake();});
 })();
 
 if ('serviceWorker' in navigator) {
