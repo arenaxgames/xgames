@@ -465,7 +465,7 @@ body{padding-bottom:0}
 </nav>
 
 <script>
-// Navigation synchrone — disponible immédiatement sans attendre le module
+// Fonctions synchrones — disponibles immédiatement sans attendre le module
 function switchTab(name) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -474,6 +474,23 @@ function switchTab(name) {
   const btn = document.getElementById('nav-' + name);
   if (btn) btn.classList.add('active');
   window.scrollTo(0, 0);
+}
+
+function selectGame(name) {
+  document.getElementById('gameJet').style.display   = name === 'jet'   ? 'block' : 'none';
+  document.getElementById('gameSnake').style.display = name === 'snake' ? 'block' : 'none';
+  const bJet   = document.getElementById('btnGameJet');
+  const bSnake = document.getElementById('btnGameSnake');
+  bJet.style.background   = name==='jet'   ? 'linear-gradient(135deg,#00f5ff,#4361ee)' : 'rgba(0,245,255,.1)';
+  bJet.style.color        = name==='jet'   ? '#000' : '#00f5ff';
+  bSnake.style.background = name==='snake' ? 'linear-gradient(135deg,#06d6a0,#4361ee)' : 'rgba(6,214,160,.1)';
+  bSnake.style.color      = name==='snake' ? '#000' : '#06d6a0';
+  bJet.style.border   = name==='jet'   ? 'none' : '1px solid rgba(0,245,255,.2)';
+  bSnake.style.border = name==='snake' ? 'none' : '1px solid rgba(6,214,160,.2)';
+}
+
+function snakeDir(d) {
+  if (window._snakeDir) window._snakeDir(d);
 }
 </script>
 
@@ -1425,15 +1442,7 @@ window.closeWin = () => {
   draw();
 })();
 
-// ── SÉLECTEUR DE JEU ──
-function selectGame(name) {
-  document.getElementById('gameJet').style.display   = name === 'jet'   ? 'block' : 'none';
-  document.getElementById('gameSnake').style.display = name === 'snake' ? 'block' : 'none';
-  document.getElementById('btnGameJet').style.background   = name === 'jet'   ? 'linear-gradient(135deg,var(--cyan),var(--blue))' : 'rgba(0,245,255,.1)';
-  document.getElementById('btnGameJet').style.color        = name === 'jet'   ? '#000' : 'var(--cyan)';
-  document.getElementById('btnGameSnake').style.background = name === 'snake' ? 'linear-gradient(135deg,var(--green),var(--blue))' : 'rgba(6,214,160,.1)';
-  document.getElementById('btnGameSnake').style.color      = name === 'snake' ? '#000' : 'var(--green)';
-}
+// ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
 
 // ── JEU DU SERPENT ──
 (function() {
@@ -1514,7 +1523,7 @@ function selectGame(name) {
     document.getElementById('startSnakeBtn').addEventListener('click', startSnake);
   }
 
-  window.snakeDir = function(d) {
+  window._snakeDir = function(d) {
     if (!running) return;
     const map={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
     const nd=map[d]; if(nd.x!==-dir.x||nd.y!==-dir.y) nextDir=nd;
