@@ -1239,7 +1239,9 @@ function spinReels(autoWin = false) {
         reels.forEach(r => { r.textContent = sym; r.classList.add('win'); });
         handleWin();
       } else {
-        reels[0].textContent = SYMBOLS[1]; reels[1].textContent = SYMBOLS[3]; reels[2].textContent = SYMBOLS[5];
+        reels[0].textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+        reels[1].textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+        reels[2].textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
         document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
         isSpinning = false;
         updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
@@ -1346,16 +1348,10 @@ window._stopCoinExplosion = stopCoinExplosion;
   let touchX = null;
 
   function resize() {
-    // Force le tab-jeu visible pour mesurer
-    const tabJeu = document.getElementById('tab-jeu');
-    const wasHidden = !tabJeu.classList.contains('active');
-    if (wasHidden) { tabJeu.style.visibility = 'hidden'; tabJeu.style.display = 'flex'; }
-    const wrap = document.getElementById('game-wrap');
-    W = wrap.offsetWidth || window.innerWidth - 28;
+    W = Math.min(window.innerWidth - 28, 400);
     H = Math.min(W * 1.4, window.innerHeight * 0.55);
     canvas.width  = W;
     canvas.height = H;
-    if (wasHidden) { tabJeu.style.display = ''; tabJeu.style.visibility = ''; }
   }
 
   function initGame() {
@@ -1720,10 +1716,12 @@ window.setStars = function(n) {
 };
 
 // Charge les avis approuvés uniquement
-onSnapshot(query(collection(db, 'avis'), where('approved','==',true), limit(20)), snap => {
+onSnapshot(query(collection(db, 'avis'), limit(50)), snap => {
   const list = document.getElementById('avisList');
   if (!list) return;
-  const avis = snap.docs.map(d => ({...d.data(), _id: d.id}));
+  const avis = snap.docs
+    .map(d => ({...d.data(), _id: d.id}))
+    .filter(a => a.approved === true);
   if (!avis.length) {
     list.innerHTML = '<div class="empty-c"><div class="empty-i">💬</div>Aucun avis pour le moment.</div>';
     return;
