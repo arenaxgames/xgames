@@ -955,6 +955,21 @@ function renderCoupons(c) {
 // Si l'admin ouvre l'app via le QR scanné, on traite directement
 async function handleScanFromURL() {
   const p = new URLSearchParams(window.location.search);
+  window.history.replaceState({}, '', window.location.pathname);
+
+  // Ouverture directe du profil via QR identité client
+  const directClientId = p.get('clientId');
+  if (directClientId) {
+    // Switche sur l'onglet clients et ouvre le profil
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+    document.querySelector('[data-t=clients]')?.classList.add('on');
+    curTab = 'clients';
+    selClientId = directClientId;
+    renderTab('clients');
+    toast('Client trouvé via QR code');
+    return;
+  }
+
   if (p.get('scan') !== '1') return;
   const token  = p.get('token');
   const pseudo = p.get('client');

@@ -325,6 +325,15 @@ body{padding-bottom:0}
   </div>
 </div>
 
+<!-- QR IDENTITÉ -->
+<div id="myQrOv" style="position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px">
+  <div style="font-family:'Orbitron',monospace;font-size:.9rem;color:var(--cyan);font-weight:900">📱 MON QR CODE</div>
+  <div style="font-size:.72rem;color:var(--dim);text-align:center">Montre ce QR à l'opérateur pour qu'il accède à ton profil</div>
+  <div id="myQrFrame" style="background:#fff;border-radius:16px;padding:14px"></div>
+  <div id="myQrPseudo" style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--txt)"></div>
+  <button onclick="document.getElementById('myQrOv').style.display='none'" style="background:transparent;border:1px solid rgba(0,245,255,.3);border-radius:20px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.72rem;padding:10px 28px;cursor:pointer">FERMER</button>
+</div>
+
 <!-- MAIN -->
 <div id="main">
   <div class="hdr">
@@ -363,6 +372,12 @@ body{padding-bottom:0}
         </div>
       </div>
     </div>
+
+    <!-- BOUTON QR IDENTITÉ -->
+    <button onclick="showMyQR()" style="width:100%;background:linear-gradient(135deg,rgba(0,245,255,.1),rgba(67,97,238,.1));border:1px solid rgba(0,245,255,.25);border-radius:14px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+      <span style="font-size:1.2rem">📱</span> MON QR CODE — À SCANNER AU STAND
+    </button>
+
     <div>
       <!-- ENSEIGNE VEGAS -->
       <div class="vegas-sign">
@@ -1564,7 +1579,18 @@ window._stopCoinExplosion = stopCoinExplosion;
 
 // ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
 
-// ── LANCER QUOTIDIEN GRATUIT ──
+// ── QR IDENTITÉ CLIENT ──
+window.showMyQR = function() {
+  const ov = document.getElementById('myQrOv');
+  const frame = document.getElementById('myQrFrame');
+  const pseudo = document.getElementById('myQrPseudo');
+  frame.innerHTML = '';
+  // URL vers admin avec le clientId
+  const adminUrl = window.location.origin + window.location.pathname.replace('client.html','admin.html') + '?clientId=' + clientId;
+  new QRCode(frame, { text: adminUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  if (pseudo) pseudo.textContent = clientData?.pseudo || '—';
+  ov.style.display = 'flex';
+};
 function checkDailySpin(data) {
   const now = new Date();
   const todayStr = now.getUTCFullYear() + '-' + (now.getUTCMonth()+1) + '-' + now.getUTCDate();
