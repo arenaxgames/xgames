@@ -1428,7 +1428,7 @@ document.getElementById('qrModal').addEventListener('click', e => { if(e.target=
 let qrScanInterval = null;
 let qrStream = null;
 
-async function openQRScanner() {
+window.openQRScanner = async function() {
   const box = document.getElementById('qrScannerBox');
   if (!box) return;
   box.style.display = 'block';
@@ -1437,7 +1437,6 @@ async function openQRScanner() {
     qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     video.srcObject = qrStream;
     video.play();
-    // Charge jsQR dynamiquement
     if (!window.jsQR) {
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
@@ -1449,7 +1448,7 @@ async function openQRScanner() {
   } catch(e) {
     document.getElementById('qrScanStatus').textContent = '❌ Caméra non accessible. Vérifie les permissions.';
   }
-}
+};
 
 function startScanLoop() {
   const video = document.getElementById('qrVideo');
@@ -1464,32 +1463,31 @@ function startScanLoop() {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const code = jsQR(imageData.data, imageData.width, imageData.height);
     if (code && code.data) {
-      // Extrait le clientId de l'URL
       try {
         const url = new URL(code.data);
-        const clientId = url.searchParams.get('clientId');
-        if (clientId) {
-          closeQRScanner();
-          selClientId = clientId;
+        const cId = url.searchParams.get('clientId');
+        if (cId) {
+          window.closeQRScanner();
+          selClientId = cId;
           renderTab('clients');
           toast('✓ Client trouvé !');
         } else {
-          status.textContent = '⚠️ QR non reconnu — utilise le QR identité client';
+          if (status) status.textContent = '⚠️ QR non reconnu — utilise le QR identité client';
         }
       } catch(e) {
-        status.textContent = '⚠️ QR invalide';
+        if (status) status.textContent = '⚠️ QR invalide';
       }
     }
   }, 300);
 }
 
-function closeQRScanner() {
+window.closeQRScanner = function() {
   clearInterval(qrScanInterval);
   qrScanInterval = null;
   if (qrStream) { qrStream.getTracks().forEach(t => t.stop()); qrStream = null; }
   const box = document.getElementById('qrScannerBox');
   if (box) box.style.display = 'none';
-}
+};
 
 // ── TOAST ──
 function toast(msg) {
