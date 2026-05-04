@@ -1151,7 +1151,25 @@ if (clientId) {
     // #main déjà visible
     if (prevXP !== null && data.xp > prevXP) {
       const t = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp);
-      if (t) showLevelUp(t);
+      if (t) {
+        showLevelUp(t);
+        // Détecte JACKPOT dans le nom du palier → lancers automatiques
+        const tierName = (t.name||'').toUpperCase();
+        const jackpotMatch = tierName.match(/(\d+)\s*JACKPOT/);
+        if (jackpotMatch) {
+          const extraSpins = parseInt(jackpotMatch[1]) || 1;
+          availableSpins += extraSpins;
+          setDoc(doc(db, 'slots', clientId), {
+            status: 'armed', clientId, multiCount: availableSpins,
+            autoGranted: true, unlockedAt: serverTimestamp()
+          }).catch(()=>{});
+          updateSpinsUI();
+        } else {
+          // Lot physique → coupon normal
+          const coupon = { id:'cp-'+Date.now(), type:'xp', name: t.name, icon: t.icon||'🎁', used:false, earnedAt: new Date().toLocaleDateString('fr-FR') };
+          updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() }).catch(()=>{});
+        }
+      }
       const bar = document.getElementById('xpFill');
       bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
     }
