@@ -643,6 +643,7 @@ async function addXP(id) {
 
     // Si des paliers JACKPOT ont été franchis → débloque les lancers
     if (jackpotSpins > 0) {
+      console.log('JACKPOT SPINS À DÉBLOQUER:', jackpotSpins, 'pour', cl.pseudo);
       const slotSnap = await getDoc(doc(db, 'slots', id));
       const currentSpins = (slotSnap.exists() && slotSnap.data().status === 'armed') ? (slotSnap.data().multiCount || 0) : 0;
       await setDoc(doc(db, 'slots', id), {
@@ -652,6 +653,8 @@ async function addXP(id) {
         autoGranted: true, unlockedAt: serverTimestamp()
       });
       toast(`🎰 ${jackpotSpins} lancer(s) jackpot débloqué(s) pour ${cl.pseudo}`);
+    } else {
+      console.log('Aucun palier JACKPOT franchi, jackpotSpins=', jackpotSpins);
     }
 
     await addDoc(collection(db, 'clients', id, 'history'), {
