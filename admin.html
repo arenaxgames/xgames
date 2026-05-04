@@ -1212,9 +1212,10 @@ function renderConfig(c) {
   document.getElementById('saveTiersBtn').addEventListener('click', async () => {
     const valid = localTiers.filter(t => t.xp > 0 && t.name.trim()).sort((a,b) => a.xp-b.xp);
     if (!valid.length) { document.getElementById('tiersFb').className='fb err'; document.getElementById('tiersFb').textContent='Aucun palier valide (XP > 0 et nom requis)'; return; }
+    config.tiers = valid; // Met à jour config local AVANT Firebase pour éviter écrasement
     await setDoc(doc(db,'config','main'), { tiers: valid }, { merge:true });
     document.getElementById('tiersFb').className='fb ok';
-    document.getElementById('tiersFb').textContent=`✓ ${valid.length} palier(s) sauvegardé(s) — visible en temps réel chez les clients`;
+    document.getElementById('tiersFb').textContent=`✓ ${valid.length} palier(s) sauvegardé(s)`;
     toast('Paliers mis à jour');
   });
 
@@ -1284,10 +1285,9 @@ function renderConfig(c) {
   // Save jackpot
   document.getElementById('saveJackpotBtn').addEventListener('click', async () => {
     const winRateRaw = document.getElementById('winRateInp').value;
-    const winRate = winRateRaw === '' ? 20 : parseInt(winRateRaw); // Fix: 0 est valide
+    const winRate = winRateRaw === '' ? 20 : parseInt(winRateRaw);
     const sumupLink = document.getElementById('sumupInp').value.trim();
     const slotPrice = document.getElementById('priceInp').value.trim();
-    // Normalize prizes to objects
     const normalizedPrizes = localPrizes
       .map(p => typeof p === 'string' ? { name: p, icon: '🎰' } : p)
       .filter(p => p.name.trim());
@@ -1296,12 +1296,16 @@ function renderConfig(c) {
       document.getElementById('jackpotFb').textContent='Ajoute au moins 1 lot jackpot';
       return;
     }
+    // Met à jour config local AVANT Firebase pour éviter écrasement par onSnapshot
+    config.jackpot = { winRate, prizes: normalizedPrizes };
+    config.sumupLink = sumupLink;
+    config.slotPrice = slotPrice;
     await setDoc(doc(db,'config','main'), {
       sumupLink, slotPrice, cashEnabled,
       jackpot: { winRate, prizes: normalizedPrizes }
     }, { merge:true });
     document.getElementById('jackpotFb').className='fb ok';
-    document.getElementById('jackpotFb').textContent=`✓ Config sauvegardée — ${normalizedPrizes.length} lot(s) jackpot, ${winRate}% de chance`;
+    document.getElementById('jackpotFb').textContent=`✓ Config sauvegardée — ${normalizedPrizes.length} lot(s), ${winRate}% de chance`;
     toast('Config jackpot mise à jour');
   });
 }
