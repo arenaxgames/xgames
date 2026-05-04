@@ -1013,14 +1013,20 @@ window._submitAvisModule = async function() {
   const fb = document.getElementById('avisFb');
   if (n === 0) { fb.innerHTML = '<span style="color:#ff006e">⭐ Sélectionne une note d\'abord !</span>'; return; }
   if (!clientData) { fb.innerHTML = '<span style="color:#ff006e">Connexion Firebase en cours, réessaie.</span>'; return; }
-  fb.innerHTML = '<span style="color:#ffd60a">⏳ Envoi…</span>';
+  fb.innerHTML = '<span style="color:#ffd60a">⏳ Vérification…</span>';
   try {
+    // Anti-fraude : vérifie si ce client a déjà soumis un avis
+    const existing = await getDocs(query(collection(db, 'avis'), where('clientId','==',clientId)));
+    if (!existing.empty) {
+      fb.innerHTML = '<span style="color:#ff006e">⚠️ Tu as déjà soumis un avis. Merci !</span>';
+      return;
+    }
     await addDoc(collection(db, 'avis'), {
       clientId, pseudo: clientData.pseudo, avatar: clientData.avatar || '🎮',
       stars: n, message: document.getElementById('avisMsg').value.trim(),
-      approved: false, createdAt: serverTimestamp()
+      approved: false, xpRewarded: false, createdAt: serverTimestamp()
     });
-    fb.innerHTML = '<span style="color:#06d6a0">✅ Merci ! Publié après validation.</span>';
+    fb.innerHTML = '<span style="color:#06d6a0">✅ Merci ! +5 XP offerts après validation par l\'admin.</span>';
     document.getElementById('avisMsg').value = '';
     if (window.setStars) window.setStars(0);
     window._selectedStars = 0;

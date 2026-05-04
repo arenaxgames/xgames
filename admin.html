@@ -1419,8 +1419,17 @@ function renderAvis(c) {
 }
 
 window.approveAvis = async (id) => {
-  await updateDoc(doc(db,'avis',id), { approved: true });
-  toast('Avis publié');
+  const avis = window._allAvis?.find(a => a._id === id);
+  await updateDoc(doc(db,'avis',id), { approved: true, xpRewarded: true });
+  // Donne 5 XP au client si pas encore récompensé
+  if (avis && !avis.xpRewarded && avis.clientId) {
+    const snap = await getDoc(doc(db,'clients',avis.clientId));
+    if (snap.exists()) {
+      const xp = (snap.data().xp || 0) + 5;
+      await updateDoc(doc(db,'clients',avis.clientId), { xp, updatedAt: serverTimestamp() });
+    }
+  }
+  toast('✅ Avis publié — +5 XP donné au client');
 };
 window.deleteAvis = async (id) => {
   await deleteDoc(doc(db,'avis',id));
