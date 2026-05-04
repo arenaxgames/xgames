@@ -1584,9 +1584,15 @@ function spinReels(autoWin = false) {
         reels.forEach(r => { r.textContent = sym; r.classList.add('win'); });
         handleWin();
       } else {
-        reels[0].textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
-        reels[1].textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
-        reels[2].textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+        // En cas de perte : 3 symboles forcément différents
+        let s0 = Math.floor(Math.random()*SYMBOLS.length);
+        let s1 = Math.floor(Math.random()*SYMBOLS.length);
+        while (s1 === s0) s1 = Math.floor(Math.random()*SYMBOLS.length);
+        let s2 = Math.floor(Math.random()*SYMBOLS.length);
+        while (s2 === s0 || s2 === s1) s2 = Math.floor(Math.random()*SYMBOLS.length);
+        reels[0].textContent = SYMBOLS[s0];
+        reels[1].textContent = SYMBOLS[s1];
+        reels[2].textContent = SYMBOLS[s2];
         document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
         isSpinning = false;
         updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
