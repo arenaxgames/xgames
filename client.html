@@ -1325,9 +1325,11 @@ function renderLeaderboard(list) {
 
 
 function renderCoupons(coupons) {
-  currentCoupons = coupons;
-  const active = coupons.filter(c => !c.used);
-  const used   = coupons.filter(c =>  c.used);
+  // Filtre les coupons JACKPOT — ils vont directement dans les lancers, pas ici
+  const nonJackpot = coupons.filter(c => !((c.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/)));
+  currentCoupons = nonJackpot;
+  const active = nonJackpot.filter(c => !c.used);
+  const used   = nonJackpot.filter(c =>  c.used);
   document.getElementById('cpCountActive').textContent = active.length;
   document.getElementById('cpCountUsed').textContent   = used.length;
   updateCouponBadge(active.length); // Badge sur la nav
