@@ -291,7 +291,7 @@ body{padding-bottom:0}
 <!-- WAIT PAYMENT -->
 <div class="overlay" id="waitOv">
   <div style="font-size:3rem">💵</div>
-  <div class="wait-t">PAYE À LA CAISSE !</div>
+  <div class="wait-t">EN ATTENTE DE L'ADMIN…</div>
   <div class="ov-sub">
     Rends-toi au stand et paie <b style="color:var(--gold)">${config?.slotPrice || '2€'}</b> à l'opérateur.<br><br>
     <span style="font-size:.75rem;color:var(--dim)">L'opérateur validera ta partie et la machine se lancera automatiquement.</span>
@@ -415,10 +415,11 @@ body{padding-bottom:0}
           <button onclick="lancerJackpot()" style="width:100%;background:linear-gradient(135deg,#ffd60a,#ff9f1c);border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:14px;cursor:pointer;letter-spacing:.05em">🎰 LANCER !</button>
         </div>
 
-        <div class="slot-btns" id="slotBtns">
-          <button class="btn-slot-pay" id="btnPay"><div class="bs-icon">🎰</div><div>JOUER — PAYE À LA CAISSE</div></button>
+        <div class="slot-btns" id="slotBtns" style="display:none"></div>
+        <div style="font-size:.68rem;color:var(--dim);text-align:center;margin-top:8px;line-height:1.6">
+          🎁 Lancer gratuit chaque jour<br>
+          ⭐ Lancers gagnés via XP et jackpot
         </div>
-        <div class="slot-price" id="slotPriceLabel">Partie : 2€</div>
         <div class="slot-lights-top" style="margin-top:12px;margin-bottom:0">
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
@@ -466,6 +467,32 @@ body{padding-bottom:0}
     </div>
     <div class="sec-t" style="margin-top:14px;margin-bottom:10px">📢 Avis publiés</div>
     <div id="avisList"></div>
+  </div>
+
+  <!-- ONGLET : PRÉSENTATION -->
+  <div id="tab-promo" class="tab-content">
+    <div class="sec-t" style="margin-bottom:12px">🎬 Le Stand X-Games</div>
+
+    <!-- Vidéo -->
+    <div style="position:relative;width:100%;max-width:400px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid rgba(0,245,255,.2);background:#000">
+      <video id="promoVideo" controls playsinline style="width:100%;display:block;max-height:260px;object-fit:cover">
+        <source src="./promo.mp4" type="video/mp4">
+        <div style="padding:30px;text-align:center;color:var(--dim);font-size:.8rem">Vidéo bientôt disponible 🎬</div>
+      </video>
+    </div>
+
+    <!-- Description depuis Firebase -->
+    <div id="promoDesc" style="margin-top:14px;background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(0,245,255,.1);border-radius:14px;padding:16px">
+      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);font-weight:700;margin-bottom:10px">🎯 À PROPOS DU JEU</div>
+      <div id="promoText" style="font-size:.82rem;color:var(--txt);line-height:1.7">
+        Chargement…
+      </div>
+    </div>
+
+    <!-- Partage -->
+    <button onclick="shareReferral()" style="width:100%;margin-top:12px;background:linear-gradient(135deg,var(--blue),var(--violet));border:none;border-radius:12px;color:#fff;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;padding:12px;cursor:pointer">
+      📤 PARTAGER AVEC MES AMIS
+    </button>
   </div>
 
   <!-- ONGLET : CLASSEMENT -->
@@ -549,6 +576,10 @@ body{padding-bottom:0}
   <button class="nav-btn" id="nav-scores" onclick="switchTab('scores')">
     <div class="nav-icon">🏆</div>
     <div class="nav-label">Classement</div>
+  </button>
+  <button class="nav-btn" id="nav-promo" onclick="switchTab('promo')">
+    <div class="nav-icon">🎬</div>
+    <div class="nav-label">Vidéo</div>
   </button>
 </nav>
 
@@ -1084,6 +1115,10 @@ if (clientId) {
         const logo = document.querySelector('.hdr-logo');
         if (logo) logo.textContent = d.standName;
       }
+      if (d.promoDesc) {
+        const el = document.getElementById('promoText');
+        if (el) el.textContent = d.promoDesc;
+      }
     }
     if (clientData) renderXP(clientData);
     updateSlotUI();
@@ -1264,8 +1299,7 @@ function renderLeaderboard(list) {
         <div style="font-size:.6rem;color:${lvlInfo.color};margin-top:1px">${lvlInfo.star} ${lvlInfo.name} · Niv.${p.level||0}</div>
       </div>
       <div style="text-align:right">
-        <div class="lb-xp" style="font-size:${isTop?'.88':'.75'}rem;color:${isTop?lvlInfo.color:'var(--cyan)'}">${p.xp||0} XP</div>
-        ${isTop ? `<div style="font-size:.55rem;color:${style.border};margin-top:2px">${['TOP 1','TOP 2','TOP 3'][i]}</div>` : ''}
+        ${isTop ? `<div style="font-size:.7rem;color:${style.border};font-family:'Orbitron',monospace;font-weight:700">${['TOP 1','TOP 2','TOP 3'][i]}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1496,13 +1530,30 @@ async function handleWin() {
   const prizeRaw = prizes[Math.floor(Math.random()*prizes.length)];
   const prize    = typeof prizeRaw === 'string' ? { name:prizeRaw, icon:'🎰' } : prizeRaw;
   document.getElementById('slotStatus').textContent = '🏆 JACKPOT !';
-  const coupon = { id:'cp-'+Date.now(), type:'slot', name:prize.name, icon:prize.icon||'🎰', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') };
-  await updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() });
+
+  const prizeName = prize.name.toUpperCase();
+  const jackpotMatch = prizeName.match(/(\d+)\s*JACKPOT/);
+
+  if (jackpotMatch) {
+    // Lot JACKPOT → lancers directs, pas de coupon
+    const extraSpins = parseInt(jackpotMatch[1]) || 1;
+    availableSpins += extraSpins;
+    await setDoc(doc(db, 'slots', clientId), {
+      status: 'armed', clientId, multiCount: availableSpins,
+      autoGranted: true, unlockedAt: serverTimestamp()
+    });
+  } else {
+    // Lot physique (plombs, ticket, etc.) → coupon à récupérer
+    const coupon = { id:'cp-'+Date.now(), type:'slot', name:prize.name, icon:prize.icon||'🎰', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') };
+    await updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() });
+  }
+
   await addDoc(collection(db, 'clients', clientId, 'history'), { type:'jackpot', label:`🎰 JACKPOT : ${prize.name}`, pseudo:clientData?.pseudo, timestamp:serverTimestamp() });
+
   document.getElementById('winIcon').textContent      = prize.icon || '🎰';
-  document.getElementById('winPrizeName').textContent = prize.name;
-  isSpinning = false; // Libéré avant le délai pour que closeWin fonctionne
-  // Attend 2s pour laisser l'animation tourner avant d'afficher le popup
+  document.getElementById('winPrizeName').textContent = prize.name
+    + (jackpotMatch ? `\n🎰 +${jackpotMatch[1]} lancer(s) ajouté(s) !` : '');
+  isSpinning = false;
   setTimeout(() => {
     document.getElementById('winOv').classList.add('show');
     startCoinExplosion();

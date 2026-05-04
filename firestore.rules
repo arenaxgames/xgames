@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Clients — lecture publique, écriture libre (pas d'auth)
+    match /clients/{clientId} {
+      allow read: if true;
+      allow write: if true;
+      match /history/{h} { allow read, write: if true; }
+    }
+
+    // Config — lecture seule pour tous
+    match /config/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Slots — lecture/écriture (déclenchés par l'app)
+    match /slots/{id} {
+      allow read, write: if true;
+    }
+
+    // Validations coupons — lecture/écriture
+    match /validations/{id} {
+      allow read, write: if true;
+    }
+
+    // Logs — écriture seule, pas de lecture publique
+    match /logs/{id} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // Avis — lecture publique, création libre, update autorisé (pour admin approve)
+    match /avis/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
+    }
+  }
+}
