@@ -311,6 +311,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 
 function initAdmin() {
   // Load config
+  let configSaving = false;
   onSnapshot(doc(db, 'config', 'main'), snap => {
     if (snap.exists()) config = { ...config, ...snap.data() };
     // Met à jour le bandeau défilant
@@ -318,7 +319,8 @@ function initAdmin() {
       const ticker = document.getElementById('tickerContent');
       if (ticker) ticker.textContent = config.bandeau;
     }
-    if (curTab === 'config') renderTab('config');
+    // Ne recharge PAS renderConfig si on est en train d'éditer
+    if (curTab === 'config' && !configSaving) renderTab('config');
   });
   // Load clients
   onSnapshot(query(collection(db, 'clients')), snap => {
@@ -1181,7 +1183,9 @@ function renderConfig(c) {
 
   document.getElementById('savePromoDescBtn').addEventListener('click', async () => {
     const txt = document.getElementById('promoDescInp').value.trim();
+    configSaving = true;
     await setDoc(doc(db,'config','main'), { promoDesc: txt }, { merge:true });
+    setTimeout(() => { configSaving = false; }, 2000);
     document.getElementById('promoDescFb').className='fb ok';
     document.getElementById('promoDescFb').textContent='✓ Description sauvegardée !';
     toast('Description vidéo mise à jour');
@@ -1191,7 +1195,9 @@ function renderConfig(c) {
     const standName = document.getElementById('standNameInp').value.trim() || 'X-Games';
     const primaryColor = document.getElementById('primaryColorInp').value;
     const secondColor = document.getElementById('secondColorInp').value;
+    configSaving = true;
     await setDoc(doc(db,'config','main'), { standName, primaryColor, secondColor }, { merge:true });
+    setTimeout(() => { configSaving = false; }, 2000);
     document.getElementById('customFb').className='fb ok';
     document.getElementById('customFb').textContent='✓ Personnalisation sauvegardée !';
     toast('Personnalisation mise à jour');
@@ -1200,8 +1206,9 @@ function renderConfig(c) {
   document.getElementById('saveBandeauBtn').addEventListener('click', async () => {
     const txt = document.getElementById('bandeauInp').value.trim();
     if (!txt) { document.getElementById('bandeauFb').className='fb err'; document.getElementById('bandeauFb').textContent='Entre un texte'; return; }
+    configSaving = true;
     await setDoc(doc(db,'config','main'), { bandeau: txt }, { merge:true });
-    // Met à jour le ticker immédiatement
+    setTimeout(() => { configSaving = false; }, 2000);
     const ticker = document.getElementById('tickerContent');
     if (ticker) ticker.textContent = txt;
     document.getElementById('bandeauFb').className='fb ok';
@@ -1211,9 +1218,11 @@ function renderConfig(c) {
 
   document.getElementById('saveTiersBtn').addEventListener('click', async () => {
     const valid = localTiers.filter(t => t.xp > 0 && t.name.trim()).sort((a,b) => a.xp-b.xp);
-    if (!valid.length) { document.getElementById('tiersFb').className='fb err'; document.getElementById('tiersFb').textContent='Aucun palier valide (XP > 0 et nom requis)'; return; }
-    config.tiers = valid; // Met à jour config local AVANT Firebase pour éviter écrasement
+    if (!valid.length) { document.getElementById('tiersFb').className='fb err'; document.getElementById('tiersFb').textContent='Aucun palier valide'; return; }
+    config.tiers = valid;
+    configSaving = true;
     await setDoc(doc(db,'config','main'), { tiers: valid }, { merge:true });
+    setTimeout(() => { configSaving = false; }, 2000);
     document.getElementById('tiersFb').className='fb ok';
     document.getElementById('tiersFb').textContent=`✓ ${valid.length} palier(s) sauvegardé(s)`;
     toast('Paliers mis à jour');
@@ -1300,10 +1309,12 @@ function renderConfig(c) {
     config.jackpot = { winRate, prizes: normalizedPrizes };
     config.sumupLink = sumupLink;
     config.slotPrice = slotPrice;
+    configSaving = true;
     await setDoc(doc(db,'config','main'), {
       sumupLink, slotPrice, cashEnabled,
       jackpot: { winRate, prizes: normalizedPrizes }
     }, { merge:true });
+    setTimeout(() => { configSaving = false; }, 2000);
     document.getElementById('jackpotFb').className='fb ok';
     document.getElementById('jackpotFb').textContent=`✓ Config sauvegardée — ${normalizedPrizes.length} lot(s), ${winRate}% de chance`;
     toast('Config jackpot mise à jour');
