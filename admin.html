@@ -1097,6 +1097,8 @@ window._saveJackpot = async function() {
   if (fb) { fb.className='fb ok'; fb.textContent=`✓ Config sauvegardée — ${winRate}% de chance`; }
   toast('Config jackpot mise à jour');
 };
+
+function renderConfig(c) {
   const tiers = config.tiers || [];
   const jackpot = config.jackpot || {};
   const prizes = jackpot.prizes || [];
@@ -1254,67 +1256,6 @@ window._saveJackpot = async function() {
     // Scroll to bottom
     document.getElementById('tiersContainer').lastElementChild?.scrollIntoView({ behavior:'smooth' });
   });
-
-  window._savePromoDesc = async function() {
-    const txt = document.getElementById('promoDescInp')?.value.trim() || '';
-    configSaving = true;
-    await setDoc(doc(db,'config','main'), { promoDesc: txt }, { merge:true });
-    setTimeout(() => { configSaving = false; }, 2000);
-    const fb = document.getElementById('promoDescFb');
-    if (fb) { fb.className='fb ok'; fb.textContent='✓ Description sauvegardée !'; }
-    toast('Description mise à jour');
-  };
-
-  window._saveCustom = async function() {
-    const standName    = document.getElementById('standNameInp')?.value.trim() || 'X-Games';
-    const primaryColor = document.getElementById('primaryColorInp')?.value || '#00f5ff';
-    const secondColor  = document.getElementById('secondColorInp')?.value  || '#f72585';
-    configSaving = true;
-    await setDoc(doc(db,'config','main'), { standName, primaryColor, secondColor }, { merge:true });
-    setTimeout(() => { configSaving = false; }, 2000);
-    const fb = document.getElementById('customFb');
-    if (fb) { fb.className='fb ok'; fb.textContent='✓ Personnalisation sauvegardée !'; }
-    toast('Personnalisation mise à jour');
-  };
-
-  window._saveBandeau = async function() {
-    const txt = document.getElementById('bandeauInp')?.value.trim();
-    if (!txt) { const fb=document.getElementById('bandeauFb'); if(fb){fb.className='fb err';fb.textContent='Entre un texte';} return; }
-    configSaving = true;
-    await setDoc(doc(db,'config','main'), { bandeau: txt }, { merge:true });
-    setTimeout(() => { configSaving = false; }, 2000);
-    const fb = document.getElementById('bandeauFb');
-    if (fb) { fb.className='fb ok'; fb.textContent='✓ Bandeau mis à jour !'; }
-    toast('Bandeau mis à jour');
-  };
-
-  window._saveTiers = async function() {
-    const valid = localTiers.filter(t => t.xp > 0 && t.name.trim()).sort((a,b) => a.xp-b.xp);
-    const fb = document.getElementById('tiersFb');
-    if (!valid.length) { if(fb){fb.className='fb err';fb.textContent='Aucun palier valide';} return; }
-    config.tiers = valid;
-    configSaving = true;
-    configInitialized = false;
-    await setDoc(doc(db,'config','main'), { tiers: valid }, { merge:true });
-    setTimeout(() => { configSaving = false; }, 2000);
-    if (fb) { fb.className='fb ok'; fb.textContent=`✓ ${valid.length} palier(s) sauvegardé(s)`; }
-    toast('Paliers mis à jour');
-  };
-
-  window._saveJackpot = async function() {
-    const winRate = parseInt(document.getElementById('winRateInp')?.value) || 20;
-    const sumupLink = document.getElementById('sumupInp')?.value.trim() || '';
-    const slotPrice = document.getElementById('priceInp')?.value.trim() || '2€';
-    const normalizedPrizes = localPrizes.map(p => typeof p==='string'?{name:p,icon:'🎰'}:p).filter(p=>p.name.trim());
-    const fb = document.getElementById('jackpotFb');
-    if (!normalizedPrizes.length) { if(fb){fb.className='fb err';fb.textContent='Ajoute au moins 1 lot';} return; }
-    config.jackpot = { winRate, prizes: normalizedPrizes };
-    configSaving = true;
-    await setDoc(doc(db,'config','main'), { sumupLink, slotPrice, cashEnabled, jackpot:{winRate,prizes:normalizedPrizes} }, { merge:true });
-    setTimeout(() => { configSaving = false; }, 2000);
-    if (fb) { fb.className='fb ok'; fb.textContent=`✓ ${normalizedPrizes.length} lot(s), ${winRate}% de chance`; }
-    toast('Config jackpot mise à jour');
-  };
 
   rebuildTiers();
 
