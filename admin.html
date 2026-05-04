@@ -351,10 +351,8 @@ function initAdmin() {
     const fb = document.getElementById('tiersFb');
     if (!valid.length) { if(fb){fb.className='fb err';fb.textContent='Aucun palier valide';} return; }
     config.tiers = valid;
-    configSaving = true;
-    configInitialized = false;
+    localTiers = JSON.parse(JSON.stringify(valid)); // Sync localTiers avec ce qui est sauvegardé
     await setDoc(doc(db,'config','main'), { tiers: valid }, { merge:true });
-    setTimeout(() => { configSaving = false; }, 3000);
     if (fb) { fb.className='fb ok'; fb.textContent=`✓ ${valid.length} palier(s) sauvegardé(s)`; }
     toast('Paliers mis à jour');
   };
@@ -379,13 +377,11 @@ function initAdmin() {
 
   onSnapshot(doc(db, 'config', 'main'), snap => {
     if (snap.exists()) config = { ...config, ...snap.data() };
-    // Met à jour le bandeau défilant
     if (config.bandeau) {
       const ticker = document.getElementById('tickerContent');
       if (ticker) ticker.textContent = config.bandeau;
     }
-    // Ne recharge PAS renderConfig si on est en train d'éditer
-    if (curTab === 'config' && !configSaving) renderTab('config');
+    // NE RECHARGE JAMAIS config depuis onSnapshot — évite d'écraser les modifs en cours
   });
   // Load clients
   onSnapshot(query(collection(db, 'clients')), snap => {
