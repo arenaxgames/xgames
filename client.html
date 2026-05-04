@@ -1293,34 +1293,70 @@ function renderXP(data) {
 
 function renderLeaderboard(list) {
   const el = document.getElementById('lbList');
-  if (!list.length) { el.innerHTML = '<div class="empty-c">Aucun joueur</div>'; return; }
+
+  // Message si vide
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-c"><div class="empty-i">🏆</div>Sois le premier sur le classement !</div>';
+    return;
+  }
+
+  // Header motivant
+  let html = `<div style="text-align:center;margin-bottom:14px;padding:10px;background:linear-gradient(135deg,rgba(255,214,10,.08),rgba(67,97,238,.08));border:1px solid rgba(255,214,10,.15);border-radius:12px">
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.1em">🏆 TOP JOUEURS X-GAMES</div>
+    <div style="font-size:.7rem;color:var(--dim);margin-top:4px">Joue plus pour grimper dans le classement !</div>
+  </div>`;
 
   const top3Styles = [
-    { bg: 'linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.08))', border: 'rgba(255,214,10,.4)', glow: '0 0 20px rgba(255,214,10,.2)' },
-    { bg: 'linear-gradient(135deg,rgba(192,192,192,.12),rgba(148,163,184,.06))', border: 'rgba(192,192,192,.35)', glow: '0 0 15px rgba(192,192,192,.1)' },
-    { bg: 'linear-gradient(135deg,rgba(205,127,50,.12),rgba(180,100,30,.06))', border: 'rgba(205,127,50,.35)', glow: '0 0 15px rgba(205,127,50,.1)' },
+    { bg:'linear-gradient(135deg,rgba(255,214,10,.18),rgba(255,159,28,.1))', border:'rgba(255,214,10,.5)', glow:'0 0 25px rgba(255,214,10,.25)' },
+    { bg:'linear-gradient(135deg,rgba(192,192,192,.14),rgba(148,163,184,.08))', border:'rgba(192,192,192,.4)', glow:'0 0 15px rgba(192,192,192,.15)' },
+    { bg:'linear-gradient(135deg,rgba(205,127,50,.14),rgba(180,100,30,.08))', border:'rgba(205,127,50,.4)', glow:'0 0 15px rgba(205,127,50,.15)' },
   ];
-  const crowns = ['👑', '🥈', '🥉'];
-  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const rankIcons = ['👑','🥈','🥉','4','5','6','7','8','9','10'];
 
-  el.innerHTML = list.map((p, i) => {
+  html += list.map((p, i) => {
     const isMe    = p._id === clientId;
-    const lvlInfo = getLevelInfo(p.level || 0);
+    const level   = p.level || 0;
+    const lvlInfo = getLevelInfo(level);
     const style   = i < 3 ? top3Styles[i] : null;
     const isTop   = i < 3;
 
-    return `<div class="lb-item ${isMe?'me':''}" style="${isTop ? `background:${style.bg};border-color:${style.border};box-shadow:${style.glow};` : ''}${i===0?'transform:scale(1.02);':''}"">
-      <div class="lb-rank r${i+1}" style="font-size:${isTop?'1.3':'0.75'}rem">${isTop ? crowns[i] : medals[i]||i+1}</div>
-      <div class="lb-av" style="font-size:${isTop?'1.4':'1.1'}rem">${p.avatar||'🎮'}</div>
+    // Barre de progression vers le prochain niveau
+    const nextLevel = LEVELS.find(l => l.minLevel > level);
+    const prevLevel = getLevelInfo(level);
+    const progressPct = nextLevel
+      ? Math.min(100, Math.round((level - prevLevel.minLevel) / (nextLevel.minLevel - prevLevel.minLevel) * 100))
+      : 100;
+
+    return `<div class="lb-item ${isMe?'me':''}" style="${isTop?`background:${style.bg};border-color:${style.border};box-shadow:${style.glow};`:''}${i===0?'transform:scale(1.02);':''}">
+      <div style="font-size:${isTop?'1.4':'1rem'};font-weight:900;min-width:28px;text-align:center;color:${isTop?style.border:'var(--dim)'}">${rankIcons[i]||i+1}</div>
+      <div style="font-size:${isTop?'1.5':'1.2'}rem;flex-shrink:0">${p.avatar||'🎮'}</div>
       <div style="flex:1;min-width:0">
-        <div class="lb-name" style="font-size:${isTop?'.9':'.82'}rem;font-weight:${isTop?'800':'600'}">${p.pseudo||'—'}${isMe?'<span class="lb-you">MOI</span>':''}</div>
-        <div style="font-size:.6rem;color:${lvlInfo.color};margin-top:1px">${lvlInfo.star} ${lvlInfo.name} · Niv.${p.level||0}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-size:${isTop?'.88':'.8'}rem;font-weight:${isTop?'800':'600'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.pseudo||'—'}</div>
+          ${isMe?'<span class="lb-you">MOI</span>':''}
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
+          <span style="font-size:.75rem">${lvlInfo.star}</span>
+          <span style="font-size:.62rem;color:${lvlInfo.color};font-weight:700">${lvlInfo.name}</span>
+          ${level===0?'<span style="font-size:.58rem;color:var(--dim)">· Débutant</span>':''}
+        </div>
+        <div style="margin-top:5px;height:4px;background:rgba(0,0,0,.4);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,${lvlInfo.color},var(--cyan));border-radius:2px;transition:width .5s"></div>
+        </div>
       </div>
-      <div style="text-align:right">
-        ${isTop ? `<div style="font-size:.7rem;color:${style.border};font-family:'Orbitron',monospace;font-weight:700">${['TOP 1','TOP 2','TOP 3'][i]}</div>` : ''}
-      </div>
+      ${isTop?`<div style="font-family:'Orbitron',monospace;font-size:.6rem;color:${style.border};font-weight:700;text-align:right">TOP ${i+1}</div>`:''}
     </div>`;
   }).join('');
+
+  // Message pour ceux pas encore dans le top
+  const meInList = list.find(p => p._id === clientId);
+  if (!meInList) {
+    html += `<div style="text-align:center;margin-top:10px;padding:10px;border:1px dashed rgba(0,245,255,.15);border-radius:10px;font-size:.72rem;color:var(--dim)">
+      🎯 Continue à jouer pour apparaître dans le top 10 !
+    </div>`;
+  }
+
+  el.innerHTML = html;
 }
 
 
