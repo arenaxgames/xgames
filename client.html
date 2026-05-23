@@ -1972,6 +1972,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
   const winners = data.winners || [];
   const drawDate = data.drawDate ? new Date(data.drawDate) : null;
   const active = data.active && winners.length > 0;
+  const lots = (data.tombolaLots || []).filter(l => l && l.trim());
   _tombolaWinners = winners;
 
   const cdBox = document.getElementById('tombolaCountdown');
@@ -2020,7 +2021,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
       if (cdBox) cdBox.style.display = 'block';
       const dateEl = document.getElementById('tombolaDrawDate');
       if (dateEl) dateEl.textContent = 'Le ' + drawDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
-      // Box accueil — compteur + lots avec ses propres éléments
+      // Box accueil avec compteur
       if (homeBox) {
         homeBox.style.display = 'block';
         const lots = data.tombolaLots?.filter(l=>l.trim()) || [];
@@ -2032,7 +2033,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
             <div style="margin:8px 0;padding:8px;background:rgba(0,0,0,.3);border-radius:10px">
               <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);margin-bottom:5px">🎁 LOTS À GAGNER</div>
               ${lots.map(l=>`<div style="font-size:.72rem;color:var(--txt);margin:3px 0">✦ ${l}</div>`).join('')}
-            </div>` : ''}
+            </div>` : '<div style="font-size:.68rem;color:var(--dim);margin:6px 0">Lots à venir…</div>'}
           <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--dim);margin:8px 0">TIRAGE DANS</div>
           <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
             <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(255,214,10,.3);border-radius:10px;padding:6px 10px;min-width:44px">
@@ -2080,8 +2081,23 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
       }
     } else {
       if (cdBox) cdBox.style.display = 'none';
-      if (homeBox) homeBox.style.display = 'none';
       if (_cdInterval) clearInterval(_cdInterval);
+      // Affiche quand même les lots si définis
+      if (homeBox && lots.length) {
+        homeBox.style.display = 'block';
+        const content = document.getElementById('tombHomeContent');
+        if (content) content.innerHTML = `
+          <div style="font-size:1.3rem">🎟️</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;margin:6px 0">TOMBOLA X-GAMES</div>
+          <div style="margin:8px 0;padding:8px;background:rgba(0,0,0,.3);border-radius:10px">
+            <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);margin-bottom:5px">🎁 LOTS À GAGNER</div>
+            ${lots.map(l=>`<div style="font-size:.72rem;color:var(--txt);margin:3px 0">✦ ${l}</div>`).join('')}
+          </div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:6px">🎫 Récupère ton ticket en jouant !</div>
+        `;
+      } else if (homeBox) {
+        homeBox.style.display = 'none';
+      }
     }
   }
 });

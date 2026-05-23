@@ -751,10 +751,12 @@ async function addXP(id) {
 
   const newXP = simXP;
 
-  // Lecture fraîche des coupons
+  // Lecture fraîche des coupons + dédoublonnage par ID
   const freshSnap = await getDoc(doc(db, 'clients', id));
   const existing  = freshSnap.data()?.coupons || [];
-  const merged    = [...existing, ...newCoupons];
+  const existingIds = new Set(existing.map(c => c.id));
+  const uniqueNew = newCoupons.filter(c => !existingIds.has(c.id));
+  const merged    = [...existing, ...uniqueNew];
 
   try {
     await updateDoc(doc(db, 'clients', id), {
@@ -1644,7 +1646,11 @@ function rebuildLotsList() {
     </div>`).join('');
 }
 
-window.updateLot = (i, v) => { window._tombolaLots[i] = v; };
+window.updateLot = async (i, v) => {
+  window._tombolaLots[i] = v;
+  // Sauvegarde auto les lots dans Firebase
+  await setDoc(doc(db,'config','tombola'), { tombolaLots: window._tombolaLots.filter(l=>l.trim()) }, { merge: true });
+};
 window.addLot    = () => { window._tombolaLots.push(''); rebuildLotsList(); };
 window.removeLot = (i) => { window._tombolaLots.splice(i,1); rebuildLotsList(); };
 
