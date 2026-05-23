@@ -385,6 +385,12 @@ function initAdmin() {
     // NE RECHARGE JAMAIS config depuis onSnapshot — évite d'écraser les modifs en cours
   });
   // Load clients
+// Helper — vérifie si l'utilisateur est en train de taper
+function userIsTyping() {
+  const el = document.activeElement;
+  return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
+}
+
   onSnapshot(query(collection(db, 'clients')), snap => {
     allClients = snap.docs
       .map(d => ({ ...d.data(), _id: d.id }))
@@ -392,6 +398,7 @@ function initAdmin() {
         const lvlDiff = (b.level||0) - (a.level||0);
         return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
       });
+    if (userIsTyping()) return; // Ne recharge pas si l'utilisateur tape
     if (curTab === 'clients') renderTab('clients');
     if (curTab === 'stats') renderTab('stats');
   });
@@ -459,6 +466,7 @@ function initAdmin() {
       tombolaWinners = snap.data().winners || [];
       tombolaDrawDate = snap.data().drawDate || null;
     }
+    if (userIsTyping()) return;
     if (curTab === 'tombola') renderTab('tombola');
   });
 
@@ -467,7 +475,7 @@ function initAdmin() {
   // Listener avis
   onSnapshot(query(collection(db, 'avis'), orderBy('createdAt', 'desc')), snap => {
     window._allAvis = snap.docs.map(d => ({...d.data(), _id: d.id}));
-    if (curTab === 'avis') renderTab('avis');
+    if (!userIsTyping() && curTab === 'avis') renderTab('avis');
     // Badge sur l'onglet
     const pending = window._allAvis.filter(a => !a.approved).length;
     const tab = document.querySelector('[data-t=avis]');
