@@ -1973,7 +1973,17 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
   const drawDate = data.drawDate ? new Date(data.drawDate) : null;
   const active = data.active && winners.length > 0;
   const lots = (data.tombolaLots || []).filter(l => l && l.trim());
+  const enabled = data.tombolaEnabled !== false;
   _tombolaWinners = winners;
+
+  // Si tombola désactivée → tout cacher
+  if (!enabled) {
+    if (homeBox) homeBox.style.display = 'none';
+    if (cdBox) cdBox.style.display = 'none';
+    if (resBox) resBox.style.display = 'none';
+    if (_cdInterval) clearInterval(_cdInterval);
+    return;
+  }
 
   const cdBox = document.getElementById('tombolaCountdown');
   const resBox = document.getElementById('tombolaResults');

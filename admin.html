@@ -465,6 +465,7 @@ function userIsTyping() {
     if (snap.exists()) {
       tombolaWinners = snap.data().winners || [];
       tombolaDrawDate = snap.data().drawDate || null;
+      window._tombolaEnabled = snap.data().tombolaEnabled !== false;
     }
     if (userIsTyping()) return;
     if (curTab === 'tombola') renderTab('tombola');
@@ -1558,18 +1559,27 @@ function renderTombola(c) {
     (cl.coupons || []).forEach(cp => {
       if (cp.tombola && !cp.used) {
         const isWinner = tombolaWinners.some(w => w.clientId === cl._id && w.ticket === cp.tombola);
-        if (usedNums.has(cp.tombola)) return; // Skip doublons
+        if (usedNums.has(cp.tombola)) return;
         usedNums.add(cp.tombola);
         tickets.push({ ...cp, clientPseudo: cl.pseudo, clientId: cl._id, clientAvatar: cl.avatar || '🎮', isWinner });
       }
     });
   });
 
-  // Lots pour tirage
   const lots = window._tombolaLots || [''];
+  const tombolaEnabled = window._tombolaEnabled !== false; // true par défaut
 
   c.innerHTML = `
     <div class="st">🎟️ Tombola — ${tickets.length} ticket(s) en jeu</div>
+
+    <!-- ACTIVER / DÉSACTIVER -->
+    <div style="display:flex;align-items:center;gap:10px;background:${tombolaEnabled?'rgba(6,214,160,.08)':'rgba(255,0,110,.08)'};border:1px solid ${tombolaEnabled?'rgba(6,214,160,.3)':'rgba(255,0,110,.3)'};border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="flex:1">
+        <div style="font-size:.8rem;font-weight:700;color:${tombolaEnabled?'var(--green)':'var(--red)'}">🎟️ Tombola ${tombolaEnabled?'ACTIVÉE':'DÉSACTIVÉE'}</div>
+        <div style="font-size:.68rem;color:var(--dim);margin-top:2px">${tombolaEnabled?'Le compteur et les lots sont visibles par les clients':'Rien n\'est affiché côté clients'}</div>
+      </div>
+      <button onclick="toggleTombola()" style="background:${tombolaEnabled?'var(--red)':'var(--green)'};border:none;border-radius:10px;color:#fff;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:10px 14px;cursor:pointer">${tombolaEnabled?'⏸ DÉSACTIVER':'▶ ACTIVER'}</button>
+    </div>
 
     ${tombolaWinners.length ? `
     <div style="background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.1));border:2px solid var(--gold);border-radius:16px;padding:14px;margin-bottom:14px">
@@ -1661,6 +1671,14 @@ window.updateLot = async (i, v) => {
 };
 window.addLot    = () => { window._tombolaLots.push(''); rebuildLotsList(); };
 window.removeLot = (i) => { window._tombolaLots.splice(i,1); rebuildLotsList(); };
+
+window.toggleTombola = async function() {
+  const enabled = window._tombolaEnabled !== false;
+  window._tombolaEnabled = !enabled;
+  await setDoc(doc(db,'config','tombola'), { tombolaEnabled: !enabled }, { merge: true });
+  toast(!enabled ? '▶ Tombola activée' : '⏸ Tombola désactivée');
+  renderTab('tombola');
+};
 
 window.saveDrawDate = async function() {
   const val = document.getElementById('tombolaDateInp')?.value;
