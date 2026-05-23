@@ -1717,31 +1717,46 @@ window.tirageTombola = async function() {
   const nb = parseInt(document.getElementById('nbWinnersInp')?.value) || 1;
   const lots = (window._tombolaLots || []).filter(l => l.trim());
 
-  // Tickets disponibles (pas déjà gagnants, numéros uniques)
-  const tickets = [];
+  // Tickets disponibles — exclut les numéros déjà gagnants ET les clients déjà gagnants
   const usedNums = new Set(tombolaWinners.map(w => w.ticket));
+  const usedClients = new Set(tombolaWinners.map(w => w.clientId));
+  const tickets = [];
+  const seenNums = new Set(usedNums); // Pour éviter doublons de numéros
+
   allClients.forEach(cl => {
+    if (usedClients.has(cl._id)) return; // Client déjà gagnant → exclu
     (cl.coupons || []).forEach(cp => {
-      if (cp.tombola && !cp.used && !usedNums.has(cp.tombola)) {
+      if (cp.tombola && !cp.used && !seenNums.has(cp.tombola)) {
         tickets.push({ ...cp, clientPseudo: cl.pseudo, clientId: cl._id, clientAvatar: cl.avatar || '🎮' });
-        usedNums.add(cp.tombola); // Empêche même num deux fois
+        seenNums.add(cp.tombola);
       }
     });
   });
 
-  if (!tickets.length) { toast('Aucun ticket restant !'); return; }
-  if (tickets.length < nb) { toast(`Seulement ${tickets.length} ticket(s) disponible(s) !`); return; }
+  if (!tickets.length) { toast('Aucun ticket disponible !'); return; }
+  if (tickets.length < nb) { toast(`Seulement ${tickets.length} ticket(s) disponible(s) pour ${nb} gagnant(s) !`); return; }
 
-  // Mélange et tire nb gagnants
+  // Mélange et tire nb gagnants — 1 seul ticket par client
   const shuffled = [...tickets].sort(() => Math.random() - 0.5);
-  const winners = shuffled.slice(0, nb);
+  const drawn = [];
+  const drawnClients = new Set();
+  for (const t of shuffled) {
+    if (drawn.length >= nb) break;
+    if (drawnClients.has(t.clientId)) continue; // Skip si ce client déjà tiré
+    drawn.push(t);
+    drawnClients.add(t.clientId);
+  }
 
-  for (let i = 0; i < winners.length; i++) {
-    const w = winners[i];
+  if (drawn.length < nb) {
+    toast(`Seulement ${drawn.length} client(s) différent(s) disponible(s) !`);
+  }
+
+  for (let i = 0; i < drawn.length; i++) {
+    const w = drawn[i];
     const prize = lots[i] || lots[0] || 'Lot surprise';
     await window.addWinner(w.clientId, w.clientPseudo, w.clientAvatar, w.tombola, prize);
   }
-  toast(`🏆 ${winners.length} gagnant(s) tiré(s) !`);
+  toast(`🏆 ${drawn.length} gagnant(s) tiré(s) !`);
 };
 
 window.deleteCoupon = async function(clientId, couponIdx) {
