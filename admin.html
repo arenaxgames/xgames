@@ -1669,8 +1669,16 @@ window.updateLot = async (i, v) => {
   // Sauvegarde auto les lots dans Firebase
   await setDoc(doc(db,'config','tombola'), { tombolaLots: window._tombolaLots.filter(l=>l.trim()) }, { merge: true });
 };
-window.addLot    = () => { window._tombolaLots.push(''); rebuildLotsList(); };
-window.removeLot = (i) => { window._tombolaLots.splice(i,1); rebuildLotsList(); };
+window.addLot = async () => {
+  window._tombolaLots.push('');
+  rebuildLotsList();
+};
+window.removeLot = async (i) => {
+  window._tombolaLots.splice(i, 1);
+  rebuildLotsList();
+  // Sauvegarde dans Firebase
+  await setDoc(doc(db,'config','tombola'), { tombolaLots: window._tombolaLots.filter(l=>l.trim()) }, { merge: true });
+};
 
 window.toggleTombola = async function() {
   const enabled = window._tombolaEnabled !== false;
