@@ -1644,6 +1644,7 @@ window.addWinner = async function(clientId, pseudo, avatar, ticket, prize) {
   await setDoc(doc(db, 'config', 'tombola'), {
     winners: tombolaWinners, active: true,
     drawDate: tombolaDrawDate,
+    tombolaLots: window._tombolaLots || [],
     updatedAt: serverTimestamp()
   });
   await updateDoc(doc(db, 'clients', clientId), { tombolaWinner: true, updatedAt: serverTimestamp() }).catch(()=>{});

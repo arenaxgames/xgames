@@ -363,10 +363,13 @@ body{padding-bottom:0}
     <!-- BANDEAU DÉFILANT -->
     <div id="clientTicker" style="overflow:hidden;height:36px;display:flex;align-items:center;border-radius:10px;margin-bottom:8px;background:linear-gradient(135deg,rgba(0,245,255,.08),rgba(67,97,238,.12),rgba(247,37,133,.08));border:1px solid rgba(0,245,255,.25);box-shadow:0 0 20px rgba(0,245,255,.1),inset 0 0 20px rgba(0,0,0,.3);position:relative">
       <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(0,245,255,.05) 50%,transparent 100%);animation:holographic-sweep 3s ease-in-out infinite"></div>
-      <div id="clientTickerTxt" style="display:inline-block;animation:ticker-scroll 22s linear infinite;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;letter-spacing:.12em;padding-right:80px;white-space:nowrap;background:linear-gradient(90deg,#00f5ff,#fff,#f72585,#ffd60a,#00f5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;filter:drop-shadow(0 0 8px rgba(0,245,255,.6))">
+      <div id="clientTickerTxt" style="display:inline-block;animation:ticker-scroll 35s linear infinite;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;letter-spacing:.12em;padding-right:80px;white-space:nowrap;background:linear-gradient(90deg,#00f5ff,#fff,#f72585,#ffd60a,#00f5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;filter:drop-shadow(0 0 8px rgba(0,245,255,.6))">
         🎯 X-Games — Jeu d'adresse • Gros lots à gagner • Tentez votre chance !
       </div>
     </div>
+    <!-- TOMBOLA ACCUEIL — compteur ou résultats -->
+    <div id="tombolaHomeBox" style="display:none;margin-bottom:10px"></div>
+
     <div class="profile-card">
       <div class="ptop">
         <div class="pavatar" id="pavatar">🎮</div>
@@ -414,11 +417,34 @@ body{padding-bottom:0}
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
         </div>
-        <div class="reels">
-          <div class="reel" id="r0">🎯</div>
-          <div class="reel" id="r1">⚡</div>
-          <div class="reel" id="r2">🎮</div>
+    <div class="slot-card">
+        <div class="slot-lights-top">
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
         </div>
+
+        <!-- TITRE MACHINE -->
+        <div class="slot-title">🎰 JACKPOT MACHINE 🎰</div>
+
+        <!-- CORPS MACHINE -->
+        <div style="background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(5,3,0,.98));border:3px solid rgba(255,159,28,.6);border-radius:18px;padding:14px;position:relative;box-shadow:inset 0 0 40px rgba(0,0,0,.9),0 0 30px rgba(255,159,28,.15)">
+          <!-- Ligne de visée -->
+          <div style="position:absolute;left:8px;right:8px;top:50%;transform:translateY(-50%);height:88px;border:2px solid rgba(255,214,10,.4);border-radius:10px;pointer-events:none;z-index:2;box-shadow:0 0 15px rgba(255,214,10,.2)"></div>
+          <!-- Flèches latérales -->
+          <div style="position:absolute;left:-2px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.2rem;filter:drop-shadow(0 0 6px var(--gold))">▶</div>
+          <div style="position:absolute;right:-2px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.2rem;filter:drop-shadow(0 0 6px var(--gold))">◀</div>
+
+          <div class="reels">
+            <div class="reel" id="r0">🎯</div>
+            <div style="width:3px;background:linear-gradient(180deg,transparent,rgba(255,159,28,.5),transparent);border-radius:2px;align-self:stretch"></div>
+            <div class="reel" id="r1">⚡</div>
+            <div style="width:3px;background:linear-gradient(180deg,transparent,rgba(255,159,28,.5),transparent);border-radius:2px;align-self:stretch"></div>
+            <div class="reel" id="r2">🎮</div>
+          </div>
+        </div>
+
         <div class="slot-status" id="slotStatus">Tente ta chance !</div>
 
         <!-- LANCER QUOTIDIEN GRATUIT -->
@@ -1943,8 +1969,10 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
   const resBox = document.getElementById('tombolaResults');
   const resList = document.getElementById('tombolaResultsList');
 
+  const homeBox = document.getElementById('tombolaHomeBox');
+
   if (active) {
-    // Tirage terminé — affiche les résultats, cache le compteur
+    // Tirage terminé
     if (cdBox) cdBox.style.display = 'none';
     if (_cdInterval) { clearInterval(_cdInterval); _cdInterval = null; }
     if (resBox) {
@@ -1960,14 +1988,19 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
         ).join('');
       }
     }
-    // Hall of Fame dans classement
+    // Box accueil — résultats
+    if (homeBox) {
+      homeBox.style.display = 'block';
+      homeBox.innerHTML = `<div style="background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.1));border:2px solid var(--gold);border-radius:14px;padding:12px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);font-weight:900;margin-bottom:6px">🏆 TIRAGE TERMINÉ</div>
+        ${winners.map(w=>`<div style="font-size:.72rem;margin:3px 0">${w.avatar} <b>${w.pseudo}</b> · <span style="color:var(--gold)">${w.prize}</span></div>`).join('')}
+      </div>`;
+    }
     updateHallOfFame(winners);
-    // Notif + badge gagnant
     showTombolaNotif(winners);
     const isWinner = winners.some(w => w.clientId === clientId);
     if (isWinner) markTombolaWinner(winners.filter(w => w.clientId === clientId));
   } else {
-    // Pas de tirage — affiche le compteur si date future
     if (resBox) resBox.style.display = 'none';
     document.getElementById('tombolaNotif')?.remove();
     document.querySelector('.tombola-winner-badge')?.remove();
@@ -1976,10 +2009,20 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
       if (cdBox) cdBox.style.display = 'block';
       const dateEl = document.getElementById('tombolaDrawDate');
       if (dateEl) dateEl.textContent = 'Le ' + drawDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+      // Box accueil — compteur + lots
+      if (homeBox) {
+        homeBox.style.display = 'block';
+        const lotsHtml = data.tombolaLots?.filter(l=>l.trim()).map(l=>`<div style="font-size:.7rem;color:var(--txt);margin:2px 0">🎁 ${l}</div>`).join('') || '';
+        homeBox.innerHTML = `<div style="background:linear-gradient(135deg,rgba(255,214,10,.1),rgba(255,159,28,.08));border:1px solid rgba(255,214,10,.3);border-radius:14px;padding:12px;text-align:center">
+          <div style="font-family:'Orbitron',monospace;font-size:.62rem;color:var(--gold);font-weight:700;margin-bottom:6px">🎟️ TOMBOLA — LOTS À GAGNER</div>
+          ${lotsHtml}
+          <div style="font-size:.65rem;color:var(--dim);margin-top:6px">Le ${drawDate.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>
+        </div>`;
+      }
       if (_cdInterval) clearInterval(_cdInterval);
       _cdInterval = setInterval(() => {
         const diff = drawDate - new Date();
-        if (diff <= 0) { clearInterval(_cdInterval); if(cdBox) cdBox.style.display='none'; return; }
+        if (diff <= 0) { clearInterval(_cdInterval); if(cdBox) cdBox.style.display='none'; if(homeBox) homeBox.style.display='none'; return; }
         const d = Math.floor(diff / 86400000);
         const h = Math.floor((diff % 86400000) / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
@@ -1992,6 +2035,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
       }, 1000);
     } else {
       if (cdBox) cdBox.style.display = 'none';
+      if (homeBox) homeBox.style.display = 'none';
       if (_cdInterval) clearInterval(_cdInterval);
     }
   }
