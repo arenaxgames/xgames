@@ -1666,8 +1666,8 @@ function rebuildLotsList() {
 
 window.updateLot = async (i, v) => {
   window._tombolaLots[i] = v;
-  // Sauvegarde auto les lots dans Firebase
-  await setDoc(doc(db,'config','tombola'), { tombolaLots: window._tombolaLots.filter(l=>l.trim()) }, { merge: true });
+  const filtered = window._tombolaLots.filter(l => l.trim());
+  await updateDoc(doc(db,'config','tombola'), { tombolaLots: filtered });
 };
 window.addLot = async () => {
   window._tombolaLots.push('');
@@ -1676,8 +1676,9 @@ window.addLot = async () => {
 window.removeLot = async (i) => {
   window._tombolaLots.splice(i, 1);
   rebuildLotsList();
-  // Sauvegarde dans Firebase
-  await setDoc(doc(db,'config','tombola'), { tombolaLots: window._tombolaLots.filter(l=>l.trim()) }, { merge: true });
+  const filtered = window._tombolaLots.filter(l => l.trim());
+  // updateDoc pour forcer l'écrasement même si vide
+  await updateDoc(doc(db,'config','tombola'), { tombolaLots: filtered });
 };
 
 window.toggleTombola = async function() {
@@ -1716,12 +1717,12 @@ window.saveDrawDate = async function() {
   if (!val) return;
   tombolaDrawDate = new Date(val).toISOString();
   const lots = (window._tombolaLots || []).filter(l => l.trim());
-  await setDoc(doc(db,'config','tombola'), {
+  await updateDoc(doc(db,'config','tombola'), {
     drawDate: tombolaDrawDate,
     tombolaLots: lots,
     active: tombolaWinners.length > 0,
     winners: tombolaWinners
-  }, { merge: true });
+  });
   const fb = document.getElementById('dateFb');
   if (fb) { fb.className='fb ok'; fb.textContent='✓ Date et lots sauvegardés !'; }
   toast('Date du tirage mise à jour');
