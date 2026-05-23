@@ -602,6 +602,13 @@ function renderDetail(id) {
     </div>
     <button class="btn btn-red btn-sm" id="delBtn" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>
 
+    <!-- DONNER UN TICKET TOMBOLA -->
+    <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:12px;padding:12px;margin-top:8px">
+      <div style="font-size:.68rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎟️ Donner un ticket tombola</div>
+      <button onclick="giveTombolaTicket('${id}')" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;padding:10px;cursor:pointer">🎟️ DONNER 1 TICKET</button>
+      <div class="fb" id="tombolaTicketFb" style="margin-top:6px"></div>
+    </div>
+
     <!-- COUPONS DU CLIENT -->
     ${(cl.coupons||[]).length ? `
     <div style="margin-top:14px">
@@ -654,6 +661,28 @@ function renderDetail(id) {
     toast('Client supprimé');
   });
 }
+
+window.giveTombolaTicket = async function(clientId) {
+  const cl = allClients.find(x => x._id === clientId);
+  if (!cl) return;
+  const fb = document.getElementById('tombolaTicketFb');
+  // Génère un numéro unique
+  const num = Math.floor(1000 + Math.random() * 9000);
+  const coupon = {
+    id: `cp-tomb-${Date.now()}`,
+    tombola: num,
+    type: 'tombola',
+    name: '🎟️ Ticket Tombola',
+    icon: '🎟️',
+    used: false,
+    earnedAt: new Date().toLocaleDateString('fr-FR')
+  };
+  const newCoupons = [...(cl.coupons||[]), coupon];
+  await updateDoc(doc(db, 'clients', clientId), { coupons: newCoupons, updatedAt: serverTimestamp() });
+  if (fb) { fb.className='fb ok'; fb.textContent=`✓ Ticket N°${num} donné à ${cl.pseudo} !`; }
+  toast(`🎟️ Ticket N°${num} → ${cl.pseudo}`);
+  renderDetail(clientId);
+};
 
 window.adminMarkUsed = async function(clientId, couponId) {
   const cl = allClients.find(x => x._id === clientId);
@@ -1623,9 +1652,15 @@ window.saveDrawDate = async function() {
   const val = document.getElementById('tombolaDateInp')?.value;
   if (!val) return;
   tombolaDrawDate = new Date(val).toISOString();
-  await setDoc(doc(db,'config','tombola'), { drawDate: tombolaDrawDate }, { merge:true });
+  const lots = (window._tombolaLots || []).filter(l => l.trim());
+  await setDoc(doc(db,'config','tombola'), {
+    drawDate: tombolaDrawDate,
+    tombolaLots: lots,
+    active: tombolaWinners.length > 0,
+    winners: tombolaWinners
+  }, { merge: true });
   const fb = document.getElementById('dateFb');
-  if (fb) { fb.className='fb ok'; fb.textContent='✓ Date sauvegardée !'; }
+  if (fb) { fb.className='fb ok'; fb.textContent='✓ Date et lots sauvegardés !'; }
   toast('Date du tirage mise à jour');
 };
 

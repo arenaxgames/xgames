@@ -61,15 +61,41 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .nr-pts{font-size:.65rem;color:rgba(255,214,10,.55);margin-top:1px}
 .sec-t{font-family:'Orbitron',monospace;font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.45);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.18),transparent)}
-.slot-card{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,159,28,.25);border-radius:20px;padding:18px;position:relative;overflow:hidden}
-.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.slot-title{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.15em;margin-bottom:16px}
-.reels{display:flex;justify-content:center;gap:10px;margin-bottom:16px}
-.reel{width:70px;height:70px;background:rgba(0,0,0,.7);border:2px solid rgba(255,159,28,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;overflow:hidden}
-.reel.spin{animation:reelspin .1s steps(1) infinite}
-@keyframes reelspin{0%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.reel.win{border-color:var(--gold);box-shadow:0 0 20px var(--gold)}
-.slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.7rem;color:var(--dim);letter-spacing:.1em;margin-bottom:12px;min-height:20px}
+/* ── MACHINE À SOUS ── */
+.slot-machine-wrap{position:relative;margin:0 auto;max-width:360px}
+/* Pieds de la machine */
+.slot-machine-wrap::after{content:'';display:block;height:14px;background:linear-gradient(180deg,rgba(80,50,10,.9),rgba(40,20,5,.95));border-radius:0 0 18px 18px;margin:0 30px;box-shadow:0 6px 20px rgba(0,0,0,.8)}
+/* Levier */
+.slot-lever{position:absolute;right:-24px;top:30px;width:16px;height:90px;z-index:10;cursor:pointer}
+.slot-lever-stick{width:6px;height:72px;background:linear-gradient(180deg,#c0a060,#8b6914,#c0a060);border-radius:3px;margin:0 auto;box-shadow:2px 0 6px rgba(0,0,0,.5)}
+.slot-lever-ball{width:16px;height:16px;background:radial-gradient(circle at 35% 35%,#ff4444,#cc0000);border-radius:50%;box-shadow:0 0 12px rgba(255,0,0,.6),inset 0 2px 4px rgba(255,255,255,.3);margin-top:2px;transition:transform .3s}
+.slot-lever.pulled .slot-lever-ball{transform:translateY(55px)}
+.slot-lever.pulled .slot-lever-stick{background:linear-gradient(180deg,#8b6914,#c0a060,#8b6914)}
+
+.slot-card{background:linear-gradient(165deg,rgba(15,8,2,.98),rgba(30,15,3,.98));border:3px solid rgba(180,120,20,.7);border-radius:22px;padding:16px;position:relative;overflow:visible;box-shadow:0 0 60px rgba(255,159,28,.2),0 20px 60px rgba(0,0,0,.9),inset 0 0 40px rgba(0,0,0,.8),inset 0 2px 0 rgba(255,200,50,.15);margin:0 20px}
+.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,rgba(255,214,10,.8),rgba(255,159,28,.6),rgba(255,214,10,.8),transparent);border-radius:22px 22px 0 0}
+.slot-card::after{content:'';position:absolute;bottom:0;left:20px;right:20px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,159,28,.4),transparent)}
+/* Panneau rouleaux */
+.slot-panel{background:linear-gradient(180deg,rgba(0,0,0,.95),rgba(5,3,0,.98));border:3px inset rgba(100,60,10,.6);border-radius:14px;padding:12px 10px;position:relative;box-shadow:inset 0 0 30px rgba(0,0,0,.9),inset 0 2px 8px rgba(0,0,0,.8)}
+/* Ligne de visée */
+.slot-panel::before{content:'';position:absolute;left:6px;right:6px;top:50%;transform:translateY(-50%);height:92px;border:2px solid rgba(255,214,10,.5);border-radius:8px;pointer-events:none;z-index:2;box-shadow:0 0 20px rgba(255,214,10,.3),inset 0 0 20px rgba(255,214,10,.05)}
+/* Flèches */
+.slot-arrow{position:absolute;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.4rem;filter:drop-shadow(0 0 8px var(--gold));line-height:1;z-index:3}
+.slot-arrow.left{left:-22px}
+.slot-arrow.right{right:-22px}
+.slot-title{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.2em;margin-bottom:12px;text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.5);animation:title-pulse 2s ease-in-out infinite}
+@keyframes title-pulse{0%,100%{text-shadow:0 0 15px var(--gold)}50%{text-shadow:0 0 30px var(--gold),0 0 60px rgba(255,214,10,.6)}}
+.reels{display:flex;justify-content:center;align-items:stretch;gap:0;position:relative}
+.reel{width:80px;height:90px;background:linear-gradient(180deg,rgba(0,0,0,.95) 0%,rgba(8,5,0,.98) 50%,rgba(0,0,0,.95) 100%);border:none;border-right:2px solid rgba(180,120,20,.4);display:flex;align-items:center;justify-content:center;font-size:2.8rem;overflow:hidden;position:relative;flex-shrink:0}
+.reel:first-child{border-radius:8px 0 0 8px;border-left:none}
+.reel:last-child{border-radius:0 8px 8px 0;border-right:none}
+.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);pointer-events:none}
+.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(0deg,rgba(0,0,0,.6),transparent);pointer-events:none}
+.reel.spin{animation:reelspin .06s steps(1) infinite}
+@keyframes reelspin{0%{transform:translateY(0) scale(1)}33%{transform:translateY(-10px) scale(.9)}66%{transform:translateY(5px) scale(.95)}}
+.reel.win{box-shadow:0 0 40px var(--gold),0 0 80px rgba(255,214,10,.5),inset 0 0 30px rgba(255,214,10,.15);animation:reel-win .25s ease-in-out infinite alternate}
+@keyframes reel-win{from{box-shadow:0 0 20px var(--gold)}to{box-shadow:0 0 60px var(--gold),0 0 100px rgba(255,214,10,.7)}}
+.slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;color:var(--dim);letter-spacing:.1em;margin:10px 0 8px;min-height:20px}
 .slot-btns{display:flex;gap:8px}
 .btn-slot-pay{flex:1;background:linear-gradient(135deg,rgba(114,9,183,.4),rgba(67,97,238,.4));border:1px solid rgba(114,9,183,.5);border-radius:12px;color:var(--txt);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
 .btn-slot-pay:disabled{opacity:.35;cursor:not-allowed}
@@ -111,31 +137,6 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .lb-item.me{border-color:rgba(0,245,255,.3)!important;background:rgba(0,245,255,.05)!important}
 .lb-rank{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;width:28px;text-align:center;flex-shrink:0}
 .lb-rank.r1{color:var(--gold)}.lb-rank.r2{color:#c0c0c0}.lb-rank.r3{color:#cd7f32}
-
-/* Enhanced slot machine */
-.slot-card{background:linear-gradient(135deg,rgba(5,5,20,.99),rgba(10,10,30,.99));border:2px solid rgba(255,159,28,.5);border-radius:24px;padding:20px;position:relative;overflow:hidden;box-shadow:0 0 80px rgba(255,159,28,.2),0 0 30px rgba(0,0,0,.9),inset 0 0 60px rgba(0,0,0,.7)}
-.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),#ff006e,var(--orange),var(--gold),transparent);animation:slot-top-glow 2s ease-in-out infinite}
-@keyframes slot-top-glow{0%,100%{opacity:.5;background-size:100%}50%{opacity:1;background-size:200%}}
-.slot-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,214,10,.5),transparent)}
-.slot-title{font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.2em;margin-bottom:18px;text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.5),0 0 80px rgba(255,214,10,.2);animation:title-pulse 2s ease-in-out infinite}
-@keyframes title-pulse{0%,100%{text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.3)}50%{text-shadow:0 0 30px var(--gold),0 0 60px rgba(255,214,10,.6),0 0 100px rgba(255,214,10,.3)}}
-.reels{display:flex;justify-content:center;gap:12px;margin-bottom:18px;position:relative}
-.reels::before{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:20px;height:20px;background:var(--gold);clip-path:polygon(50% 0%,0% 100%,100% 100%);filter:drop-shadow(0 0 8px var(--gold))}
-.reel{width:82px;height:88px;background:linear-gradient(180deg,rgba(0,0,0,.95),rgba(5,3,0,.98));border:2px solid rgba(255,159,28,.5);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2.6rem;overflow:hidden;position:relative;box-shadow:inset 0 0 25px rgba(0,0,0,.9),0 6px 20px rgba(0,0,0,.7),0 0 10px rgba(255,159,28,.1)}
-.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:35%;background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);pointer-events:none;border-radius:12px 12px 0 0}
-.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:35%;background:linear-gradient(0deg,rgba(0,0,0,.5),transparent);pointer-events:none}
-.reel.spin{animation:reelspin .06s steps(1) infinite}
-@keyframes reelspin{0%{transform:translateY(0) scale(1)}33%{transform:translateY(-8px) scale(.93)}66%{transform:translateY(4px) scale(.97)}}
-.reel.win{border-color:var(--gold);box-shadow:0 0 40px var(--gold),0 0 80px rgba(255,214,10,.5),inset 0 0 30px rgba(255,214,10,.15);animation:reel-win .3s ease-in-out infinite alternate}
-@keyframes reel-win{from{box-shadow:0 0 20px var(--gold),inset 0 0 10px rgba(255,214,10,.1)}to{box-shadow:0 0 60px var(--gold),0 0 100px rgba(255,214,10,.6),inset 0 0 40px rgba(255,214,10,.2)}}
-.slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;color:var(--dim);letter-spacing:.12em;margin-bottom:14px;min-height:22px}
-.slot-btns{display:flex;gap:10px}
-.btn-slot-pay{flex:1;background:linear-gradient(135deg,rgba(114,9,183,.6),rgba(67,97,238,.6));border:1px solid rgba(114,9,183,.7);border-radius:14px;color:var(--txt);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .2s;box-shadow:0 0 20px rgba(114,9,183,.2)}
-.btn-slot-pay:active{transform:scale(.97);opacity:.8}
-.btn-slot-pay:disabled{opacity:.35;cursor:not-allowed}
-.btn-slot-pay .bs-icon{font-size:1.4rem}
-.btn-slot-cash{flex:1;background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.15));border:1px solid rgba(255,214,10,.35);border-radius:14px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;box-shadow:0 0 15px rgba(255,214,10,.1)}
-.slot-price{font-size:.62rem;color:var(--dim);margin-top:8px;text-align:center;letter-spacing:.06em}
 
 /* Slot lights decoration */
 .slot-lights-top{display:flex;justify-content:center;gap:5px;margin-bottom:14px}
@@ -368,7 +369,10 @@ body{padding-bottom:0}
       </div>
     </div>
     <!-- TOMBOLA ACCUEIL — compteur ou résultats -->
-    <div id="tombolaHomeBox" style="display:none;margin-bottom:10px"></div>
+    <div id="tombolaHomeBox" style="display:none;margin-bottom:12px;background:linear-gradient(135deg,rgba(20,0,50,.98),rgba(10,0,30,.98));border:2px solid rgba(255,214,10,.4);border-radius:18px;padding:16px;text-align:center;position:relative;overflow:hidden;box-shadow:0 0 30px rgba(255,214,10,.15)">
+      <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,214,10,.02) 10px,rgba(255,214,10,.02) 20px)"></div>
+      <div id="tombHomeContent" style="position:relative;z-index:1"></div>
+    </div>
 
     <div class="profile-card">
       <div class="ptop">
@@ -410,6 +414,14 @@ body{padding-bottom:0}
         <div class="vegas-tagline">🏆 Gagnez des SUPER LOTS ! 🏆</div>
       </div>
 
+      <!-- MACHINE À SOUS -->
+      <div class="slot-machine-wrap">
+        <!-- Levier -->
+        <div class="slot-lever" id="slotLever" onclick="pullLever()">
+          <div class="slot-lever-stick"></div>
+          <div class="slot-lever-ball"></div>
+        </div>
+
       <div class="slot-card">
         <div class="slot-lights-top">
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
@@ -421,19 +433,13 @@ body{padding-bottom:0}
         <!-- TITRE MACHINE -->
         <div class="slot-title">🎰 JACKPOT MACHINE 🎰</div>
 
-        <!-- CORPS MACHINE -->
-        <div style="background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(5,3,0,.98));border:3px solid rgba(255,159,28,.6);border-radius:18px;padding:14px;position:relative;box-shadow:inset 0 0 40px rgba(0,0,0,.9),0 0 30px rgba(255,159,28,.15)">
-          <!-- Ligne de visée -->
-          <div style="position:absolute;left:8px;right:8px;top:50%;transform:translateY(-50%);height:88px;border:2px solid rgba(255,214,10,.4);border-radius:10px;pointer-events:none;z-index:2;box-shadow:0 0 15px rgba(255,214,10,.2)"></div>
-          <!-- Flèches latérales -->
-          <div style="position:absolute;left:-2px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.2rem;filter:drop-shadow(0 0 6px var(--gold))">▶</div>
-          <div style="position:absolute;right:-2px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.2rem;filter:drop-shadow(0 0 6px var(--gold))">◀</div>
-
+        <!-- PANNEAU ROULEAUX -->
+        <div class="slot-panel" style="position:relative">
+          <div class="slot-arrow left">▶</div>
+          <div class="slot-arrow right">◀</div>
           <div class="reels">
             <div class="reel" id="r0">🎯</div>
-            <div style="width:3px;background:linear-gradient(180deg,transparent,rgba(255,159,28,.5),transparent);border-radius:2px;align-self:stretch"></div>
             <div class="reel" id="r1">⚡</div>
-            <div style="width:3px;background:linear-gradient(180deg,transparent,rgba(255,159,28,.5),transparent);border-radius:2px;align-self:stretch"></div>
             <div class="reel" id="r2">🎮</div>
           </div>
         </div>
@@ -465,6 +471,7 @@ body{padding-bottom:0}
           <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
         </div>
       </div>
+      </div><!-- fin slot-machine-wrap -->
 
       <!-- PARRAINAGE -->
       <div class="profile-card" style="margin-top:12px">
@@ -894,6 +901,15 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
 window.addEventListener('appinstalled', function() {
   document.getElementById('installBar').style.display = 'none';
 });
+
+// Levier machine à sous
+function pullLever() {
+  const lever = document.getElementById('slotLever');
+  if (!lever || lever.classList.contains('pulled')) return;
+  lever.classList.add('pulled');
+  setTimeout(() => lever.classList.remove('pulled'), 400);
+  lancerJackpot();
+}
 
 function snakeDir(d) {
   if (!sRunning) return;
@@ -1984,10 +2000,12 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
     // Box accueil — résultats
     if (homeBox) {
       homeBox.style.display = 'block';
-      homeBox.innerHTML = `<div style="background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.1));border:2px solid var(--gold);border-radius:14px;padding:12px;text-align:center">
-        <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);font-weight:900;margin-bottom:6px">🏆 TIRAGE TERMINÉ</div>
-        ${winners.map(w=>`<div style="font-size:.72rem;margin:3px 0">${w.avatar} <b>${w.pseudo}</b> · <span style="color:var(--gold)">${w.prize}</span></div>`).join('')}
-      </div>`;
+      const content = document.getElementById('tombHomeContent');
+      if (content) content.innerHTML = `
+        <div style="font-size:1.4rem">🏆</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;margin:6px 0;letter-spacing:.1em">TIRAGE TERMINÉ !</div>
+        ${winners.map(w=>`<div style="font-size:.75rem;margin:4px 0;padding:4px 8px;background:rgba(255,214,10,.1);border-radius:8px">${w.avatar} <b>${w.pseudo}</b> <span style="color:var(--gold)">🏆 ${w.prize}</span></div>`).join('')}
+      `;
     }
     updateHallOfFame(winners);
     showTombolaNotif(winners);
@@ -2002,30 +2020,64 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
       if (cdBox) cdBox.style.display = 'block';
       const dateEl = document.getElementById('tombolaDrawDate');
       if (dateEl) dateEl.textContent = 'Le ' + drawDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
-      // Box accueil — compteur + lots
+      // Box accueil — compteur + lots avec ses propres éléments
       if (homeBox) {
         homeBox.style.display = 'block';
-        const lotsHtml = data.tombolaLots?.filter(l=>l.trim()).map(l=>`<div style="font-size:.7rem;color:var(--txt);margin:2px 0">🎁 ${l}</div>`).join('') || '';
-        homeBox.innerHTML = `<div style="background:linear-gradient(135deg,rgba(255,214,10,.1),rgba(255,159,28,.08));border:1px solid rgba(255,214,10,.3);border-radius:14px;padding:12px;text-align:center">
-          <div style="font-family:'Orbitron',monospace;font-size:.62rem;color:var(--gold);font-weight:700;margin-bottom:6px">🎟️ TOMBOLA — LOTS À GAGNER</div>
-          ${lotsHtml}
-          <div style="font-size:.65rem;color:var(--dim);margin-top:6px">Le ${drawDate.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div>
-        </div>`;
+        const lots = data.tombolaLots?.filter(l=>l.trim()) || [];
+        const content = document.getElementById('tombHomeContent');
+        if (content) content.innerHTML = `
+          <div style="font-size:1.3rem">🎟️</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;letter-spacing:.12em;margin:6px 0">TOMBOLA X-GAMES</div>
+          ${lots.length ? `
+            <div style="margin:8px 0;padding:8px;background:rgba(0,0,0,.3);border-radius:10px">
+              <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);margin-bottom:5px">🎁 LOTS À GAGNER</div>
+              ${lots.map(l=>`<div style="font-size:.72rem;color:var(--txt);margin:3px 0">✦ ${l}</div>`).join('')}
+            </div>` : ''}
+          <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--dim);margin:8px 0">TIRAGE DANS</div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(255,214,10,.3);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbDays" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--gold)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">JOURS</div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold);align-self:center">:</div>
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.3);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbHours" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--cyan)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">HEURES</div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold);align-self:center">:</div>
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(247,37,133,.3);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbMins" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--pink)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">MIN</div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold);align-self:center">:</div>
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbSecs" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--txt)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">SEC</div>
+            </div>
+          </div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:8px">🎫 Récupère ton ticket en jouant !</div>
+        `;
+        // Lance le décompte dans la box accueil
+        if (_cdInterval) clearInterval(_cdInterval);
+        _cdInterval = setInterval(() => {
+          const diff = drawDate - new Date();
+          if (diff <= 0) { clearInterval(_cdInterval); if(homeBox) homeBox.style.display='none'; return; }
+          const d = Math.floor(diff/86400000);
+          const h = Math.floor((diff%86400000)/3600000);
+          const m = Math.floor((diff%3600000)/60000);
+          const s = Math.floor((diff%60000)/1000);
+          const el = id => document.getElementById(id);
+          if(el('hbDays'))  el('hbDays').textContent  = String(d).padStart(2,'0');
+          if(el('hbHours')) el('hbHours').textContent = String(h).padStart(2,'0');
+          if(el('hbMins'))  el('hbMins').textContent  = String(m).padStart(2,'0');
+          if(el('hbSecs'))  el('hbSecs').textContent  = String(s).padStart(2,'0');
+          // Aussi onglet coupons
+          if(el('cdDays'))  el('cdDays').textContent  = String(d).padStart(2,'0');
+          if(el('cdHours')) el('cdHours').textContent = String(h).padStart(2,'0');
+          if(el('cdMins'))  el('cdMins').textContent  = String(m).padStart(2,'0');
+          if(el('cdSecs'))  el('cdSecs').textContent  = String(s).padStart(2,'0');
+        }, 1000);
       }
-      if (_cdInterval) clearInterval(_cdInterval);
-      _cdInterval = setInterval(() => {
-        const diff = drawDate - new Date();
-        if (diff <= 0) { clearInterval(_cdInterval); if(cdBox) cdBox.style.display='none'; if(homeBox) homeBox.style.display='none'; return; }
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        const el = (id) => document.getElementById(id);
-        if(el('cdDays'))  el('cdDays').textContent  = String(d).padStart(2,'0');
-        if(el('cdHours')) el('cdHours').textContent = String(h).padStart(2,'0');
-        if(el('cdMins'))  el('cdMins').textContent  = String(m).padStart(2,'0');
-        if(el('cdSecs'))  el('cdSecs').textContent  = String(s).padStart(2,'0');
-      }, 1000);
     } else {
       if (cdBox) cdBox.style.display = 'none';
       if (homeBox) homeBox.style.display = 'none';
