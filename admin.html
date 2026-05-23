@@ -1675,8 +1675,31 @@ window.removeLot = (i) => { window._tombolaLots.splice(i,1); rebuildLotsList(); 
 window.toggleTombola = async function() {
   const enabled = window._tombolaEnabled !== false;
   window._tombolaEnabled = !enabled;
-  await setDoc(doc(db,'config','tombola'), { tombolaEnabled: !enabled }, { merge: true });
-  toast(!enabled ? '▶ Tombola activée' : '⏸ Tombola désactivée');
+
+  // Si on désactive → retire tous les tickets tombola de tous les clients
+  if (enabled) {
+    toast('⏳ Suppression des tickets en cours…');
+    for (const cl of allClients) {
+      const hasTickets = (cl.coupons||[]).some(c => c.tombola && !c.used);
+      if (hasTickets) {
+        const cleaned = (cl.coupons||[]).filter(c => !c.tombola || c.used);
+        await updateDoc(doc(db,'clients',cl._id), { coupons: cleaned, updatedAt: serverTimestamp() }).catch(()=>{});
+      }
+    }
+    // Efface aussi les gagnants et remet à zéro
+    for (const w of tombolaWinners) {
+      await updateDoc(doc(db,'clients',w.clientId), { tombolaWinner: false }).catch(()=>{});
+    }
+    tombolaWinners = [];
+  }
+
+  await setDoc(doc(db,'config','tombola'), {
+    tombolaEnabled: !enabled,
+    winners: [],
+    active: false
+  }, { merge: true });
+
+  toast(!enabled ? '▶ Tombola activée' : '⏸ Tombola désactivée — tickets supprimés');
   renderTab('tombola');
 };
 
