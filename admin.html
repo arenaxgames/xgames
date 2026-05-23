@@ -734,12 +734,7 @@ async function addXP(id) {
     const spaceLeft = maxXP - simXP;
 
     if (spaceLeft <= 0) {
-      // Barre pleine — donne tous les paliers et repart à 0
-      sortedTiers.forEach((t, idx) => {
-        const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
-        if (m) { jackpotSpins += parseInt(m[1])||1; }
-        else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, tombola: genTombolaNum(), type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
-      });
+      // Barre pleine — repart à 0 SANS redonner les paliers (déjà donnés au tour précédent)
       simXP = 0; curLevel++;
       continue;
     }
@@ -754,8 +749,14 @@ async function addXP(id) {
       else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, tombola: genTombolaNum(), type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
     });
 
-    simXP = newSimXP;
-    totalRemaining -= xpThisCycle;
+    // Si on atteint exactement maxXP → on repart à 0 au prochain tour
+    if (newSimXP >= maxXP) {
+      simXP = 0; curLevel++;
+      totalRemaining -= xpThisCycle;
+    } else {
+      simXP = newSimXP;
+      totalRemaining -= xpThisCycle;
+    }
   }
 
   const newXP = simXP;
