@@ -220,6 +220,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <button class="tab on" data-t="clients">🎮 Clients</button>
     <button class="tab" data-t="slots" id="slotsTab">🎰 Jackpot</button>
     <button class="tab" data-t="coupons">🎫 Coupons</button>
+    <button class="tab" data-t="tombola">🎟️ Tombola</button>
     <button class="tab" data-t="config">⚙️ Config</button>
     <button class="tab" data-t="stats">📊 Stats</button>
     <button class="tab" data-t="avis">⭐ Avis</button>
@@ -451,6 +452,16 @@ function initAdmin() {
   });
 
   // Handle QR scan from URL
+  // Listener tombola winners
+  window._tombolaLots = [''];
+  onSnapshot(doc(db, 'config', 'tombola'), snap => {
+    if (snap.exists()) {
+      tombolaWinners = snap.data().winners || [];
+      tombolaDrawDate = snap.data().drawDate || null;
+    }
+    if (curTab === 'tombola') renderTab('tombola');
+  });
+
   handleScanFromURL();
 
   // Listener avis
@@ -485,7 +496,8 @@ function renderTab(t) {
   else if (t === 'coupons') renderCoupons(c);
   else if (t === 'config') renderConfig(c);
   else if (t === 'stats') renderStats(c);
-  else if (t === 'avis')  renderAvis(c);
+  else if (t === 'avis')    renderAvis(c);
+  else if (t === 'tombola') renderTombola(c);
 }
 
 // ═══════════════════════════════════════
@@ -531,7 +543,7 @@ function displayClients(list) {
       <div class="cl-top">
         <div class="cl-av">${cl.avatar||'🎮'}</div>
         <div style="flex:1;min-width:0">
-          <div class="cl-name">${cl.pseudo||'—'}</div>
+          <div class="cl-name">${cl.pseudo||'—'}${cl.tombolaWinner?'<span style="color:var(--gold);font-size:.85rem"> 🏆</span>':''}</div>
           <div class="cl-id">Niv.${cl.level||0} · 💰 ${euros}€ dépensé</div>
         </div>
         <div class="cl-xp">${pts} XP</div>
@@ -588,7 +600,22 @@ function renderDetail(id) {
         <button class="btn btn-gold" id="multiSpinBtn" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
       </div>
     </div>
-    <button class="btn btn-red btn-sm" id="delBtn" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>`;
+    <button class="btn btn-red btn-sm" id="delBtn" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>
+
+    <!-- COUPONS DU CLIENT -->
+    ${(cl.coupons||[]).length ? `
+    <div style="margin-top:14px">
+      <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--cyan);font-weight:700;margin-bottom:8px">🎫 COUPONS (${(cl.coupons||[]).filter(c=>!c.used).length} actifs)</div>
+      ${(cl.coupons||[]).map((cp,i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(0,0,0,.3);border:1px solid ${cp.used?'rgba(255,255,255,.05)':'rgba(0,245,255,.12)'};border-radius:10px;margin-bottom:6px;opacity:${cp.used?.6:1}">
+          <div style="font-size:1.1rem">${cp.icon||'🎁'}</div>
+          <div style="flex:1">
+            <div style="font-size:.78rem;font-weight:700;color:${cp.used?'var(--dim)':'var(--txt)'}">${cp.name}</div>
+            <div style="font-size:.62rem;color:var(--dim)">${cp.used?'✓ Utilisé':'Actif'}${cp.tombola?' · N°'+cp.tombola:''}</div>
+          </div>
+          <button onclick="deleteCoupon('${id}',${i})" style="background:var(--red);border:none;border-radius:6px;color:#fff;font-size:.65rem;padding:4px 8px;cursor:pointer">🗑</button>
+        </div>`).join('')}
+    </div>` : ''}`;
 
   // Preset click
   box.querySelectorAll('.preset').forEach(p => {
@@ -628,6 +655,25 @@ function renderDetail(id) {
   });
 }
 
+window.adminMarkUsed = async function(clientId, couponId) {
+  const cl = allClients.find(x => x._id === clientId);
+  if (!cl) return;
+  const updated = (cl.coupons||[]).map(c =>
+    c.id === couponId ? { ...c, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : c
+  );
+  await updateDoc(doc(db, 'clients', clientId), { coupons: updated, updatedAt: serverTimestamp() });
+  toast('✓ Coupon marqué utilisé');
+  renderTab('coupons');
+};
+
+function genTombolaNum() {
+  const base = Math.floor(1000 + Math.random() * 9000);
+  const salt = Date.now() % 100;
+  let num = base + salt;
+  if (num > 9999) num = num - 9000;
+  return num;
+}
+
 async function addXP(id) {
   const euros  = parseFloat(document.getElementById('euroInp')?.value) || 0;
   const xpToAdd = Math.floor(euros); // 1€ = 1 XP
@@ -644,6 +690,7 @@ async function addXP(id) {
   let jackpotSpins = 0;
   let simXP = cl.xp || 0;
   let totalRemaining = xpToAdd;
+  let cpSeq = 0; // Séquence unique pour éviter doublons d'IDs
 
   while (totalRemaining > 0) {
     const spaceLeft = maxXP - simXP;
@@ -653,7 +700,7 @@ async function addXP(id) {
       sortedTiers.forEach((t, idx) => {
         const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
         if (m) { jackpotSpins += parseInt(m[1])||1; }
-        else { newCoupons.push({ id:`cp-${Date.now()}-${t.xp}-${idx}-${curLevel}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
+        else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, tombola: genTombolaNum(), type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
       });
       simXP = 0; curLevel++;
       continue;
@@ -666,7 +713,7 @@ async function addXP(id) {
     sortedTiers.filter(t => t.xp > simXP && t.xp <= newSimXP).forEach((t, idx) => {
       const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
       if (m) { jackpotSpins += parseInt(m[1])||1; }
-      else { newCoupons.push({ id:`cp-${Date.now()}-${t.xp}-${idx}-${curLevel}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
+      else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, tombola: genTombolaNum(), type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
     });
 
     simXP = newSimXP;
@@ -828,6 +875,16 @@ function renderSlots(c) {
 // COUPONS TAB — SCANNER QR
 // ═══════════════════════════════════════
 function renderCoupons(c) {
+  // Collecte tous les coupons actifs de tous les clients
+  const allActiveCoupons = [];
+  allClients.forEach(cl => {
+    (cl.coupons||[]).filter(cp => !cp.used).forEach(cp => {
+      allActiveCoupons.push({ ...cp, clientPseudo: cl.pseudo, clientAvatar: cl.avatar||'🎮', clientId: cl._id });
+    });
+  });
+  // Tombe en premier les gagnants tombola
+  allActiveCoupons.sort((a,b) => (b.tombola&&tombolaWinners.some(w=>w.ticket===b.tombola)?1:0) - (a.tombola&&tombolaWinners.some(w=>w.ticket===a.tombola)?1:0));
+
   c.innerHTML = `
     <div class="st">Scanner un QR coupon</div>
     <div class="card" style="margin-bottom:14px">
@@ -842,7 +899,6 @@ function renderCoupons(c) {
         <div style="position:relative;border-radius:12px;overflow:hidden;border:2px solid var(--gold)">
           <video id="scanVideo" style="width:100%;display:block;border-radius:10px" playsinline></video>
           <div style="position:absolute;inset:0;border:3px solid rgba(255,214,10,.4);border-radius:10px;pointer-events:none"></div>
-          <!-- Scan line animation -->
           <div style="position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scan-line 1.5s ease-in-out infinite" id="scanLine"></div>
         </div>
         <button class="btn btn-red btn-sm btn-full" id="stopScanBtn" style="margin-top:8px">✕ Arrêter le scan</button>
@@ -852,6 +908,25 @@ function renderCoupons(c) {
 
     <div class="st">Demandes en cours</div>
     <div id="pendingValidations"></div>
+
+    <!-- TOUS LES COUPONS ACTIFS -->
+    <div class="st" style="margin-top:16px">🎫 Tous les coupons actifs (${allActiveCoupons.length})</div>
+    ${allActiveCoupons.length ? allActiveCoupons.map(cp => {
+      const isTombolaWin = cp.tombola && tombolaWinners.some(w => w.ticket === cp.tombola);
+      return `<div style="background:${isTombolaWin?'linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.1))':'rgba(10,15,30,.8)'};border:1px solid ${isTombolaWin?'var(--gold)':'rgba(255,255,255,.08)'};border-radius:12px;padding:11px 14px;margin-bottom:8px;${isTombolaWin?'animation:winner-pulse 1.5s ease-in-out infinite alternate;':''}" >
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:1.2rem">${cp.clientAvatar}</div>
+          <div style="flex:1">
+            <div style="font-size:.82rem;font-weight:700">${cp.clientPseudo}${isTombolaWin?' 🏆':''}</div>
+            <div style="font-size:.7rem;font-weight:600;color:${isTombolaWin?'var(--gold)':'var(--txt)'}">
+              ${cp.icon||'🎁'} ${cp.name}${cp.tombola?' · N°'+cp.tombola:''}
+            </div>
+            <div style="font-size:.62rem;color:var(--dim)">Gagné le ${cp.earnedAt||''}</div>
+          </div>
+          <button onclick="adminMarkUsed('${cp.clientId}','${cp.id}')" style="background:linear-gradient(135deg,var(--green),var(--cyan));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;padding:6px 10px;cursor:pointer">✓ UTILISÉ</button>
+        </div>
+      </div>`;
+    }).join('') : '<div class="empty-s"><div class="empty-si">🎫</div>Aucun coupon actif</div>'}
 
     <div style="margin-top:16px">
       <div class="st">Valider manuellement (par pseudo)</div>
@@ -1431,6 +1506,213 @@ window.approveAvis = async (id) => {
 window.deleteAvis = async (id) => {
   await deleteDoc(doc(db,'avis',id));
   toast('Avis supprimé');
+};
+
+// ── TOMBOLA ──
+let tombolaWinners = [];
+let tombolaDrawDate = null;
+
+function renderTombola(c) {
+  const tickets = [];
+  const usedNums = new Set();
+  allClients.forEach(cl => {
+    (cl.coupons || []).forEach(cp => {
+      if (cp.tombola && !cp.used) {
+        const isWinner = tombolaWinners.some(w => w.clientId === cl._id && w.ticket === cp.tombola);
+        if (usedNums.has(cp.tombola)) return; // Skip doublons
+        usedNums.add(cp.tombola);
+        tickets.push({ ...cp, clientPseudo: cl.pseudo, clientId: cl._id, clientAvatar: cl.avatar || '🎮', isWinner });
+      }
+    });
+  });
+
+  // Lots pour tirage
+  const lots = window._tombolaLots || [''];
+
+  c.innerHTML = `
+    <div class="st">🎟️ Tombola — ${tickets.length} ticket(s) en jeu</div>
+
+    ${tombolaWinners.length ? `
+    <div style="background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.1));border:2px solid var(--gold);border-radius:16px;padding:14px;margin-bottom:14px">
+      <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);font-weight:900;text-align:center;margin-bottom:10px">🏆 GAGNANTS DU TIRAGE</div>
+      ${tombolaWinners.map((w,i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(0,0,0,.3);border-radius:10px;margin-bottom:6px">
+          <div style="font-size:1.1rem">${w.avatar}</div>
+          <div style="flex:1">
+            <div style="font-size:.82rem;font-weight:700">${w.pseudo} 🏆</div>
+            <div style="font-size:.65rem;color:var(--gold)">N°${w.ticket} · ${w.prize}</div>
+          </div>
+          <button onclick="removeWinner(${i})" style="background:var(--red);border:none;border-radius:6px;color:#fff;font-size:.6rem;padding:4px 8px;cursor:pointer">✕</button>
+        </div>`).join('')}
+      <button onclick="clearAllWinners()" style="width:100%;margin-top:8px;background:var(--red);border:none;border-radius:8px;color:#fff;font-family:'Orbitron',monospace;font-size:.65rem;padding:8px;cursor:pointer">🗑 EFFACER TOUS</button>
+    </div>` : ''}
+
+    <!-- DATE DU TIRAGE -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="lbl">📅 Date du tirage (affiché aux clients)</div>
+      <input type="datetime-local" id="tombolaDateInp" class="inp" value="${tombolaDrawDate ? new Date(tombolaDrawDate).toISOString().slice(0,16) : ''}" style="margin-bottom:8px">
+      <button onclick="saveDrawDate()" style="width:100%;background:linear-gradient(135deg,var(--blue),var(--violet));border:none;border-radius:10px;color:#fff;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:10px;cursor:pointer">💾 SAUVEGARDER LA DATE</button>
+      <div class="fb" id="dateFb"></div>
+    </div>
+
+    <!-- TIRAGE ALÉATOIRE -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="lbl">🎲 Tirage aléatoire</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <label style="font-size:.75rem;color:var(--dim)">Nombre de gagnants :</label>
+        <input type="number" id="nbWinnersInp" min="1" max="10" value="1" style="width:60px;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.2);border-radius:8px;color:var(--txt);font-size:.9rem;padding:6px;text-align:center;outline:none">
+      </div>
+      <div class="lbl">Lots à attribuer (un par ligne) :</div>
+      <div id="tombolaLotsList">
+        ${lots.map((l,i) => `
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input class="inp" style="margin:0;flex:1" placeholder="Ex: 1ère place — Peluche géante" value="${l}" oninput="updateLot(${i}, this.value)">
+            <button onclick="removeLot(${i})" style="background:var(--red);border:none;border-radius:8px;color:#fff;padding:0 10px;cursor:pointer;font-size:.8rem">✕</button>
+          </div>`).join('')}
+      </div>
+      <button onclick="addLot()" style="width:100%;background:rgba(0,245,255,.08);border:1px dashed rgba(0,245,255,.3);border-radius:8px;color:var(--cyan);font-size:.75rem;padding:8px;cursor:pointer;margin-bottom:10px">+ Ajouter un lot</button>
+      <button onclick="tirageTombola()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:12px;color:#000;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;padding:13px;cursor:pointer">🎲 LANCER LE TIRAGE</button>
+    </div>
+
+    <!-- TIRAGE MANUEL -->
+    <div class="st" style="margin-bottom:8px">Désigner manuellement (${tickets.length} tickets)</div>
+    ${tickets.length ? tickets.map(t => `
+      <div style="background:${t.isWinner?'rgba(255,214,10,.12)':'rgba(10,15,30,.8)'};border:1px solid ${t.isWinner?'var(--gold)':'rgba(255,255,255,.08)'};border-radius:12px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:1.2rem">${t.clientAvatar}</div>
+        <div style="flex:1">
+          <div style="font-size:.82rem;font-weight:700">${t.clientPseudo}${t.isWinner?' 🏆':''}</div>
+          <div style="font-size:.68rem;color:var(--dim)">${t.name} · N°${t.tombola}</div>
+        </div>
+        ${!t.isWinner ? `
+          <select id="lot-${t.tombola}" style="background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.2);border-radius:6px;color:var(--txt);font-size:.62rem;padding:4px;max-width:110px">
+            <option value="">— Lot —</option>
+            ${lots.filter(l=>l.trim()).map(l=>`<option value="${l}">${l}</option>`).join('')}
+            <option value="__custom__">Personnalisé…</option>
+          </select>
+          <button onclick="addWinnerManual('${t.clientId}','${t.clientPseudo}','${t.clientAvatar}',${t.tombola},'lot-${t.tombola}')" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;padding:6px 10px;cursor:pointer">🏆</button>
+        ` : '<span style="font-size:.7rem;color:var(--gold);font-weight:700">🏆 GAGNANT</span>'}
+      </div>`).join('') : '<div class="empty-s"><div class="empty-si">🎟️</div>Aucun ticket en jeu</div>'}
+  `;
+
+  // Sync nombre gagnants avec lots
+  document.getElementById('nbWinnersInp')?.addEventListener('input', syncLotsToWinners);
+}
+
+function syncLotsToWinners() {
+  const nb = parseInt(document.getElementById('nbWinnersInp')?.value) || 1;
+  while (window._tombolaLots.length < nb) window._tombolaLots.push('');
+  while (window._tombolaLots.length > nb) window._tombolaLots.pop();
+  rebuildLotsList();
+}
+
+function rebuildLotsList() {
+  const el = document.getElementById('tombolaLotsList');
+  if (!el) return;
+  el.innerHTML = (window._tombolaLots || []).map((l,i) => `
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input class="inp" style="margin:0;flex:1" placeholder="Lot ${i+1}" value="${l}" oninput="updateLot(${i}, this.value)">
+      <button onclick="removeLot(${i})" style="background:var(--red);border:none;border-radius:8px;color:#fff;padding:0 10px;cursor:pointer;font-size:.8rem">✕</button>
+    </div>`).join('');
+}
+
+window.updateLot = (i, v) => { window._tombolaLots[i] = v; };
+window.addLot    = () => { window._tombolaLots.push(''); rebuildLotsList(); };
+window.removeLot = (i) => { window._tombolaLots.splice(i,1); rebuildLotsList(); };
+
+window.saveDrawDate = async function() {
+  const val = document.getElementById('tombolaDateInp')?.value;
+  if (!val) return;
+  tombolaDrawDate = new Date(val).toISOString();
+  await setDoc(doc(db,'config','tombola'), { drawDate: tombolaDrawDate }, { merge:true });
+  const fb = document.getElementById('dateFb');
+  if (fb) { fb.className='fb ok'; fb.textContent='✓ Date sauvegardée !'; }
+  toast('Date du tirage mise à jour');
+};
+
+window.addWinnerManual = async function(clientId, pseudo, avatar, ticket, selectId) {
+  const sel = document.getElementById(selectId);
+  let prize = sel ? sel.value : '';
+  if (!prize || prize === '__custom__') {
+    prize = prompt('Entrez le lot pour ce gagnant :') || 'Lot surprise';
+  }
+  await window.addWinner(clientId, pseudo, avatar, ticket, prize);
+};
+
+window.addWinner = async function(clientId, pseudo, avatar, ticket, prize) {
+  if (tombolaWinners.some(w => w.ticket === ticket)) return; // Anti-doublon
+  tombolaWinners.push({ clientId, pseudo, avatar, ticket, prize });
+  await setDoc(doc(db, 'config', 'tombola'), {
+    winners: tombolaWinners, active: true,
+    drawDate: tombolaDrawDate,
+    updatedAt: serverTimestamp()
+  });
+  await updateDoc(doc(db, 'clients', clientId), { tombolaWinner: true, updatedAt: serverTimestamp() }).catch(()=>{});
+  toast(`🏆 ${pseudo} — N°${ticket} — ${prize}`);
+  renderTab('tombola');
+};
+
+window.removeWinner = async function(idx) {
+  const w = tombolaWinners[idx];
+  tombolaWinners.splice(idx, 1);
+  if (w && !tombolaWinners.some(x => x.clientId === w.clientId)) {
+    await updateDoc(doc(db,'clients',w.clientId), { tombolaWinner: false }).catch(()=>{});
+  }
+  await setDoc(doc(db,'config','tombola'), { winners: tombolaWinners, active: tombolaWinners.length > 0, drawDate: tombolaDrawDate, updatedAt: serverTimestamp() });
+  renderTab('tombola');
+};
+
+window.clearAllWinners = async function() {
+  for (const w of tombolaWinners) {
+    await updateDoc(doc(db,'clients',w.clientId), { tombolaWinner: false }).catch(()=>{});
+  }
+  tombolaWinners = [];
+  await setDoc(doc(db,'config','tombola'), { winners:[], active:false, drawDate: tombolaDrawDate });
+  toast('Tous les résultats effacés');
+  renderTab('tombola');
+};
+
+window.tirageTombola = async function() {
+  const nb = parseInt(document.getElementById('nbWinnersInp')?.value) || 1;
+  const lots = (window._tombolaLots || []).filter(l => l.trim());
+
+  // Tickets disponibles (pas déjà gagnants, numéros uniques)
+  const tickets = [];
+  const usedNums = new Set(tombolaWinners.map(w => w.ticket));
+  allClients.forEach(cl => {
+    (cl.coupons || []).forEach(cp => {
+      if (cp.tombola && !cp.used && !usedNums.has(cp.tombola)) {
+        tickets.push({ ...cp, clientPseudo: cl.pseudo, clientId: cl._id, clientAvatar: cl.avatar || '🎮' });
+        usedNums.add(cp.tombola); // Empêche même num deux fois
+      }
+    });
+  });
+
+  if (!tickets.length) { toast('Aucun ticket restant !'); return; }
+  if (tickets.length < nb) { toast(`Seulement ${tickets.length} ticket(s) disponible(s) !`); return; }
+
+  // Mélange et tire nb gagnants
+  const shuffled = [...tickets].sort(() => Math.random() - 0.5);
+  const winners = shuffled.slice(0, nb);
+
+  for (let i = 0; i < winners.length; i++) {
+    const w = winners[i];
+    const prize = lots[i] || lots[0] || 'Lot surprise';
+    await window.addWinner(w.clientId, w.clientPseudo, w.clientAvatar, w.tombola, prize);
+  }
+  toast(`🏆 ${winners.length} gagnant(s) tiré(s) !`);
+};
+
+window.deleteCoupon = async function(clientId, couponIdx) {
+  const cl = allClients.find(x => x._id === clientId);
+  if (!cl) return;
+  const coupon = cl.coupons[couponIdx];
+  if (!confirm(`Supprimer le coupon "${coupon?.name}" ?`)) return;
+  const newCoupons = [...(cl.coupons||[])];
+  newCoupons.splice(couponIdx, 1);
+  await updateDoc(doc(db, 'clients', clientId), { coupons: newCoupons, updatedAt: serverTimestamp() });
+  // NE PAS toucher au statut tombola — le badge et le classement gagnant restent
+  toast('✓ Coupon supprimé — badge tombola conservé');
+  renderDetail(clientId);
 };
 
 function exportData() {

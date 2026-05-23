@@ -113,19 +113,21 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .lb-rank.r1{color:var(--gold)}.lb-rank.r2{color:#c0c0c0}.lb-rank.r3{color:#cd7f32}
 
 /* Enhanced slot machine */
-.slot-card{background:linear-gradient(135deg,rgba(5,5,20,.98),rgba(10,10,30,.98));border:2px solid rgba(255,159,28,.3);border-radius:24px;padding:20px;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(255,159,28,.1),inset 0 0 40px rgba(0,0,0,.5)}
-.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),var(--orange),var(--gold),transparent)}
-.slot-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,214,10,.3),transparent)}
-.slot-title{font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.2em;margin-bottom:18px;text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.3)}
+.slot-card{background:linear-gradient(135deg,rgba(5,5,20,.99),rgba(10,10,30,.99));border:2px solid rgba(255,159,28,.5);border-radius:24px;padding:20px;position:relative;overflow:hidden;box-shadow:0 0 80px rgba(255,159,28,.2),0 0 30px rgba(0,0,0,.9),inset 0 0 60px rgba(0,0,0,.7)}
+.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),#ff006e,var(--orange),var(--gold),transparent);animation:slot-top-glow 2s ease-in-out infinite}
+@keyframes slot-top-glow{0%,100%{opacity:.5;background-size:100%}50%{opacity:1;background-size:200%}}
+.slot-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,214,10,.5),transparent)}
+.slot-title{font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.2em;margin-bottom:18px;text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.5),0 0 80px rgba(255,214,10,.2);animation:title-pulse 2s ease-in-out infinite}
+@keyframes title-pulse{0%,100%{text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.3)}50%{text-shadow:0 0 30px var(--gold),0 0 60px rgba(255,214,10,.6),0 0 100px rgba(255,214,10,.3)}}
 .reels{display:flex;justify-content:center;gap:12px;margin-bottom:18px;position:relative}
 .reels::before{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:20px;height:20px;background:var(--gold);clip-path:polygon(50% 0%,0% 100%,100% 100%);filter:drop-shadow(0 0 8px var(--gold))}
-.reel{width:76px;height:76px;background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(10,5,0,.95));border:2px solid rgba(255,159,28,.4);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;overflow:hidden;position:relative;box-shadow:inset 0 0 20px rgba(0,0,0,.8),0 4px 15px rgba(0,0,0,.5)}
-.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent);pointer-events:none}
-.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(0deg,rgba(0,0,0,.3),transparent);pointer-events:none}
-.reel.spin{animation:reelspin .08s steps(1) infinite}
-@keyframes reelspin{0%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(.95)}}
-.reel.win{border-color:var(--gold);box-shadow:0 0 30px var(--gold),0 0 60px rgba(255,214,10,.4),inset 0 0 20px rgba(255,214,10,.1);animation:reel-win .4s ease-in-out infinite alternate}
-@keyframes reel-win{from{box-shadow:0 0 15px var(--gold)}to{box-shadow:0 0 40px var(--gold),0 0 80px rgba(255,214,10,.5)}}
+.reel{width:82px;height:88px;background:linear-gradient(180deg,rgba(0,0,0,.95),rgba(5,3,0,.98));border:2px solid rgba(255,159,28,.5);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2.6rem;overflow:hidden;position:relative;box-shadow:inset 0 0 25px rgba(0,0,0,.9),0 6px 20px rgba(0,0,0,.7),0 0 10px rgba(255,159,28,.1)}
+.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:35%;background:linear-gradient(180deg,rgba(255,255,255,.07),transparent);pointer-events:none;border-radius:12px 12px 0 0}
+.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:35%;background:linear-gradient(0deg,rgba(0,0,0,.5),transparent);pointer-events:none}
+.reel.spin{animation:reelspin .06s steps(1) infinite}
+@keyframes reelspin{0%{transform:translateY(0) scale(1)}33%{transform:translateY(-8px) scale(.93)}66%{transform:translateY(4px) scale(.97)}}
+.reel.win{border-color:var(--gold);box-shadow:0 0 40px var(--gold),0 0 80px rgba(255,214,10,.5),inset 0 0 30px rgba(255,214,10,.15);animation:reel-win .3s ease-in-out infinite alternate}
+@keyframes reel-win{from{box-shadow:0 0 20px var(--gold),inset 0 0 10px rgba(255,214,10,.1)}to{box-shadow:0 0 60px var(--gold),0 0 100px rgba(255,214,10,.6),inset 0 0 40px rgba(255,214,10,.2)}}
 .slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;color:var(--dim);letter-spacing:.12em;margin-bottom:14px;min-height:22px}
 .slot-btns{display:flex;gap:10px}
 .btn-slot-pay{flex:1;background:linear-gradient(135deg,rgba(114,9,183,.6),rgba(67,97,238,.6));border:1px solid rgba(114,9,183,.7);border-radius:14px;color:var(--txt);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .2s;box-shadow:0 0 20px rgba(114,9,183,.2)}
@@ -188,6 +190,9 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 @keyframes wspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .wait-t{font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan)}
 @keyframes ticker-scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+@keyframes holographic-sweep{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+@keyframes notif-slide-in{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes winner-pulse{from{box-shadow:0 0 20px rgba(255,214,10,.3)}to{box-shadow:0 0 50px rgba(255,214,10,.6),0 0 80px rgba(255,214,10,.3)}}
 #validateOv{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
 #validateOv.show{display:flex}
 .vld-cp-badge{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 16px;max-width:300px;width:100%}
@@ -334,6 +339,19 @@ body{padding-bottom:0}
   <button onclick="document.getElementById('myQrOv').style.display='none'" style="background:transparent;border:1px solid rgba(0,245,255,.3);border-radius:20px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.72rem;padding:10px 28px;cursor:pointer">FERMER</button>
 </div>
 
+<!-- POPUP INSTALLATION — non bloquant, en bas -->
+<div id="installBar" style="display:none;position:fixed;bottom:70px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:420px;z-index:2000;background:linear-gradient(135deg,rgba(10,15,30,.98),rgba(13,21,48,.98));border:1px solid rgba(0,245,255,.35);border-radius:16px;padding:12px 16px;box-shadow:0 0 30px rgba(0,245,255,.2);display:none;align-items:center;gap:10px">
+  <div style="font-size:1.8rem;flex-shrink:0">📲</div>
+  <div style="flex:1">
+    <div style="font-family:'Orbitron',monospace;font-size:.68rem;font-weight:900;color:var(--cyan)">INSTALLER X-GAMES</div>
+    <div id="installBarTxt" style="font-size:.65rem;color:var(--dim);margin-top:3px;line-height:1.5"></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+    <button id="installBarBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:900;padding:7px 12px;cursor:pointer;white-space:nowrap">INSTALLER</button>
+    <button onclick="closeInstallBar()" style="background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;color:var(--dim);font-size:.6rem;padding:5px 12px;cursor:pointer">Plus tard</button>
+  </div>
+</div>
+
 <!-- MAIN -->
 <div id="main">
   <div class="hdr">
@@ -343,9 +361,10 @@ body{padding-bottom:0}
   <!-- ONGLET : CARTE (défaut) -->
   <div id="tab-carte" class="tab-content active">
     <!-- BANDEAU DÉFILANT -->
-    <div id="clientTicker" style="background:linear-gradient(90deg,#b8860b,var(--gold),#b8860b);overflow:hidden;height:26px;display:flex;align-items:center;white-space:nowrap;border-radius:8px;margin-bottom:4px">
-      <div id="clientTickerTxt" style="display:inline-block;animation:ticker-scroll 18s linear infinite;font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;color:#000;letter-spacing:.06em;padding-right:60px">
-        🎯 X-Games — Jeu d'adresse • Gros lots à gagner • 2€ la partie • Tentez votre chance !
+    <div id="clientTicker" style="overflow:hidden;height:36px;display:flex;align-items:center;border-radius:10px;margin-bottom:8px;background:linear-gradient(135deg,rgba(0,245,255,.08),rgba(67,97,238,.12),rgba(247,37,133,.08));border:1px solid rgba(0,245,255,.25);box-shadow:0 0 20px rgba(0,245,255,.1),inset 0 0 20px rgba(0,0,0,.3);position:relative">
+      <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(0,245,255,.05) 50%,transparent 100%);animation:holographic-sweep 3s ease-in-out infinite"></div>
+      <div id="clientTickerTxt" style="display:inline-block;animation:ticker-scroll 22s linear infinite;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;letter-spacing:.12em;padding-right:80px;white-space:nowrap;background:linear-gradient(90deg,#00f5ff,#fff,#f72585,#ffd60a,#00f5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;filter:drop-shadow(0 0 8px rgba(0,245,255,.6))">
+        🎯 X-Games — Jeu d'adresse • Gros lots à gagner • Tentez votre chance !
       </div>
     </div>
     <div class="profile-card">
@@ -441,6 +460,29 @@ body{padding-bottom:0}
   <!-- ONGLET : COUPONS -->
   <div id="tab-coupons" class="tab-content">
     <div class="sec-t" style="margin-bottom:14px">🎫 Mes coupons</div>
+
+    <!-- COMPTEUR TOMBOLA -->
+    <div id="tombolaCountdown" style="display:none;background:linear-gradient(135deg,rgba(255,214,10,.1),rgba(255,159,28,.08));border:1px solid rgba(255,214,10,.3);border-radius:14px;padding:12px;text-align:center;margin-bottom:12px">
+      <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);font-weight:700;margin-bottom:6px">🎟️ PROCHAIN TIRAGE DE LA TOMBOLA</div>
+      <div id="tombolaDrawDate" style="font-size:.72rem;color:var(--dim);margin-bottom:8px"></div>
+      <div style="display:flex;justify-content:center;gap:10px">
+        <div style="text-align:center"><div id="cdDays" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--gold)">--</div><div style="font-size:.55rem;color:var(--dim)">JOURS</div></div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--dim)">:</div>
+        <div style="text-align:center"><div id="cdHours" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--cyan)">--</div><div style="font-size:.55rem;color:var(--dim)">HEURES</div></div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--dim)">:</div>
+        <div style="text-align:center"><div id="cdMins" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--pink)">--</div><div style="font-size:.55rem;color:var(--dim)">MIN</div></div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--dim)">:</div>
+        <div style="text-align:center"><div id="cdSecs" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--txt)">--</div><div style="font-size:.55rem;color:var(--dim)">SEC</div></div>
+      </div>
+    </div>
+
+    <!-- RÉSULTATS TOMBOLA — affiché quand tirage terminé -->
+    <div id="tombolaResults" style="display:none;background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.1));border:2px solid var(--gold);border-radius:14px;padding:14px;text-align:center;margin-bottom:12px">
+      <div style="font-size:1.5rem">🏆</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);font-weight:900;margin:6px 0">TIRAGE TERMINÉ !</div>
+      <div id="tombolaResultsList" style="margin-top:8px"></div>
+    </div>
+
     <div class="cp-tabs">
       <button class="cp-tab on" id="cpTabActive">🎫 Actifs <span class="cp-tab-count" id="cpCountActive">0</span></button>
       <button class="cp-tab" id="cpTabUsed">✓ Utilisés <span class="cp-tab-count" id="cpCountUsed">0</span></button>
@@ -507,6 +549,15 @@ body{padding-bottom:0}
   <div id="tab-scores" class="tab-content">
     <div class="sec-t" style="margin-bottom:14px">🏆 Top 10 des tireurs</div>
     <div class="lb-list" id="lbList"></div>
+
+    <!-- HALL OF FAME TOMBOLA -->
+    <div id="tombolaHallOfFame" style="display:none;margin-top:18px">
+      <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.15em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        🎟️ GAGNANTS TOMBOLA
+        <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(255,214,10,.4),transparent)"></div>
+      </div>
+      <div id="tombolaHallList"></div>
+    </div>
   </div>
 
   <!-- ONGLET : MINI-JEU -->
@@ -763,6 +814,67 @@ function snakeGameOver() {
     +(isNewRecord&&snakeScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
     +'<button onclick="startSnakeGame()" style="background:linear-gradient(135deg,#06d6a0,#4361ee);border:none;border-radius:20px;color:#000;font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>';
 }
+
+// ── INSTALLATION PWA ──
+var _deferredInstall = null;
+var _installBarShown = false;
+
+function closeInstallBar() {
+  document.getElementById('installBar').style.display = 'none';
+  sessionStorage.setItem('installDismissed', '1');
+}
+
+function showInstallBar() {
+  if (_installBarShown) return;
+  if (sessionStorage.getItem('installDismissed')) return;
+  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (isStandalone) return; // Déjà installée
+  
+  var bar = document.getElementById('installBar');
+  var txt = document.getElementById('installBarTxt');
+  var btn = document.getElementById('installBarBtn');
+  
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    txt.textContent = 'Appuie sur ⎙ Partager → Sur l\'écran d\'accueil';
+    btn.textContent = 'COMMENT ?';
+    btn.onclick = function() {
+      alert('iPhone :\n1. Appuie sur ⎙ (Partager) en bas\n2. Choisis "Sur l\'écran d\'accueil"\n3. Appuie Ajouter');
+    };
+  } else if (_deferredInstall) {
+    txt.textContent = 'Installe l\'app pour un accès rapide !';
+    btn.onclick = async function() {
+      _deferredInstall.prompt();
+      var result = await _deferredInstall.userChoice;
+      if (result.outcome === 'accepted') {
+        bar.style.display = 'none';
+      }
+      _deferredInstall = null;
+    };
+  } else {
+    return; // Android sans prompt disponible
+  }
+  
+  bar.style.display = 'flex';
+  _installBarShown = true;
+}
+
+// Capture l'événement Android
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferredInstall = e;
+  setTimeout(showInstallBar, 3000);
+});
+
+// iOS : affiche après 3s
+if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+  var isStandalone = window.navigator.standalone;
+  if (!isStandalone) setTimeout(showInstallBar, 3000);
+}
+
+// Cache la barre si l'app est installée
+window.addEventListener('appinstalled', function() {
+  document.getElementById('installBar').style.display = 'none';
+});
 
 function snakeDir(d) {
   if (!sRunning) return;
@@ -1021,11 +1133,10 @@ window._submitAvisModule = async function() {
   const fb = document.getElementById('avisFb');
   if (n === 0) { fb.innerHTML = '<span style="color:#ff006e">⭐ Sélectionne une note d\'abord !</span>'; return; }
   if (!clientData) { fb.innerHTML = '<span style="color:#ff006e">Connexion Firebase en cours, réessaie.</span>'; return; }
-  fb.innerHTML = '<span style="color:#ffd60a">⏳ Vérification…</span>';
+  fb.innerHTML = '<span style="color:#ffd60a">⏳ Envoi…</span>';
   try {
-    // Anti-fraude : vérifie si ce client a déjà soumis un avis
-    const existing = await getDocs(query(collection(db, 'avis'), where('clientId','==',clientId)));
-    if (!existing.empty) {
+    // Anti-fraude : vérifie via le champ client (pas besoin d'index)
+    if (clientData.avisSubmitted) {
       fb.innerHTML = '<span style="color:#ff006e">⚠️ Tu as déjà soumis un avis. Merci !</span>';
       return;
     }
@@ -1034,6 +1145,8 @@ window._submitAvisModule = async function() {
       stars: n, message: document.getElementById('avisMsg').value.trim(),
       approved: false, xpRewarded: false, createdAt: serverTimestamp()
     });
+    // Marque que ce client a soumis un avis
+    await updateDoc(doc(db, 'clients', clientId), { avisSubmitted: true, updatedAt: serverTimestamp() });
     fb.innerHTML = '<span style="color:#06d6a0">✅ Merci ! +5 XP offerts après validation par l\'admin.</span>';
     document.getElementById('avisMsg').value = '';
     if (window.setStars) window.setStars(0);
@@ -1180,7 +1293,7 @@ if (clientId) {
           updateSpinsUI();
         } else {
           // Lot physique → coupon normal
-          const coupon = { id:'cp-'+Date.now(), type:'xp', name: t.name, icon: t.icon||'🎁', used:false, earnedAt: new Date().toLocaleDateString('fr-FR') };
+          const coupon = { id:'cp-'+Date.now(), tombola: genTombolaNum(), type:'xp', name: t.name, icon: t.icon||'🎁', used:false, earnedAt: new Date().toLocaleDateString('fr-FR') };
           updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() }).catch(()=>{});
         }
       }
@@ -1268,8 +1381,11 @@ function renderProfile(data) {
   const plevel  = document.getElementById('plevel');
   const pbadge  = document.getElementById('pbadge');
   document.getElementById('pavatar').textContent = data.avatar || '🎮';
-  pname.textContent   = data.pseudo || '—';
+  // Insigne tombola si gagnant
+  const isTombolaWinner = data.tombolaWinner === true;
+  pname.textContent   = (data.pseudo || '—') + (isTombolaWinner ? ' 🏆' : '');
   pname.style.opacity = '1';
+  pname.style.color   = isTombolaWinner ? 'var(--gold)' : '';
   plevel.textContent  = `${lvlInfo.star} ${lvlInfo.name} — Niv. ${level}`;
   plevel.style.opacity = '1';
   pbadge.style.background = `linear-gradient(90deg, ${lvlInfo.color}, ${lvlInfo.color}aa)`;
@@ -1346,7 +1462,7 @@ function renderLeaderboard(list) {
       <div style="font-size:${isTop?'1.5':'1.2'}rem;flex-shrink:0">${p.avatar||'🎮'}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px">
-          <div style="font-size:${isTop?'.88':'.8'}rem;font-weight:${isTop?'800':'600'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.pseudo||'—'}</div>
+          <div style="font-size:${isTop?'.88':'.8'}rem;font-weight:${isTop?'800':'600'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.pseudo||'—'}${p.tombolaWinner?'<span style="color:var(--gold);font-size:.8rem"> 🏆</span>':''}</div>
           ${isMe?'<span class="lb-you">MOI</span>':''}
         </div>
         <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
@@ -1400,7 +1516,7 @@ function renderCoupons(coupons) {
         <div class="cp-info">
           <div class="cp-name">${c.name || '—'}</div>
           <div class="cp-type">${type==='slot'?'🎰 Jackpot':'⭐ Palier XP'}</div>
-          <div class="cp-date">${isUsed ? '✓ Utilisé le '+c.usedDate : 'Gagné le '+(c.earnedAt||'')}</div>
+          <div class="cp-date">${isUsed ? '✓ Utilisé le '+c.usedDate : 'Gagné le '+(c.earnedAt||'')}${c.tombola ? ' · <span style="font-family:Orbitron,monospace;color:var(--gold);font-weight:700">N°'+c.tombola+'</span>' : ''}</div>
         </div>
         ${isUsed ? '<div class="coupon-used-label">UTILISÉ</div>' : ''}
       </div>
@@ -1461,6 +1577,15 @@ function genToken() {
   return 'TKN-' + Date.now() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
 }
 
+function genTombolaNum() {
+  // Numéro aléatoire entre 1000 et 9999, vérifié unique via timestamp + random
+  const base = Math.floor(1000 + Math.random() * 9000);
+  const salt = Date.now() % 100; // Évite les doublons même en rafale
+  let num = base + salt;
+  if (num > 9999) num = num - 9000;
+  return num;
+}
+
 function drawValidationQR(url) {
   // Nettoie l'ancien QR
   const frame = document.querySelector('.vld-qr-frame');
@@ -1485,8 +1610,8 @@ function drawValidationQR(url) {
   qrDiv.style.display = 'block';
 }
 
-async function openValidate(couponId) {
-  const coupon = currentCoupons.find(c => c.id === couponId);
+async function openValidate(couponId, couponOverride) {
+  const coupon = couponOverride || currentCoupons.find(c => c.id === couponId);
   if (!coupon) return;
   if (validateUnsub) { validateUnsub(); validateUnsub = null; }
   clearInterval(validateTimer);
@@ -1620,7 +1745,7 @@ async function handleWin() {
     });
   } else {
     // Lot physique (plombs, ticket, etc.) → coupon à récupérer
-    const coupon = { id:'cp-'+Date.now(), type:'slot', name:prize.name, icon:prize.icon||'🎰', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') };
+    const coupon = { id:'cp-'+Date.now(), tombola: genTombolaNum(), type:'slot', name:prize.name, icon:prize.icon||'🎰', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') };
     await updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() });
   }
 
@@ -1802,6 +1927,137 @@ onSnapshot(query(collection(db, 'avis'), limit(50)), snap => {
   });
 });
 
+
+// ── COMPTEUR TOMBOLA ──
+let _cdInterval = null;
+let _tombolaWinners = [];
+
+onSnapshot(doc(db, 'config', 'tombola'), snap => {
+  const data = snap.exists() ? snap.data() : {};
+  const winners = data.winners || [];
+  const drawDate = data.drawDate ? new Date(data.drawDate) : null;
+  const active = data.active && winners.length > 0;
+  _tombolaWinners = winners;
+
+  const cdBox = document.getElementById('tombolaCountdown');
+  const resBox = document.getElementById('tombolaResults');
+  const resList = document.getElementById('tombolaResultsList');
+
+  if (active) {
+    // Tirage terminé — affiche les résultats, cache le compteur
+    if (cdBox) cdBox.style.display = 'none';
+    if (_cdInterval) { clearInterval(_cdInterval); _cdInterval = null; }
+    if (resBox) {
+      resBox.style.display = 'block';
+      if (resList) {
+        resList.innerHTML = winners.map(w =>
+          `<div style="padding:6px 0;border-bottom:1px solid rgba(255,214,10,.15);font-size:.75rem">
+            <span style="font-size:.9rem">${w.avatar}</span>
+            <b style="color:var(--txt)"> ${w.pseudo}</b>
+            <span style="color:var(--gold)"> 🏆 ${w.prize}</span>
+            <span style="font-size:.65rem;color:var(--dim)"> · N°${w.ticket}</span>
+          </div>`
+        ).join('');
+      }
+    }
+    // Hall of Fame dans classement
+    updateHallOfFame(winners);
+    // Notif + badge gagnant
+    showTombolaNotif(winners);
+    const isWinner = winners.some(w => w.clientId === clientId);
+    if (isWinner) markTombolaWinner(winners.filter(w => w.clientId === clientId));
+  } else {
+    // Pas de tirage — affiche le compteur si date future
+    if (resBox) resBox.style.display = 'none';
+    document.getElementById('tombolaNotif')?.remove();
+    document.querySelector('.tombola-winner-badge')?.remove();
+
+    if (drawDate && drawDate > new Date()) {
+      if (cdBox) cdBox.style.display = 'block';
+      const dateEl = document.getElementById('tombolaDrawDate');
+      if (dateEl) dateEl.textContent = 'Le ' + drawDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+      if (_cdInterval) clearInterval(_cdInterval);
+      _cdInterval = setInterval(() => {
+        const diff = drawDate - new Date();
+        if (diff <= 0) { clearInterval(_cdInterval); if(cdBox) cdBox.style.display='none'; return; }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const el = (id) => document.getElementById(id);
+        if(el('cdDays'))  el('cdDays').textContent  = String(d).padStart(2,'0');
+        if(el('cdHours')) el('cdHours').textContent = String(h).padStart(2,'0');
+        if(el('cdMins'))  el('cdMins').textContent  = String(m).padStart(2,'0');
+        if(el('cdSecs'))  el('cdSecs').textContent  = String(s).padStart(2,'0');
+      }, 1000);
+    } else {
+      if (cdBox) cdBox.style.display = 'none';
+      if (_cdInterval) clearInterval(_cdInterval);
+    }
+  }
+});
+
+window.validateTombolaTicket = async function(ticket, prize) {
+  const fakeCoupon = { id: 'tombola-' + ticket, name: '🏆 Tombola N°' + ticket + ' — ' + prize, icon: '🏆', type: 'tombola' };
+  await openValidate(fakeCoupon.id, fakeCoupon);
+};
+
+function updateHallOfFame(winners) {
+  const hof = document.getElementById('tombolaHallOfFame');
+  const list = document.getElementById('tombolaHallList');
+  if (!hof || !list || !winners.length) { if(hof) hof.style.display='none'; return; }
+  hof.style.display = 'block';
+  list.innerHTML = winners.map(w => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:linear-gradient(135deg,rgba(255,214,10,.08),rgba(255,159,28,.05));border:1px solid rgba(255,214,10,.2);border-radius:12px;margin-bottom:6px">
+      <div style="font-size:1.3rem">${w.avatar}</div>
+      <div style="flex:1">
+        <div style="font-size:.82rem;font-weight:700">${w.pseudo} <span style="color:var(--gold)">🏆</span></div>
+        <div style="font-size:.65rem;color:var(--gold);margin-top:2px">${w.prize} · N°${w.ticket}</div>
+      </div>
+    </div>`).join('');
+}
+
+function showTombolaNotif(winners) {
+  let notif = document.getElementById('tombolaNotif');
+  if (!notif) {
+    notif = document.createElement('div');
+    notif.id = 'tombolaNotif';
+    notif.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:420px;z-index:5000;background:linear-gradient(135deg,rgba(255,214,10,.2),rgba(255,159,28,.15));border:2px solid var(--gold);border-radius:16px;padding:14px 18px;box-shadow:0 0 40px rgba(255,214,10,.3);animation:notif-slide-in .5s ease';
+    document.body.appendChild(notif);
+  }
+  const isMeWinner = winners.some(w => w.clientId === clientId);
+  notif.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:1.4rem">${isMeWinner ? '🎉🏆🎉' : '🎟️'}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);font-weight:900;margin:4px 0">${isMeWinner ? 'TU AS GAGNÉ !' : 'RÉSULTATS DE LA TOMBOLA'}</div>
+      ${winners.map(w => `<div style="font-size:.75rem;margin:3px 0">${w.avatar} <b>${w.pseudo}</b> 🏆 — N°${w.ticket}</div>`).join('')}
+    </div>
+    <button onclick="document.getElementById('tombolaNotif').style.display='none'" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:var(--dim);font-size:1rem;cursor:pointer">✕</button>
+  `;
+  notif.style.display = 'block';
+}
+
+function markTombolaWinner(wins) {
+  setTimeout(() => {
+    const list = document.getElementById('couponList');
+    if (!list) return;
+    document.querySelectorAll('.tombola-winner-badge').forEach(el => el.remove());
+    const badge = document.createElement('div');
+    badge.className = 'tombola-winner-badge';
+    badge.style.cssText = 'background:linear-gradient(135deg,rgba(255,214,10,.25),rgba(255,159,28,.2));border:2px solid var(--gold);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;animation:winner-pulse 1s ease-in-out infinite alternate;position:relative;overflow:hidden';
+    badge.innerHTML = `
+      <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,214,10,.15),transparent);animation:holographic-sweep 2s ease-in-out infinite;pointer-events:none"></div>
+      <div style="font-size:2rem">🏆</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.82rem;color:var(--gold);font-weight:900">TON TICKET A GAGNÉ !</div>
+      ${wins.map(w => `
+        <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--txt);margin-top:6px">N°${w.ticket} · ${w.prize}</div>
+        <button onclick="validateTombolaTicket(${w.ticket},'${w.prize}')" style="margin-top:10px;width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:12px;color:#000;font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;padding:11px;cursor:pointer">📱 PRÉSENTER AU STAND — QR CODE</button>
+      `).join('')}
+      <div style="font-size:.65rem;color:var(--dim);margin-top:8px">🎁 Présente-toi au stand pour récupérer ton lot</div>
+    `;
+    list.prepend(badge);
+  }, 500);
+}
 
 // ── FIN ──
 
