@@ -757,7 +757,7 @@ async function addXP(id) {
     sortedTiers.filter(t => t.xp > simXP && t.xp <= newSimXP).forEach((t, idx) => {
       const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
       if (m) { jackpotSpins += parseInt(m[1])||1; }
-      else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, tombola: genTombolaNum(), type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
+      else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
     });
 
     // Si on atteint exactement maxXP → on repart à 0 au prochain tour
@@ -1569,7 +1569,7 @@ function renderTombola(c) {
   const usedNums = new Set();
   allClients.forEach(cl => {
     (cl.coupons || []).forEach(cp => {
-      if (cp.tombola && !cp.used) {
+      if (cp.type === 'tombola' && !cp.used) {
         const isWinner = tombolaWinners.some(w => w.clientId === cl._id && w.ticket === cp.tombola);
         if (usedNums.has(cp.tombola)) return;
         usedNums.add(cp.tombola);
@@ -1721,9 +1721,9 @@ window.toggleTombola = async function() {
   if (enabled) {
     toast('⏳ Suppression des tickets en cours…');
     for (const cl of allClients) {
-      const hasTickets = (cl.coupons||[]).some(c => c.tombola && !c.used);
+      const hasTickets = (cl.coupons||[]).some(c => c.type === 'tombola' && !c.used);
       if (hasTickets) {
-        const cleaned = (cl.coupons||[]).filter(c => !c.tombola || c.used);
+        const cleaned = (cl.coupons||[]).filter(c => !(c.type === 'tombola' && !c.used));
         await updateDoc(doc(db,'clients',cl._id), { coupons: cleaned, updatedAt: serverTimestamp() }).catch(()=>{});
       }
     }
