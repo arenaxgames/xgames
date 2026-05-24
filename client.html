@@ -1974,6 +1974,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
   const active = data.active && winners.length > 0;
   const lots = (data.tombolaLots || []).filter(l => l && l.trim());
   const enabled = data.tombolaEnabled !== false;
+  const ticketPrice = data.ticketPrice || 0;
   _tombolaWinners = winners;
 
   // Si tombola désactivée → tout cacher
@@ -2039,6 +2040,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
         if (content) content.innerHTML = `
           <div style="font-size:1.3rem">🎟️</div>
           <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;letter-spacing:.12em;margin:6px 0">TOMBOLA X-GAMES</div>
+          ${ticketPrice > 0 ? `<div style="background:linear-gradient(135deg,rgba(255,214,10,.2),rgba(255,159,28,.15));border:1px solid rgba(255,214,10,.4);border-radius:10px;padding:8px 14px;margin:8px 0;display:inline-block"><span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--gold)">${ticketPrice}€</span><span style="font-size:.65rem;color:var(--dim);margin-left:6px">/ ticket</span></div>` : ''}
           ${lots.length ? `
             <div style="margin:8px 0;padding:8px;background:rgba(0,0,0,.3);border-radius:10px">
               <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);margin-bottom:5px">🎁 LOTS À GAGNER</div>
@@ -2066,7 +2068,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
               <div style="font-size:.5rem;color:var(--dim)">SEC</div>
             </div>
           </div>
-          <div style="font-size:.62rem;color:var(--dim);margin-top:8px">🎫 Récupère ton ticket en jouant !</div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:8px">🎟️ Achetez votre ticket tombola au stand !${ticketPrice > 0 ? `<span style="color:var(--gold);font-weight:700;font-size:.72rem"> ${ticketPrice}€</span>` : ''}</div>
         `;
         // Lance le décompte dans la box accueil
         if (_cdInterval) clearInterval(_cdInterval);
@@ -2099,11 +2101,12 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
         if (content) content.innerHTML = `
           <div style="font-size:1.3rem">🎟️</div>
           <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;margin:6px 0">TOMBOLA X-GAMES</div>
+          ${ticketPrice > 0 ? `<div style="background:linear-gradient(135deg,rgba(255,214,10,.2),rgba(255,159,28,.15));border:1px solid rgba(255,214,10,.4);border-radius:10px;padding:8px 14px;margin:8px 0;display:inline-block"><span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--gold)">${ticketPrice}€</span><span style="font-size:.65rem;color:var(--dim);margin-left:6px">/ ticket</span></div>` : ''}
           <div style="margin:8px 0;padding:8px;background:rgba(0,0,0,.3);border-radius:10px">
             <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);margin-bottom:5px">🎁 LOTS À GAGNER</div>
             ${lots.map(l=>`<div style="font-size:.72rem;color:var(--txt);margin:3px 0">✦ ${l}</div>`).join('')}
           </div>
-          <div style="font-size:.62rem;color:var(--dim);margin-top:6px">🎫 Récupère ton ticket en jouant !</div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:6px">🎟️ Achetez votre ticket tombola au stand !${ticketPrice > 0 ? `<span style="color:var(--gold);font-weight:700;font-size:.72rem"> ${ticketPrice}€</span>` : ''}</div>
         `;
       } else if (homeBox) {
         homeBox.style.display = 'none';

@@ -461,11 +461,13 @@ function userIsTyping() {
   // Handle QR scan from URL
   // Listener tombola winners
   window._tombolaLots = [''];
+  window._tombolaTicketPrice = 0;
   onSnapshot(doc(db, 'config', 'tombola'), snap => {
     if (snap.exists()) {
       tombolaWinners = snap.data().winners || [];
       tombolaDrawDate = snap.data().drawDate || null;
       window._tombolaEnabled = snap.data().tombolaEnabled !== false;
+      window._tombolaTicketPrice = snap.data().ticketPrice || 0;
     }
     if (userIsTyping()) return;
     if (curTab === 'tombola') renderTab('tombola');
@@ -613,8 +615,12 @@ function renderDetail(id) {
 
     <!-- DONNER UN TICKET TOMBOLA -->
     <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:12px;padding:12px;margin-top:8px">
-      <div style="font-size:.68rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎟️ Donner un ticket tombola</div>
-      <button onclick="giveTombolaTicket('${id}')" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;padding:10px;cursor:pointer">🎟️ DONNER 1 TICKET</button>
+      <div style="font-size:.68rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎟️ Vendre un ticket tombola</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <label style="font-size:.72rem;color:var(--dim);white-space:nowrap">Prix (€) :</label>
+        <input type="number" id="tombolaPriceInp" min="0" step="0.5" value="1" style="width:70px;background:rgba(0,0,0,.5);border:1px solid rgba(255,214,10,.3);border-radius:8px;color:var(--txt);font-size:.9rem;padding:6px;text-align:center;outline:none">
+      </div>
+      <button onclick="giveTombolaTicket('${id}')" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;padding:10px;cursor:pointer">🎟️ VENDRE 1 TICKET</button>
       <div class="fb" id="tombolaTicketFb" style="margin-top:6px"></div>
     </div>
 
@@ -675,20 +681,25 @@ window.giveTombolaTicket = async function(clientId) {
   const cl = allClients.find(x => x._id === clientId);
   if (!cl) return;
   const fb = document.getElementById('tombolaTicketFb');
-  // Génère un numéro unique
+  const price = parseFloat(document.getElementById('tombolaPriceInp')?.value) || 0;
   const num = Math.floor(1000 + Math.random() * 9000);
   const coupon = {
     id: `cp-tomb-${Date.now()}`,
     tombola: num,
     type: 'tombola',
-    name: '🎟️ Ticket Tombola',
+    name: `🎟️ Ticket Tombola${price > 0 ? ` (${price}€)` : ''}`,
     icon: '🎟️',
     used: false,
     earnedAt: new Date().toLocaleDateString('fr-FR')
   };
   const newCoupons = [...(cl.coupons||[]), coupon];
-  await updateDoc(doc(db, 'clients', clientId), { coupons: newCoupons, updatedAt: serverTimestamp() });
-  if (fb) { fb.className='fb ok'; fb.textContent=`✓ Ticket N°${num} donné à ${cl.pseudo} !`; }
+  const newEuros = (cl.totalEuros || 0) + price;
+  await updateDoc(doc(db, 'clients', clientId), {
+    coupons: newCoupons,
+    totalEuros: newEuros,
+    updatedAt: serverTimestamp()
+  });
+  if (fb) { fb.className='fb ok'; fb.textContent=`✓ Ticket N°${num} vendu${price>0?' ('+price+'€)':''} à ${cl.pseudo} !`; }
   toast(`🎟️ Ticket N°${num} → ${cl.pseudo}`);
   renderDetail(clientId);
 };
@@ -1599,6 +1610,17 @@ function renderTombola(c) {
 
     <!-- DATE DU TIRAGE -->
     <div class="card" style="margin-bottom:12px">
+      <div class="lbl">💰 Prix du ticket tombola (affiché aux clients)</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <input type="number" id="tombola-price-inp" min="0" step="0.5" value="${window._tombolaTicketPrice || ''}" placeholder="Ex: 5" style="width:80px;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.2);border-radius:8px;color:var(--txt);font-size:1rem;padding:8px;text-align:center;outline:none">
+        <span style="font-size:.8rem;color:var(--dim)">€ par ticket</span>
+        <button onclick="saveTombolaPrice()" style="background:linear-gradient(135deg,var(--blue),var(--violet));border:none;border-radius:8px;color:#fff;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:8px 12px;cursor:pointer">💾 OK</button>
+      </div>
+      <div class="fb" id="tombola-price-fb"></div>
+    </div>
+
+    <!-- DATE DU TIRAGE -->
+    <div class="card" style="margin-bottom:12px">
       <div class="lbl">📅 Date du tirage (affiché aux clients)</div>
       <input type="datetime-local" id="tombolaDateInp" class="inp" value="${tombolaDrawDate ? new Date(tombolaDrawDate).toISOString().slice(0,16) : ''}" style="margin-bottom:8px">
       <button onclick="saveDrawDate()" style="width:100%;background:linear-gradient(135deg,var(--blue),var(--violet));border:none;border-radius:10px;color:#fff;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:10px;cursor:pointer">💾 SAUVEGARDER LA DATE</button>
@@ -1680,6 +1702,15 @@ window.removeLot = async (i) => {
   const filtered = window._tombolaLots.filter(l => l.trim());
   // updateDoc pour forcer l'écrasement même si vide
   await updateDoc(doc(db,'config','tombola'), { tombolaLots: filtered });
+};
+
+window.saveTombolaPrice = async function() {
+  const price = parseFloat(document.getElementById('tombola-price-inp')?.value) || 0;
+  window._tombolaTicketPrice = price;
+  await updateDoc(doc(db,'config','tombola'), { ticketPrice: price });
+  const fb = document.getElementById('tombola-price-fb');
+  if (fb) { fb.className='fb ok'; fb.textContent=`✓ Prix : ${price}€`; }
+  toast(`Prix ticket tombola : ${price}€`);
 };
 
 window.toggleTombola = async function() {
