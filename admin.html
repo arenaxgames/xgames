@@ -725,65 +725,62 @@ function genTombolaNum() {
 
 async function addXP(id) {
   const euros  = parseFloat(document.getElementById('euroInp')?.value) || 0;
-  const xpToAdd = Math.floor(euros); // 1€ = 1 XP
+  const xpToAdd = Math.floor(euros);
   if (xpToAdd <= 0) { showDetFb('Entre un montant valide', 'err'); return; }
 
-  const cl = allClients.find(x => x._id === id);
-  if (!cl) return;
-
-  const sortedTiers = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
-  const maxXP = sortedTiers.length ? sortedTiers[sortedTiers.length-1].xp : 100;
-
-  let curLevel = cl.level || 0;
-  const newCoupons = [];
-  let jackpotSpins = 0;
-  let simXP = cl.xp || 0;
-  let totalRemaining = xpToAdd;
-  let cpSeq = 0; // Séquence unique pour éviter doublons d'IDs
-
-  while (totalRemaining > 0) {
-    const spaceLeft = maxXP - simXP;
-
-    if (spaceLeft <= 0) {
-      // Barre pleine — repart à 0 SANS redonner les paliers (déjà donnés au tour précédent)
-      simXP = 0; curLevel++;
-      continue;
-    }
-
-    const xpThisCycle = Math.min(totalRemaining, spaceLeft);
-    const newSimXP    = simXP + xpThisCycle;
-
-    // Capture tous les paliers franchis dans ce segment
-    sortedTiers.filter(t => t.xp > simXP && t.xp <= newSimXP).forEach((t, idx) => {
-      const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
-      if (m) { jackpotSpins += parseInt(m[1])||1; }
-      else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
-    });
-
-    // Si on atteint exactement maxXP → on repart à 0 au prochain tour
-    if (newSimXP >= maxXP) {
-      simXP = 0; curLevel++;
-      totalRemaining -= xpThisCycle;
-    } else {
-      simXP = newSimXP;
-      totalRemaining -= xpThisCycle;
-    }
-  }
-
-  const newXP = simXP;
-
-  // Lecture fraîche des coupons + dédoublonnage par ID
-  const freshSnap = await getDoc(doc(db, 'clients', id));
-  const existing  = freshSnap.data()?.coupons || [];
-  const existingIds = new Set(existing.map(c => c.id));
-  const uniqueNew = newCoupons.filter(c => !existingIds.has(c.id));
-  const merged    = [...existing, ...uniqueNew];
+  // Verrou anti-double clic
+  const btn = document.getElementById('addXpBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
 
   try {
+    // Lecture FRAÎCHE depuis Firebase pour éviter bug de cache
+    const freshSnap = await getDoc(doc(db, 'clients', id));
+    if (!freshSnap.exists()) return;
+    const freshCl = freshSnap.data();
+
+    const sortedTiers = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
+    const maxXP = sortedTiers.length ? sortedTiers[sortedTiers.length-1].xp : 100;
+
+    let curLevel = freshCl.level || 0;
+    const newCoupons = [];
+    let jackpotSpins = 0;
+    let simXP = freshCl.xp || 0;
+    let totalRemaining = xpToAdd;
+    let cpSeq = 0;
+    let cycles = 0;
+
+    while (totalRemaining > 0) {
+      const spaceLeft = maxXP - simXP;
+      if (spaceLeft <= 0) {
+        simXP = 0; curLevel++; cycles++;
+        continue;
+      }
+      const xpThisCycle = Math.min(totalRemaining, spaceLeft);
+      const newSimXP = simXP + xpThisCycle;
+      sortedTiers.filter(t => t.xp > simXP && t.xp <= newSimXP).forEach((t, idx) => {
+        const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
+        if (m) { jackpotSpins += parseInt(m[1])||1; }
+        else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
+      });
+      if (newSimXP >= maxXP) {
+        simXP = 0; curLevel++; cycles++;
+        totalRemaining -= xpThisCycle;
+      } else {
+        simXP = newSimXP;
+        totalRemaining -= xpThisCycle;
+      }
+    }
+
+    const newXP = simXP;
+    const existing = freshCl.coupons || [];
+    // Dédoublonnage uniquement par ID — permet le cumul des coupons
+    const existingIds = new Set(existing.map(c => c.id));
+    const uniqueNew = newCoupons.filter(c => !existingIds.has(c.id));
+    const merged = [...existing, ...uniqueNew];
+
     await updateDoc(doc(db, 'clients', id), {
-      xp: newXP,
-      level: curLevel,
-      totalEuros: (cl.totalEuros || 0) + euros,
+      xp: newXP, level: curLevel,
+      totalEuros: (freshCl.totalEuros || 0) + euros,
       coupons: merged,
       updatedAt: serverTimestamp()
     });
@@ -794,11 +791,11 @@ async function addXP(id) {
       const currentSpins = (slotSnap.exists() && slotSnap.data().status === 'armed') ? (slotSnap.data().multiCount || 0) : 0;
       await setDoc(doc(db, 'slots', id), {
         status: 'armed', clientId: id,
-        clientPseudo: cl.pseudo || '—',
+        clientPseudo: freshCl.pseudo || '—',
         multiCount: currentSpins + jackpotSpins,
         autoGranted: true, unlockedAt: serverTimestamp()
       });
-      toast(`🎰 ${jackpotSpins} lancer(s) jackpot débloqué(s) pour ${cl.pseudo}`);
+      toast(`🎰 ${jackpotSpins} lancer(s) jackpot débloqué(s) pour ${freshCl.pseudo}`);
     }
 
     await addDoc(collection(db, 'clients', id, 'history'), {
@@ -806,20 +803,20 @@ async function addXP(id) {
       label: `+${xpToAdd} XP (${euros}€)${cycles > 0 ? ` · ${cycles} niveau(x) gagné(s)` : ''}`,
       euros, xp: xpToAdd, timestamp: serverTimestamp()
     });
-    await addDoc(collection(db, 'logs'), {
-      type: 'add', clientId: id, clientName: cl.pseudo,
-      euros, xp: xpToAdd, timestamp: serverTimestamp()
-    });
 
     let msg = `✓ +${xpToAdd} XP — Total : ${newXP} XP`;
     if (cycles > 0) msg += ` · 🎖️ Niveau ${curLevel} !`;
-    if (newCoupons.length) msg += ` · ${newCoupons.length} coupon(s)`;
+    if (uniqueNew.length) msg += ` · ${uniqueNew.length} coupon(s)`;
 
     showDetFb(msg, 'ok');
     document.getElementById('euroInp').value = '';
     document.querySelectorAll('.preset').forEach(x => x.classList.remove('on'));
-    toast(`+${xpToAdd} XP pour ${cl.pseudo}`);
-  } catch(e) { showDetFb('Erreur : ' + e.message, 'err'); }
+    toast(`+${xpToAdd} XP pour ${freshCl.pseudo}`);
+  } catch(e) {
+    showDetFb('Erreur : ' + e.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '➕ AJOUTER'; }
+  }
 }
 
 async function removeXP(id) {
