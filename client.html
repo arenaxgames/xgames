@@ -276,6 +276,26 @@ body::after{content:'';position:fixed;inset:0;
 @keyframes check-pop{0%{transform:scale(0)}100%{transform:scale(1)}}
 .vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green);text-shadow:0 0 20px var(--green)}
 .vld-ok-sub{font-size:.78rem;color:var(--dim)}
+
+/* Bouton MON QR CODE — surbrillance jaune néon */
+.my-qr-btn{
+  width:100%;
+  background:linear-gradient(135deg,rgba(255,214,10,.18),rgba(255,159,28,.14));
+  border:2px solid rgba(255,214,10,.8);
+  border-radius:14px;
+  color:var(--gold);
+  font-family:'Orbitron',monospace;
+  font-size:.7rem;font-weight:900;
+  padding:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 0 20px rgba(255,214,10,.4),0 0 40px rgba(255,214,10,.15);
+  animation:my-qr-glow 1.5s ease-in-out infinite alternate;
+  text-shadow:0 0 10px rgba(255,214,10,.6);
+}
+@keyframes my-qr-glow{
+  from{box-shadow:0 0 15px rgba(255,214,10,.3),0 0 30px rgba(255,214,10,.1);border-color:rgba(255,214,10,.6)}
+  to{box-shadow:0 0 30px rgba(255,214,10,.7),0 0 60px rgba(255,214,10,.35),0 0 90px rgba(255,214,10,.15);border-color:rgba(255,214,10,1)}
+}
 /* ── NAVIGATION BAS D'ÉCRAN ── */
 .bottom-nav{
   position:fixed;bottom:0;left:0;right:0;z-index:1000;
@@ -460,7 +480,7 @@ body{padding-bottom:0}
     </div>
 
     <!-- BOUTON QR IDENTITÉ -->
-    <button onclick="showMyQR()" style="width:100%;background:linear-gradient(135deg,rgba(0,245,255,.1),rgba(67,97,238,.1));border:1px solid rgba(0,245,255,.25);border-radius:14px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+    <button onclick="showMyQR()" class="my-qr-btn">
       <span style="font-size:1.2rem">📱</span> MON QR CODE — À SCANNER AU STAND
     </button>
 
