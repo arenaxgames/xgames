@@ -993,8 +993,14 @@ function renderCoupons(c) {
   let scanStream  = null;
   let scanTimer   = null;
 
-  document.getElementById('startScanBtn').addEventListener('click', startScan);
-  document.getElementById('stopScanBtn').addEventListener('click', stopScan);
+  const startBtnEl = document.getElementById('startScanBtn');
+  const stopBtnEl  = document.getElementById('stopScanBtn');
+  const startBtnFresh = startBtnEl.cloneNode(true);
+  startBtnEl.parentNode.replaceChild(startBtnFresh, startBtnEl);
+  const stopBtnFresh = stopBtnEl.cloneNode(true);
+  stopBtnEl.parentNode.replaceChild(stopBtnFresh, stopBtnEl);
+  startBtnFresh.addEventListener('click', startScan);
+  stopBtnFresh.addEventListener('click', stopScan);
 
   async function startScan() {
     document.getElementById('scanContainer').style.display = 'block';
@@ -1018,6 +1024,7 @@ function renderCoupons(c) {
     document.getElementById('startScanBtn').style.display  = 'flex';
   }
 
+  let _jsQRModule = null;
   function scanLoop(video) {
     // Use BarcodeDetector if available (Chrome/Android), fallback to jsQR
     if ('BarcodeDetector' in window) {
@@ -1029,23 +1036,29 @@ function renderCoupons(c) {
         } catch {}
       }, 300);
     } else {
-      // Fallback: draw frame to canvas and decode
+      // Fallback iOS/Safari: charge jsQR une seule fois puis décode en boucle
       const cvs = document.createElement('canvas');
       const ctx = cvs.getContext('2d');
-      scanTimer = setInterval(() => {
+
+      const runDecode = async () => {
+        if (!_jsQRModule) {
+          try {
+            const m = await import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js');
+            _jsQRModule = m.default || window.jsQR;
+          } catch { return; }
+        }
         if (!video.videoWidth) return;
         cvs.width  = video.videoWidth;
         cvs.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
-        // Try to find QR via URL pattern in title (simplified)
-        // For full decode we'd need jsQR — use a basic URL check
         const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-        // Import jsQR dynamically
-        import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js').then(m => {
-          const result = (m.default || window.jsQR)(imageData.data, imageData.width, imageData.height);
+        try {
+          const result = _jsQRModule(imageData.data, imageData.width, imageData.height);
           if (result?.data) { stopScan(); handleScanResult(result.data); }
-        }).catch(() => {});
-      }, 400);
+        } catch {}
+      };
+
+      scanTimer = setInterval(runDecode, 300);
     }
   }
 
@@ -1125,7 +1138,10 @@ function renderCoupons(c) {
   };
 
   // ── MANUEL PAR PSEUDO ──
-  document.getElementById('cpSearch').addEventListener('click', () => {
+  const cpSearchEl = document.getElementById('cpSearch');
+  const cpSearchFresh = cpSearchEl.cloneNode(true);
+  cpSearchEl.parentNode.replaceChild(cpSearchFresh, cpSearchEl);
+  cpSearchFresh.addEventListener('click', () => {
     const pseudo = document.getElementById('cpPseudo').value.trim();
     const cl = allClients.find(x => x.pseudo?.toLowerCase() === pseudo.toLowerCase());
     const res = document.getElementById('cpResults');
@@ -1155,11 +1171,14 @@ function renderCoupons(c) {
         await updateDoc(doc(db, 'clients', fresh.dataset.clid), { coupons: updated });
         await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:fresh.dataset.clid, clientName:fresh.dataset.clname, timestamp:serverTimestamp() });
         toast('✓ Coupon validé');
-        document.getElementById('cpSearch').click();
+        cpSearchFresh.click();
       });
     });
   });
-  document.getElementById('cpPseudo').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cpSearch').click(); });
+  const cpPseudoEl = document.getElementById('cpPseudo');
+  const cpPseudoFresh = cpPseudoEl.cloneNode(true);
+  cpPseudoEl.parentNode.replaceChild(cpPseudoFresh, cpPseudoEl);
+  cpPseudoFresh.addEventListener('keydown', e => { if(e.key==='Enter') cpSearchFresh.click(); });
 }
 
 // ── GESTION SCAN DEPUIS URL (?scan=1&token=...) ──────────────────
@@ -1372,10 +1391,12 @@ function renderConfig(c) {
     });
   }
 
-  document.getElementById('addTierBtn').addEventListener('click', () => {
+  const addTierBtnEl = document.getElementById('addTierBtn');
+  const addTierBtnFresh = addTierBtnEl.cloneNode(true);
+  addTierBtnEl.parentNode.replaceChild(addTierBtnFresh, addTierBtnEl);
+  addTierBtnFresh.addEventListener('click', () => {
     localTiers.push({ xp: 0, name: '', icon: '🎁' });
     rebuildTiers();
-    // Scroll to bottom
     document.getElementById('tiersContainer').lastElementChild?.scrollIntoView({ behavior:'smooth' });
   });
 
@@ -1426,7 +1447,10 @@ function renderConfig(c) {
     });
   }
 
-  document.getElementById('addPrizeBtn').addEventListener('click', () => {
+  const addPrizeBtnEl = document.getElementById('addPrizeBtn');
+  const addPrizeBtnFresh = addPrizeBtnEl.cloneNode(true);
+  addPrizeBtnEl.parentNode.replaceChild(addPrizeBtnFresh, addPrizeBtnEl);
+  addPrizeBtnFresh.addEventListener('click', () => {
     localPrizes.push({ name: '', icon: '🎁' });
     rebuildPrizes();
   });
@@ -1434,17 +1458,26 @@ function renderConfig(c) {
   rebuildPrizes();
 
   // Win rate slider
-  // winRate slider
-  document.getElementById('winRateInp')?.addEventListener('input', function() {
-    document.getElementById('winRateVal').textContent = this.value + '%';
-  });
+  const winRateInpEl = document.getElementById('winRateInp');
+  if (winRateInpEl) {
+    const winRateInpFresh = winRateInpEl.cloneNode(true);
+    winRateInpEl.parentNode.replaceChild(winRateInpFresh, winRateInpEl);
+    winRateInpFresh.addEventListener('input', function() {
+      document.getElementById('winRateVal').textContent = this.value + '%';
+    });
+  }
 
   // Cash toggle
   let cashEnabled = config.cashEnabled || false;
-  document.getElementById('cashToggle')?.addEventListener('click', function() {
-    cashEnabled = !cashEnabled;
-    this.classList.toggle('on', cashEnabled);
-  });
+  const cashToggleEl = document.getElementById('cashToggle');
+  if (cashToggleEl) {
+    const cashToggleFresh = cashToggleEl.cloneNode(true);
+    cashToggleEl.parentNode.replaceChild(cashToggleFresh, cashToggleEl);
+    cashToggleFresh.addEventListener('click', function() {
+      cashEnabled = !cashEnabled;
+      this.classList.toggle('on', cashEnabled);
+    });
+  }
 }
 
 // ═══════════════════════════════════════
