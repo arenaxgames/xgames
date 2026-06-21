@@ -18,13 +18,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#000814;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff9f1c;--txt:#e0e7ff;--dim:#4a5568}
+:root{--bg:#00040f;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff9f1c;--txt:#e0e7ff;--dim:#4a5568}
 html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',Arial,sans-serif;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,245,255,.012) 2px,rgba(0,245,255,.012) 4px);pointer-events:none;z-index:0}
-body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(67,97,238,.18) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(114,9,183,.15) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* Grille holographique de fond */
+body::before{content:'';position:fixed;inset:0;
+  background:
+    linear-gradient(rgba(0,245,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,245,255,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0}
+
+/* Halos de couleur */
+body::after{content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 10%,rgba(114,9,183,.25) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 90%,rgba(247,37,133,.2) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(67,97,238,.15) 0%,transparent 60%);
+  pointer-events:none;z-index:0;animation:halo-shift 8s ease-in-out infinite alternate}
+@keyframes halo-shift{0%{opacity:.7}100%{opacity:1}}
+
+/* Particules */
 #pts{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
 .pt{position:absolute;width:2px;height:2px;border-radius:50%;animation:fl linear infinite}
 @keyframes fl{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) translateX(var(--dx));opacity:0}}
+
 #loadOv{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px}
 .ll{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);text-shadow:0 0 30px var(--cyan);animation:blink 1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
@@ -35,32 +53,49 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .err-t{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--red)}
 #main{position:relative;z-index:2;min-height:100vh;padding:16px 14px 50px;max-width:430px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
-.hdr-logo{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan);text-shadow:0 0 15px var(--cyan);letter-spacing:.08em}
-.hdr-back{background:transparent;border:1px solid rgba(0,245,255,.15);border-radius:8px;color:var(--cyan);font-size:.7rem;padding:5px 11px;cursor:pointer;font-family:'Orbitron',monospace}
-.profile-card{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(0,245,255,.18);border-radius:20px;padding:18px;position:relative;overflow:hidden}
-.profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.hdr-logo{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan);text-shadow:0 0 15px var(--cyan),0 0 30px rgba(0,245,255,.4);letter-spacing:.08em}
+.hdr-back{background:transparent;border:1px solid rgba(0,245,255,.2);border-radius:8px;color:var(--cyan);font-size:.7rem;padding:5px 11px;cursor:pointer;font-family:'Orbitron',monospace}
+
+/* Carte profil — holographique */
+.profile-card{
+  background:linear-gradient(135deg,rgba(5,10,25,.97),rgba(10,18,45,.97));
+  border:1px solid transparent;
+  border-radius:20px;padding:18px;position:relative;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,245,255,.08),0 8px 32px rgba(0,0,0,.6);
+}
+.profile-card::before{content:'';position:absolute;inset:0;border-radius:20px;padding:1px;
+  background:linear-gradient(135deg,rgba(0,245,255,.4),rgba(114,9,183,.3),rgba(247,37,133,.2),rgba(0,245,255,.4));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+/* Balayage holographique */
+.profile-card::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(0,245,255,.04) 50%,transparent 60%);
+  animation:holo-card 4s ease-in-out infinite;pointer-events:none}
+@keyframes holo-card{0%,100%{transform:translateX(-100%)}50%{transform:translateX(200%)}}
+
 .ptop{display:flex;align-items:center;gap:13px;margin-bottom:16px}
-.pavatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid rgba(0,245,255,.35);flex-shrink:0}
+.pavatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid rgba(0,245,255,.5);flex-shrink:0;box-shadow:0 0 20px rgba(0,245,255,.2)}
 .pinfo{flex:1;min-width:0}
-.pname{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 10px rgba(224,231,255,.3)}
 .plevel{font-size:.7rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
 .pbadge{display:inline-block;padding:2px 9px;border-radius:20px;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:#000;margin-top:4px}
 .xp-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
 .xp-lbl{font-size:.62rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase}
-.xp-cnt{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;color:var(--cyan)}
-.xp-wrap{position:relative;height:24px;background:rgba(0,0,0,.6);border-radius:12px;border:1px solid rgba(0,245,255,.12);overflow:hidden;margin-bottom:6px}
-.xp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:12px;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--pink));transition:width 1.2s cubic-bezier(.34,1.56,.64,1)}
+.xp-cnt{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;color:var(--cyan);text-shadow:0 0 10px var(--cyan)}
+.xp-wrap{position:relative;height:24px;background:rgba(0,0,0,.6);border-radius:12px;border:1px solid rgba(0,245,255,.15);overflow:hidden;margin-bottom:6px;box-shadow:inset 0 0 10px rgba(0,0,0,.5)}
+.xp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:12px;background:linear-gradient(90deg,var(--violet),var(--blue),var(--cyan));transition:width 1.2s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 15px rgba(0,245,255,.4)}
 .xp-milestones{display:flex;gap:3px;margin-top:4px}
 .xm{flex:1;text-align:center;font-size:.5rem;color:rgba(0,245,255,.3);font-family:'Orbitron',monospace}
 .xm.done{color:var(--cyan)}
-.next-rwd{background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.18);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-top:10px}
+.next-rwd{background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.2);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-top:10px;box-shadow:0 0 15px rgba(255,214,10,.05)}
 .nr-icon{font-size:1.3rem}
 .nr-info{flex:1}
 .nr-lbl{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
-.nr-name{font-size:.82rem;color:var(--gold);font-weight:700;margin-top:1px}
+.nr-name{font-size:.82rem;color:var(--gold);font-weight:700;margin-top:1px;text-shadow:0 0 10px rgba(255,214,10,.3)}
 .nr-pts{font-size:.65rem;color:rgba(255,214,10,.55);margin-top:1px}
-.sec-t{font-family:'Orbitron',monospace;font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.45);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.18),transparent)}
+.sec-t{font-family:'Orbitron',monospace;font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.6);margin-bottom:10px;display:flex;align-items:center;gap:8px;text-shadow:0 0 8px rgba(0,245,255,.4)}
+.sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.3),transparent)}
 /* ── MACHINE À SOUS ── */
 .slot-machine-wrap{position:relative;margin:0 auto;max-width:360px}
 /* Pieds de la machine */
@@ -194,27 +229,52 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 @keyframes holographic-sweep{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
 @keyframes notif-slide-in{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @keyframes winner-pulse{from{box-shadow:0 0 20px rgba(255,214,10,.3)}to{box-shadow:0 0 50px rgba(255,214,10,.6),0 0 80px rgba(255,214,10,.3)}}
-#validateOv{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+#validateOv{position:fixed;inset:0;z-index:8000;
+  background:linear-gradient(135deg,rgba(0,4,15,.98),rgba(5,0,20,.98));
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
 #validateOv.show{display:flex}
-.vld-cp-badge{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 16px;max-width:300px;width:100%}
+.vld-cp-badge{display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(0,245,255,.2);
+  border-radius:14px;padding:10px 16px;max-width:320px;width:100%}
 .vld-cp-icon{font-size:2.2rem;flex-shrink:0}
 .vld-cp-info{flex:1;text-align:left;min-width:0}
 .vld-cp-name{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;color:#fff}
 .vld-cp-sub{font-size:.62rem;color:var(--dim);margin-top:2px}
-.vld-qr-frame{background:#fff;border-radius:20px;padding:12px;box-shadow:0 0 50px rgba(0,245,255,.25)}
-.vld-qr-frame canvas{display:block;border-radius:10px}
-.vld-instruction{font-size:.76rem;color:var(--dim);max-width:240px;line-height:1.6}
-.vld-instruction b{color:var(--cyan)}
-.vld-timer-wrap{width:100%;max-width:280px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
-.vld-timer-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:2px;transition:width 1s linear}
-.vld-timer-bar.warn{background:linear-gradient(90deg,var(--red),var(--orange))}
-.vld-timer-txt{font-family:'Orbitron',monospace;font-size:.62rem;color:var(--dim)}
-.vld-cancel{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:20px;color:var(--dim);font-size:.68rem;padding:8px 24px;cursor:pointer;font-family:'Orbitron',monospace}
+
+/* QR CODE — Grand et voyant */
+.vld-qr-frame{
+  background:#fff;
+  border-radius:20px;
+  padding:16px;
+  position:relative;
+  box-shadow:
+    0 0 0 2px rgba(0,245,255,.8),
+    0 0 30px rgba(0,245,255,.6),
+    0 0 60px rgba(0,245,255,.3),
+    0 0 100px rgba(0,245,255,.15);
+  animation:qr-pulse 2s ease-in-out infinite alternate
+}
+@keyframes qr-pulse{
+  from{box-shadow:0 0 0 2px rgba(0,245,255,.6),0 0 20px rgba(0,245,255,.4),0 0 40px rgba(0,245,255,.2)}
+  to{box-shadow:0 0 0 3px rgba(0,245,255,1),0 0 40px rgba(0,245,255,.8),0 0 80px rgba(0,245,255,.4),0 0 120px rgba(0,245,255,.2)}
+}
+.vld-qr-frame canvas{display:block;border-radius:8px}
+
+.vld-instruction{font-size:.8rem;color:var(--txt);max-width:260px;line-height:1.6;
+  background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.15);
+  border-radius:10px;padding:8px 14px}
+.vld-instruction b{color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
+.vld-timer-wrap{width:100%;max-width:300px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.vld-timer-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:3px;transition:width 1s linear;box-shadow:0 0 8px var(--cyan)}
+.vld-timer-bar.warn{background:linear-gradient(90deg,var(--red),var(--orange));box-shadow:0 0 8px var(--red)}
+.vld-timer-txt{font-family:'Orbitron',monospace;font-size:.65rem;color:var(--cyan)}
+.vld-cancel{background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:20px;color:var(--dim);font-size:.68rem;padding:8px 24px;cursor:pointer;font-family:'Orbitron',monospace}
 .vld-confirmed{display:none;flex-direction:column;align-items:center;gap:12px}
 .vld-confirmed.show{display:flex}
 .vld-check{font-size:5rem;animation:check-pop .6s cubic-bezier(.34,1.56,.64,1)}
 @keyframes check-pop{0%{transform:scale(0)}100%{transform:scale(1)}}
-.vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green)}
+.vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green);text-shadow:0 0 20px var(--green)}
 .vld-ok-sub{font-size:.78rem;color:var(--dim)}
 /* ── NAVIGATION BAS D'ÉCRAN ── */
 .bottom-nav{
@@ -1364,16 +1424,20 @@ if (clientId) {
     const d = snap.data();
 
     if (d.status === 'ready') {
-      // Mémorise le nb de lancers et passe à 'armed' une seule fois
-      availableSpins = d.multiCount || 1;
+      // Nouveau lancer débloqué par admin — additionne aux lancers existants
+      const newSpins = d.multiCount || 1;
+      availableSpins += newSpins;
       setDoc(doc(db, 'slots', clientId), { ...d, status:'armed', multiCount: availableSpins }).catch(()=>{});
       document.getElementById('waitOv').classList.remove('show');
       updateSpinsUI();
     }
-    // Sur 'armed' après refresh : relit le nb restant depuis Firebase
-    if (d.status === 'armed' && availableSpins === 0) {
-      availableSpins = d.multiCount || 0;
-      updateSpinsUI();
+    // Sur 'armed' : relit depuis Firebase si on a moins de lancers qu'en Firebase
+    if (d.status === 'armed') {
+      const firebaseSpins = d.multiCount || 0;
+      if (firebaseSpins > availableSpins) {
+        availableSpins = firebaseSpins;
+        updateSpinsUI();
+      }
     }
     if (d.status === 'idle' || d.status === 'used') {
       availableSpins = 0;
@@ -1632,8 +1696,8 @@ function drawValidationQR(url) {
 
   new QRCode(qrDiv, {
     text: url,
-    width: 200,
-    height: 200,
+    width: 260,
+    height: 260,
     colorDark: '#000000',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
@@ -1888,11 +1952,9 @@ function checkDailySpin(data) {
 
 window.useDailySpin = async function() {
   if (!clientData) return;
-  // Relit depuis Firebase pour éviter toute manipulation locale
   const snap = await getDoc(doc(db, 'clients', clientId));
   if (!snap.exists()) return;
   const freshData = snap.data();
-  // Utilise la date serveur Firebase — impossible à manipuler côté client
   const now = new Date();
   const todayStr = now.getUTCFullYear() + '-' + (now.getUTCMonth()+1) + '-' + now.getUTCDate();
   if (freshData.lastDailySpin === todayStr) {
@@ -1902,6 +1964,11 @@ window.useDailySpin = async function() {
   await updateDoc(doc(db, 'clients', clientId), { lastDailySpin: todayStr, lastDailySpinAt: serverTimestamp() });
   document.getElementById('dailySpinBanner').style.display = 'none';
   availableSpins++;
+  // Sauvegarde dans Firebase pour que addXP puisse lire le bon total
+  await setDoc(doc(db, 'slots', clientId), {
+    status: 'armed', clientId, multiCount: availableSpins,
+    autoGranted: true, unlockedAt: serverTimestamp()
+  });
   updateSpinsUI();
 };
 
@@ -2185,6 +2252,18 @@ if ('serviceWorker' in navigator) {
 }
 mkPts();
 initCoinCanvas();
+
+// ── EXPOSITION WINDOW — toutes les fonctions appelées en onclick ──
+window.switchTab       = switchTab;
+window.selectGame      = selectGame;
+window.setStars        = setStars;
+window.submitAvis      = submitAvis;
+window.startSnakeGame  = startSnakeGame;
+window.startJetGame    = startJetGame;
+window.snakeDir        = snakeDir;
+window.pullLever       = pullLever;
+window.closeWin        = closeWin;
+window.closeInstallBar = closeInstallBar;
 </script>
 </body>
 </html>

@@ -398,7 +398,8 @@ function userIsTyping() {
         const lvlDiff = (b.level||0) - (a.level||0);
         return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
       });
-    if (userIsTyping()) return; // Ne recharge pas si l'utilisateur tape
+    if (userIsTyping()) return;
+    if (window._addingXP) return; // Ne recharge pas pendant addXP
     if (curTab === 'clients') renderTab('clients');
     if (curTab === 'stats') renderTab('stats');
   });
@@ -563,7 +564,9 @@ function displayClients(list) {
     </div>`;
   }).join('');
   el.querySelectorAll('.cl-row').forEach(r => {
-    r.addEventListener('click', () => { selClientId = r.dataset.id; displayClients(list); renderDetail(selClientId); });
+    const fresh = r.cloneNode(true);
+    r.parentNode.replaceChild(fresh, r);
+    fresh.addEventListener('click', () => { selClientId = fresh.dataset.id; displayClients(list); renderDetail(selClientId); });
   });
 }
 
@@ -599,19 +602,19 @@ function renderDetail(id) {
       <div class="xp-preview" id="xpPrev">Sélectionne ou tape un montant</div>
     </div>
     <div class="ctrl-grid">
-      <button class="ctrl-btn ctrl-add" id="addXpBtn"><div class="ci">⬆️</div>AJOUTER XP</button>
-      <button class="ctrl-btn ctrl-rem" id="remXpBtn"><div class="ci">⬇️</div>RETIRER 1 XP</button>
-      <button class="ctrl-btn ctrl-qr" id="qrBtn"><div class="ci">📱</div>QR CODE</button>
+      <button class="ctrl-btn ctrl-add" onclick="addXP('${id}')"><div class="ci">⬆️</div>AJOUTER XP</button>
+      <button class="ctrl-btn ctrl-rem" onclick="removeXP('${id}')"><div class="ci">⬇️</div>RETIRER 1 XP</button>
+      <button class="ctrl-btn ctrl-qr" onclick="showQR(allClients.find(x=>x._id==='${id}'))"><div class="ci">📱</div>QR CODE</button>
     </div>
     <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:12px;padding:12px;margin-top:8px">
       <div style="font-size:.68rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎰 Débloquer des lancers jackpot</div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="font-size:.7rem;color:var(--dim);flex:1">Nombre de lancers :</div>
         <input id="multiSpinInp" type="number" min="1" max="20" value="1" style="width:54px;background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.3);border-radius:6px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.85rem;text-align:center;padding:6px">
-        <button class="btn btn-gold" id="multiSpinBtn" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
+        <button class="btn btn-gold" onclick="const n=parseInt(document.getElementById('multiSpinInp').value)||1;if(n<1||n>20){showDetFb('Entre un nombre entre 1 et 20','err');return;}multiUnlockSlot('${id}','${cl.pseudo}',n)" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
       </div>
     </div>
-    <button class="btn btn-red btn-sm" id="delBtn" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>
+    <button class="btn btn-red btn-sm" onclick="deleteClient('${id}')" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>
 
     <!-- DONNER UN TICKET TOMBOLA -->
     <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:12px;padding:12px;margin-top:8px">
@@ -660,22 +663,16 @@ function renderDetail(id) {
     if (el) el.textContent = e > 0 ? `${e}€ = +${xp} XP (1€ = 1 XP)` : 'Sélectionne ou tape un montant';
   }
 
-  document.getElementById('addXpBtn').addEventListener('click', () => addXP(id));
-  document.getElementById('remXpBtn').addEventListener('click', () => removeXP(id));
-  document.getElementById('qrBtn').addEventListener('click', () => showQR(cl));
-  document.getElementById('multiSpinBtn').addEventListener('click', () => {
-    const n = parseInt(document.getElementById('multiSpinInp').value) || 1;
-    if (n < 1 || n > 20) { showDetFb('Entre un nombre entre 1 et 20', 'err'); return; }
-    multiUnlockSlot(id, cl.pseudo, n);
-  });
-  document.getElementById('delBtn').addEventListener('click', async() => {
-    if (!confirm(`Supprimer ${cl.pseudo} ?`)) return;
-    await deleteDoc(doc(db, 'clients', id));
-    selClientId = null;
-    box.classList.remove('on');
-    toast('Client supprimé');
-  });
 }
+
+window.deleteClient = async function(id) {
+  const cl = allClients.find(x => x._id === id);
+  if (!confirm(`Supprimer ${cl?.pseudo || 'ce client'} ?`)) return;
+  await deleteDoc(doc(db, 'clients', id));
+  selClientId = null;
+  document.getElementById('detBox').classList.remove('on');
+  toast('Client supprimé');
+};
 
 window.giveTombolaTicket = async function(clientId) {
   const cl = allClients.find(x => x._id === clientId);
@@ -723,13 +720,15 @@ function genTombolaNum() {
   return num;
 }
 
-async function addXP(id) {
+window.addXP = async function(id) {
   const euros  = parseFloat(document.getElementById('euroInp')?.value) || 0;
   const xpToAdd = Math.floor(euros);
   if (xpToAdd <= 0) { showDetFb('Entre un montant valide', 'err'); return; }
 
-  // Verrou anti-double clic
-  const btn = document.getElementById('addXpBtn');
+  // Verrou global — bloque onSnapshot pendant toute l'opération
+  window._addingXP = true;
+  // Verrou anti-double clic — trouve le bouton par sa classe
+  const btn = document.querySelector('.ctrl-btn.ctrl-add');
   if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
 
   try {
@@ -815,11 +814,12 @@ async function addXP(id) {
   } catch(e) {
     showDetFb('Erreur : ' + e.message, 'err');
   } finally {
+    window._addingXP = false;
     if (btn) { btn.disabled = false; btn.textContent = '➕ AJOUTER'; }
   }
 }
 
-async function removeXP(id) {
+window.removeXP = async function(id) {
   const cl = allClients.find(x => x._id === id);
   if (!cl || (cl.xp||0) <= 0) { showDetFb('Déjà à 0 XP', 'err'); return; }
   await updateDoc(doc(db, 'clients', id), { xp: Math.max(0, (cl.xp||0)-1), updatedAt: serverTimestamp() });
@@ -835,7 +835,7 @@ async function unlockSlot(id) {
   toast(`Partie débloquée pour ${cl?.pseudo}`);
 }
 
-async function multiUnlockSlot(id, pseudo, count) {
+window.multiUnlockSlot = async function(id, pseudo, count) {
   const cl = allClients.find(x => x._id === id);
   await setDoc(doc(db, 'slots', id), {
     status: 'ready', clientId: id,
@@ -896,9 +896,11 @@ function renderSlots(c) {
     </div>`;
 
   c.querySelectorAll('[data-action]').forEach(b => {
-    b.addEventListener('click', async () => {
-      const cid = b.dataset.cid;
-      if (b.dataset.action === 'unlock') {
+    const fresh = b.cloneNode(true);
+    b.parentNode.replaceChild(fresh, b);
+    fresh.addEventListener('click', async () => {
+      const cid = fresh.dataset.cid;
+      if (fresh.dataset.action === 'unlock') {
         await setDoc(doc(db, 'slots', cid), { status: 'ready', clientId: cid, forced: false, unlockedAt: serverTimestamp() });
         toast('Partie débloquée');
       } else {
@@ -1107,19 +1109,20 @@ function renderCoupons(c) {
           <div style="font-size:.7rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.couponName}</div>
           <div style="font-size:.6rem;color:var(--dim);margin-top:2px">${Math.max(0,Math.round((v.expiresAt-Date.now())/1000))}s restantes</div>
         </div>
-        <button class="btn btn-green btn-sm" data-tok="${v._id}" data-pseudo="${v.pseudo}" data-cpname="${v.couponName}" data-clid="${v.clientId}">✓ Valider</button>
+        <button class="btn btn-green btn-sm" onclick="validatePending('${v._id}','${v.pseudo}','${v.couponName}','${v.clientId}')">✓ Valider</button>
       </div>`).join('');
-
-    box.querySelectorAll('[data-tok]').forEach(b => {
-      b.addEventListener('click', async () => {
-        const vSnap = await getDoc(doc(db, 'validations', b.dataset.tok));
-        if (!vSnap.exists()) return;
-        await setDoc(doc(db, 'validations', b.dataset.tok), { ...vSnap.data(), validated: true, validatedAt: serverTimestamp() });
-        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:b.dataset.clid, clientName:b.dataset.pseudo, couponName:b.dataset.cpname, timestamp:serverTimestamp() });
-        toast(`✓ Validé pour ${b.dataset.pseudo}`);
-      });
-    });
   });
+
+  window.validatePending = async function(tok, pseudo, cpName, clId) {
+    try {
+      const vSnap = await getDoc(doc(db, 'validations', tok));
+      if (!vSnap.exists()) { toast('Coupon introuvable'); return; }
+      if (vSnap.data().validated) { toast('Déjà validé'); return; }
+      await setDoc(doc(db, 'validations', tok), { ...vSnap.data(), validated: true, validatedAt: serverTimestamp() });
+      await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:clId, clientName:pseudo, couponName:cpName, timestamp:serverTimestamp() });
+      toast(`✓ Validé pour ${pseudo}`);
+    } catch(e) { toast('Erreur: ' + e.message); }
+  };
 
   // ── MANUEL PAR PSEUDO ──
   document.getElementById('cpSearch').addEventListener('click', () => {
@@ -1141,14 +1144,16 @@ function renderCoupons(c) {
         </div>`).join('') + `</div>`;
 
     res.querySelectorAll('[data-cpid]').forEach(b => {
-      b.addEventListener('click', async () => {
-        const clData = allClients.find(x => x._id === b.dataset.clid);
+      const fresh = b.cloneNode(true);
+      b.parentNode.replaceChild(fresh, b);
+      fresh.addEventListener('click', async () => {
+        const clData = allClients.find(x => x._id === fresh.dataset.clid);
         if (!clData) return;
         const updated = (clData.coupons||[]).map(cp =>
-          cp.id === b.dataset.cpid ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
+          cp.id === fresh.dataset.cpid ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
         );
-        await updateDoc(doc(db, 'clients', b.dataset.clid), { coupons: updated });
-        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:b.dataset.clid, clientName:b.dataset.clname, timestamp:serverTimestamp() });
+        await updateDoc(doc(db, 'clients', fresh.dataset.clid), { coupons: updated });
+        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:fresh.dataset.clid, clientName:fresh.dataset.clname, timestamp:serverTimestamp() });
         toast('✓ Coupon validé');
         document.getElementById('cpSearch').click();
       });
@@ -1876,7 +1881,7 @@ function exportData() {
 }
 
 // ── QR ──
-function showQR(cl) {
+window.showQR = function(cl) {
   const url = `${window.location.origin}/client.html?id=${cl._id}`;
   document.getElementById('qrSub').textContent = `Carte de ${cl.pseudo}`;
   document.getElementById('qrName').textContent = cl.pseudo;
