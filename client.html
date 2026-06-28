@@ -1322,6 +1322,7 @@ if (!clientId) {
 
 // Global state
 let clientData  = null;
+let _pinVerified = false; // PIN vérifié une fois par session
 let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratuite',icon:'🎯'}] }, sumupLink:'', slotPrice:'2€', cashEnabled:false };
 let prevXP      = null;
 let lastSpinTime = 0;
@@ -1391,8 +1392,6 @@ if (clientId) {
   });
 
   // Client listener
-  let _pinVerified = false; // PIN vérifié une fois par session
-
   onSnapshot(doc(db, 'clients', clientId), snap => {
     clearTimeout(loadTimeout);
     document.getElementById('loadOv').style.display = 'none';
