@@ -261,8 +261,13 @@ body::after{
 
   <div class="card" id="returnCard">
     <div class="card-title">⚡ J'ai déjà un compte</div>
-    <label class="inp-label">Ton pseudo (sans emoji)</label>
+    <label class="inp-label">Ton pseudo</label>
     <input class="inp" id="returnPseudo" type="text" placeholder="Ex: DragonBall99" maxlength="20" autocomplete="off">
+    <div id="returnPinWrap" style="display:none">
+      <label class="inp-label" style="margin-top:10px">🔐 Ton PIN secret (4 chiffres)</label>
+      <input class="inp" id="returnPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="off" style="letter-spacing:.4em;font-size:1.3rem;text-align:center">
+      <div style="font-size:.68rem;color:var(--dim);margin-top:4px;text-align:center">⚠️ Ne donne jamais ton PIN à quelqu'un d'autre</div>
+    </div>
     <button class="btn-primary" id="returnBtn">ACCÉDER À MA CARTE ⚡</button>
     <div class="msg" id="returnMsg"></div>
   </div>
@@ -274,6 +279,9 @@ body::after{
     <div class="card-title">🎮 Créer ma carte</div>
     <label class="inp-label">Choisis un pseudo</label>
     <input class="inp" id="newPseudo" type="text" placeholder="Ex: DragonBall99" maxlength="18" autocomplete="off">
+    <label class="inp-label" style="margin-top:10px">🔐 Crée ton PIN secret (4 chiffres)</label>
+    <input class="inp" id="newPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="off" style="letter-spacing:.4em;font-size:1.3rem;text-align:center">
+    <div style="font-size:.68rem;color:var(--dim);margin-top:4px;margin-bottom:6px;text-align:center">⚠️ Ce PIN est personnel et secret — ne le donne jamais</div>
     <label class="inp-label">Choisis ton avatar</label>
     <div class="avatar-grid" id="avatarGrid"></div>
     <button class="btn-primary" id="createBtn">CRÉER MA CARTE 🎮</button>
@@ -289,7 +297,7 @@ body::after{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
@@ -369,17 +377,74 @@ function showMsg(id, txt, type) {
 // Stats retirées - données internes
 
 // ── RETURNING PLAYER ──
+let _returnClientDoc = null;
+
 document.getElementById('returnBtn').addEventListener('click', async () => {
   const pseudo = document.getElementById('returnPseudo').value.trim();
   if (!pseudo) { showMsg('returnMsg', 'Entre ton pseudo', 'err'); return; }
-  const q    = query(collection(db,'clients'), where('pseudo','==',pseudo));
-  const snap = await getDocs(q);
-  if (snap.empty) { showMsg('returnMsg', 'Pseudo introuvable. Crée une nouvelle carte !', 'err'); return; }
-  const clientDoc = snap.docs[0];
-  localStorage.setItem('xgames_client_id', clientDoc.id);
+
+  const pinWrap = document.getElementById('returnPinWrap');
+  const pinInp  = document.getElementById('returnPin');
+
+  // Étape 1 — cherche le client
+  if (pinWrap.style.display === 'none') {
+    const q    = query(collection(db,'clients'), where('pseudo','==',pseudo));
+    const snap = await getDocs(q);
+    if (snap.empty) { showMsg('returnMsg', 'Pseudo introuvable. Crée une nouvelle carte !', 'err'); return; }
+    _returnClientDoc = snap.docs[0];
+    const data = _returnClientDoc.data();
+
+    // Pas de PIN — en crée un
+    if (!data.pin) {
+      pinWrap.innerHTML = `
+        <div style="background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.3);border-radius:10px;padding:10px;margin-top:10px;text-align:center">
+          <div style="font-size:.75rem;color:var(--gold);font-weight:700;margin-bottom:6px">🔐 Première connexion sécurisée</div>
+          <div style="font-size:.68rem;color:var(--dim);margin-bottom:8px">Crée un PIN à 4 chiffres pour protéger ta carte</div>
+          <input class="inp" id="returnPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="letter-spacing:.4em;font-size:1.3rem;text-align:center;margin-bottom:6px">
+          <div style="font-size:.65rem;color:var(--dim)">⚠️ Ce code est personnel — ne le donne jamais</div>
+        </div>`;
+      pinWrap.style.display = 'block';
+      document.getElementById('returnBtn').textContent = 'CRÉER MON PIN ET ACCÉDER ⚡';
+      showMsg('returnMsg', '👆 Crée ton PIN secret pour sécuriser ta carte', 'info');
+      return;
+    }
+
+    // A un PIN — demande-le
+    pinWrap.style.display = 'block';
+    pinWrap.innerHTML = `
+      <label class="inp-label" style="margin-top:10px">🔐 Ton PIN secret (4 chiffres)</label>
+      <input class="inp" id="returnPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="off" style="letter-spacing:.4em;font-size:1.3rem;text-align:center">
+      <div style="font-size:.68rem;color:var(--dim);margin-top:4px;text-align:center">⚠️ Ne donne jamais ton PIN à quelqu'un d'autre</div>`;
+    document.getElementById('returnBtn').textContent = 'VALIDER ⚡';
+    document.getElementById('returnPin').focus();
+    showMsg('returnMsg', '', '');
+    return;
+  }
+
+  // Étape 2 — vérifie le PIN
+  const pin = document.getElementById('returnPin').value.trim();
+  if (!pin || pin.length < 4) { showMsg('returnMsg', 'Entre ton PIN à 4 chiffres', 'err'); return; }
+
+  const data = _returnClientDoc.data();
+
+  if (!data.pin) {
+    // Nouveau PIN — l'enregistre
+    if (!/^\d{4}$/.test(pin)) { showMsg('returnMsg', 'Le PIN doit contenir 4 chiffres uniquement', 'err'); return; }
+    await updateDoc(doc(db,'clients',_returnClientDoc.id), { pin });
+    showMsg('returnMsg', '✓ PIN créé avec succès !', 'ok');
+  } else {
+    // Vérifie le PIN
+    if (pin !== data.pin) {
+      showMsg('returnMsg', '❌ PIN incorrect. Demande une réinitialisation au stand.', 'err');
+      return;
+    }
+  }
+
+  localStorage.setItem('xgames_client_id', _returnClientDoc.id);
   localStorage.setItem('xgames_pseudo', pseudo);
-  window.location.href = `client.html?id=${clientDoc.id}`;
+  window.location.href = `client.html?id=${_returnClientDoc.id}`;
 });
+
 document.getElementById('returnPseudo').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('returnBtn').click();
 });
@@ -387,9 +452,11 @@ document.getElementById('returnPseudo').addEventListener('keydown', e => {
 // ── NEW PLAYER ──
 document.getElementById('createBtn').addEventListener('click', async () => {
   const pseudo = document.getElementById('newPseudo').value.trim();
+  const pin    = document.getElementById('newPin').value.trim();
   if (!pseudo || pseudo.length < 2) { showMsg('createMsg', 'Pseudo trop court (min 2 caractères)', 'err'); return; }
   if (pseudo.length > 18)           { showMsg('createMsg', 'Pseudo trop long (max 18)', 'err'); return; }
   if (containsBadWord(pseudo))      { showMsg('createMsg', 'Ce pseudo n\'est pas autorisé', 'err'); return; }
+  if (!pin || !/^\d{4}$/.test(pin)) { showMsg('createMsg', 'PIN invalide — 4 chiffres uniquement (ex: 1234)', 'err'); return; }
 
   const btn = document.getElementById('createBtn');
   btn.textContent = '⏳ Création en cours...';
@@ -407,11 +474,11 @@ document.getElementById('createBtn').addEventListener('click', async () => {
     const id  = genId();
     const ref = doc(collection(db,'clients'));
     await setDoc(ref, {
-      id, pseudo, avatar: selAvatar,
+      id, pseudo, avatar: selAvatar, pin,
       xp: 0, level: 0, coupons: [], cycleCount: 0, totalEuros: 0,
       createdAt: serverTimestamp(), updatedAt: serverTimestamp()
     });
-    // Parrainage — donne 1 XP au parrain UNE SEULE FOIS à la création
+    // Parrainage
     const refId = new URLSearchParams(window.location.search).get('ref');
     if (refId && refId !== ref.id) {
       const parrain = await getDocs(query(collection(db,'clients'), where('id','==',refId)));
