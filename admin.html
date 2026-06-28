@@ -797,16 +797,29 @@ window.addXP = async function(id) {
         else { simXP = newSimXP; totalRemaining -= xpThisCycle; }
       }
 
-      // Fusion anti-doublon — dans la transaction on a les vraies données
+      // Fusion anti-doublon — filtre par ID ET par nom+niveau actuel
+      // Permet plusieurs cycles par jour mais bloque les vrais doublons
       const existing = freshCl.coupons || [];
       const existingIds = new Set(existing.map(c => c.id));
-      const uniqueNew = newCoupons.filter(c => !existingIds.has(c.id));
+      // Bloque si même nom + même niveau + créé dans les 30 dernières secondes
+      const nowTs = Date.now();
+      const recentNames = new Set(
+        existing
+          .filter(c => c.type === 'xp' && c._ts && (nowTs - c._ts) < 30000)
+          .map(c => (c.name?.trim() || '') + '-' + (c._level || 0))
+      );
+      const uniqueNew = newCoupons.filter(c =>
+        !existingIds.has(c.id) &&
+        !recentNames.has((c.name?.trim() || '') + '-' + (c._level || 0))
+      );
+      // Ajoute timestamp et niveau aux nouveaux coupons pour le filtre futur
+      const uniqueNewWithTs = uniqueNew.map(c => ({ ...c, _ts: nowTs, _level: freshCl.level || 0 }));
 
       transaction.update(clientRef, {
         xp: simXP,
         level: curLevel,
         totalEuros: (freshCl.totalEuros || 0) + euros,
-        coupons: [...existing, ...uniqueNew],
+        coupons: [...existing, ...uniqueNewWithTs],
         updatedAt: serverTimestamp()
       });
     });
