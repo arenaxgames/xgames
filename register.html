@@ -227,6 +227,38 @@ body::after{
   </div>
 </div>
 
+<!-- ÉCRAN PIN — plein écran après pseudo -->
+<div id="pinScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;text-align:center">
+  <div style="font-size:3rem">🔐</div>
+  <div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--gold);text-shadow:0 0 20px var(--gold)">CODE SECRET</div>
+  <div id="pinScreenName" style="font-size:.85rem;color:var(--dim)"></div>
+  <input id="pinScreenInp" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •"
+    style="width:180px;background:rgba(0,0,0,.7);border:2px solid rgba(255,214,10,.6);border-radius:14px;color:var(--gold);font-size:2.2rem;text-align:center;letter-spacing:.5em;padding:14px;outline:none;font-family:'Orbitron',monospace">
+  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.8rem;color:var(--dim)">
+    <input type="checkbox" id="pinScreenStay" style="width:20px;height:20px;accent-color:var(--gold);cursor:pointer">
+    Rester connecté sur cet appareil
+  </label>
+  <button id="pinScreenBtn" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:15px 40px;cursor:pointer;width:100%;max-width:300px">VALIDER ⚡</button>
+  <div id="pinScreenMsg" style="font-size:.75rem;color:var(--red);min-height:20px"></div>
+  <button id="pinScreenBack" style="background:transparent;border:none;color:var(--dim);font-size:.72rem;cursor:pointer;text-decoration:underline">← Retour</button>
+</div>
+
+<!-- ÉCRAN CRÉER PIN — première fois -->
+<div id="pinCreateScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;text-align:center">
+  <div style="font-size:3rem">🔐</div>
+  <div style="font-family:'Orbitron',monospace;font-size:.95rem;font-weight:900;color:var(--gold)">CRÉE TON CODE SECRET</div>
+  <div style="font-size:.75rem;color:var(--dim);max-width:280px;line-height:1.6">Choisis un code à 4 chiffres pour protéger ta carte.<br><b style="color:var(--pink)">⚠️ Ne le donne jamais à quelqu'un d'autre !</b></div>
+  <input id="pinCreateScreenInp" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •"
+    style="width:180px;background:rgba(0,0,0,.7);border:2px solid rgba(255,214,10,.6);border-radius:14px;color:var(--gold);font-size:2.2rem;text-align:center;letter-spacing:.5em;padding:14px;outline:none;font-family:'Orbitron',monospace">
+  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.8rem;color:var(--dim)">
+    <input type="checkbox" id="pinCreateStay" style="width:20px;height:20px;accent-color:var(--gold);cursor:pointer">
+    Rester connecté sur cet appareil
+  </label>
+  <button id="pinCreateBtn" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:15px 40px;cursor:pointer;width:100%;max-width:300px">CRÉER MON CODE ⚡</button>
+  <div id="pinCreateScreenMsg" style="font-size:.75rem;color:var(--red);min-height:20px"></div>
+  <button id="pinCreateBack" style="background:transparent;border:none;color:var(--dim);font-size:.72rem;cursor:pointer;text-decoration:underline">← Retour</button>
+</div>
+
 <div id="main">
   <!-- LOGO CASINO -->
   <div class="logo-wrap">
@@ -263,16 +295,7 @@ body::after{
     <div class="card-title">⚡ J'ai déjà un compte</div>
     <label class="inp-label">Ton pseudo</label>
     <input class="inp" id="returnPseudo" type="text" placeholder="Ex: DragonBall99" maxlength="20" autocomplete="off">
-    <div id="returnPinWrap" style="display:none">
-      <label class="inp-label" style="margin-top:10px">🔐 Ton PIN secret (4 chiffres)</label>
-      <input class="inp" id="returnPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="off" style="letter-spacing:.4em;font-size:1.3rem;text-align:center">
-      <div style="font-size:.68rem;color:var(--dim);margin-top:4px;text-align:center">⚠️ Ne donne jamais ton PIN à quelqu'un d'autre</div>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.75rem;color:var(--dim);margin-top:10px">
-        <input type="checkbox" id="stayConnected" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer">
-        Rester connecté sur cet appareil
-      </label>
-    </div>
-    <button class="btn-primary" id="returnBtn">ACCÉDER À MA CARTE ⚡</button>
+    <button class="btn-primary" id="returnBtn">CONTINUER ⚡</button>
     <div class="msg" id="returnMsg"></div>
   </div>
 
@@ -381,81 +404,94 @@ function showMsg(id, txt, type) {
 // Stats retirées - données internes
 
 // ── RETURNING PLAYER ──
-let _returnClientDoc = null;
+let _returnDoc = null;
 
 document.getElementById('returnBtn').addEventListener('click', async () => {
   const pseudo = document.getElementById('returnPseudo').value.trim();
-  if (!pseudo) { showMsg('returnMsg', 'Entre ton pseudo', 'err'); return; }
+  const msg    = document.getElementById('returnMsg');
+  if (!pseudo) { msg.textContent = 'Entre ton pseudo'; msg.className = 'msg err'; return; }
 
-  const pinWrap = document.getElementById('returnPinWrap');
-  const pinInp  = document.getElementById('returnPin');
+  const btn = document.getElementById('returnBtn');
+  btn.textContent = '⏳...'; btn.disabled = true;
 
-  // Étape 1 — cherche le client
-  if (pinWrap.style.display === 'none') {
-    const q    = query(collection(db,'clients'), where('pseudo','==',pseudo));
-    const snap = await getDocs(q);
-    if (snap.empty) { showMsg('returnMsg', 'Pseudo introuvable. Crée une nouvelle carte !', 'err'); return; }
-    _returnClientDoc = snap.docs[0];
-    const data = _returnClientDoc.data();
+  const snap = await getDocs(query(collection(db,'clients'), where('pseudo','==',pseudo)));
+  btn.textContent = 'CONTINUER ⚡'; btn.disabled = false;
 
-    // Pas de PIN — en crée un
-    if (!data.pin) {
-      pinWrap.innerHTML = `
-        <div style="background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.3);border-radius:10px;padding:10px;margin-top:10px;text-align:center">
-          <div style="font-size:.75rem;color:var(--gold);font-weight:700;margin-bottom:6px">🔐 Première connexion sécurisée</div>
-          <div style="font-size:.68rem;color:var(--dim);margin-bottom:8px">Crée un PIN à 4 chiffres pour protéger ta carte</div>
-          <input class="inp" id="returnPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="letter-spacing:.4em;font-size:1.3rem;text-align:center;margin-bottom:6px">
-          <div style="font-size:.65rem;color:var(--dim)">⚠️ Ce code est personnel — ne le donne jamais</div>
-        </div>`;
-      pinWrap.style.display = 'block';
-      document.getElementById('returnBtn').textContent = 'CRÉER MON PIN ET ACCÉDER ⚡';
-      showMsg('returnMsg', '👆 Crée ton PIN secret pour sécuriser ta carte', 'info');
-      return;
-    }
+  if (snap.empty) { msg.textContent = 'Pseudo introuvable. Crée une nouvelle carte !'; msg.className = 'msg err'; return; }
+  msg.textContent = ''; msg.className = 'msg';
 
-    // A un PIN — demande-le
-    pinWrap.style.display = 'block';
-    pinWrap.innerHTML = `
-      <label class="inp-label" style="margin-top:10px">🔐 Ton PIN secret (4 chiffres)</label>
-      <input class="inp" id="returnPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="off" style="letter-spacing:.4em;font-size:1.3rem;text-align:center">
-      <div style="font-size:.68rem;color:var(--dim);margin-top:4px;text-align:center">⚠️ Ne donne jamais ton PIN à quelqu'un d'autre</div>`;
-    document.getElementById('returnBtn').textContent = 'VALIDER ⚡';
-    document.getElementById('returnPin').focus();
-    showMsg('returnMsg', '', '');
-    return;
-  }
-
-  // Étape 2 — vérifie le PIN
-  const pin = document.getElementById('returnPin').value.trim();
-  if (!pin || pin.length < 4) { showMsg('returnMsg', 'Entre ton PIN à 4 chiffres', 'err'); return; }
-
-  const data = _returnClientDoc.data();
+  _returnDoc = snap.docs[0];
+  const data = _returnDoc.data();
 
   if (!data.pin) {
-    if (!/^\d{4}$/.test(pin)) { showMsg('returnMsg', 'Le PIN doit contenir 4 chiffres uniquement', 'err'); return; }
-    await updateDoc(doc(db,'clients',_returnClientDoc.id), { pin });
+    // Pas de PIN — écran création
+    document.getElementById('pinCreateScreen').style.display = 'flex';
   } else {
-    if (pin !== data.pin) {
-      showMsg('returnMsg', '❌ PIN incorrect. Demande une réinitialisation au stand.', 'err');
-      return;
-    }
+    // A un PIN — écran saisie
+    document.getElementById('pinScreenName').textContent = `Bienvenue ${data.pseudo} 👋`;
+    document.getElementById('pinScreen').style.display = 'flex';
+    setTimeout(() => document.getElementById('pinScreenInp').focus(), 100);
   }
-
-  // PIN validé — sauvegarde si "rester connecté" coché
-  const stayEl = document.getElementById('stayConnected');
-  if (stayEl?.checked) {
-    localStorage.setItem('xgames_pin_ok', _returnClientDoc.id);
-  } else {
-    localStorage.removeItem('xgames_pin_ok');
-  }
-
-  localStorage.setItem('xgames_client_id', _returnClientDoc.id);
-  localStorage.setItem('xgames_pseudo', pseudo);
-  window.location.href = `client.html?id=${_returnClientDoc.id}`;
 });
 
 document.getElementById('returnPseudo').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('returnBtn').click();
+});
+
+// Valider PIN existant
+document.getElementById('pinScreenBtn').addEventListener('click', async () => {
+  const pin = document.getElementById('pinScreenInp').value.trim();
+  const msg = document.getElementById('pinScreenMsg');
+  if (pin.length < 4) { msg.textContent = 'Entre 4 chiffres'; return; }
+  if (!_returnDoc) return;
+  if (pin !== _returnDoc.data().pin) {
+    msg.textContent = '❌ Code incorrect. Demande une réinitialisation au stand.';
+    document.getElementById('pinScreenInp').value = '';
+    return;
+  }
+  if (document.getElementById('pinScreenStay').checked) {
+    localStorage.setItem('xgames_pin_ok', _returnDoc.id);
+  } else {
+    localStorage.removeItem('xgames_pin_ok');
+  }
+  localStorage.setItem('xgames_client_id', _returnDoc.id);
+  window.location.href = `client.html?id=${_returnDoc.id}`;
+});
+
+document.getElementById('pinScreenInp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pinScreenBtn').click();
+});
+
+document.getElementById('pinScreenBack').addEventListener('click', () => {
+  document.getElementById('pinScreen').style.display = 'none';
+  document.getElementById('pinScreenInp').value = '';
+  document.getElementById('pinScreenMsg').textContent = '';
+});
+
+// Créer PIN (première fois)
+document.getElementById('pinCreateBtn').addEventListener('click', async () => {
+  const pin = document.getElementById('pinCreateScreenInp').value.trim();
+  const msg = document.getElementById('pinCreateScreenMsg');
+  if (!/^\d{4}$/.test(pin)) { msg.textContent = '4 chiffres uniquement (ex: 1234)'; return; }
+  if (!_returnDoc) return;
+  await updateDoc(doc(db,'clients',_returnDoc.id), { pin });
+  if (document.getElementById('pinCreateStay').checked) {
+    localStorage.setItem('xgames_pin_ok', _returnDoc.id);
+  } else {
+    localStorage.removeItem('xgames_pin_ok');
+  }
+  localStorage.setItem('xgames_client_id', _returnDoc.id);
+  window.location.href = `client.html?id=${_returnDoc.id}`;
+});
+
+document.getElementById('pinCreateScreenInp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pinCreateBtn').click();
+});
+
+document.getElementById('pinCreateBack').addEventListener('click', () => {
+  document.getElementById('pinCreateScreen').style.display = 'none';
+  document.getElementById('pinCreateScreenInp').value = '';
+  document.getElementById('pinCreateScreenMsg').textContent = '';
 });
 
 // ── NEW PLAYER ──
