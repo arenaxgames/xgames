@@ -547,19 +547,22 @@ document.getElementById('newPseudo').addEventListener('keydown', e => {
 // ── AUTO-RECONNEXION ──
 const savedId = localStorage.getItem('xgames_client_id');
 if (savedId) {
-  // Si "rester connecté" activé → passe direct
   if (localStorage.getItem('xgames_pin_ok') === savedId) {
+    // Rester connecté activé → passe direct
     window.location.href = `client.html?id=${savedId}`;
   } else {
-    // Demande le PIN ici avant de rediriger
+    // Demande le PIN avant de rediriger
     (async () => {
-      const snap = await getDoc(doc(db, 'clients', savedId));
-      if (!snap.exists()) {
-        localStorage.removeItem('xgames_client_id');
-        window.location.reload();
-        return;
-      }
-      const data = snap.data();
+      try {
+        const snap = await getDoc(doc(db, 'clients', savedId));
+        if (!snap.exists()) {
+          // Compte supprimé — nettoie et affiche les formulaires normalement
+          localStorage.removeItem('xgames_client_id');
+          localStorage.removeItem('xgames_pin_ok');
+          // PAS de reload — affiche juste les formulaires
+          return;
+        }
+        const data = snap.data();
       // Cache les formulaires
       document.getElementById('returnCard').style.display = 'none';
       document.getElementById('newCard').style.display = 'none';
@@ -580,7 +583,7 @@ if (savedId) {
           </label>
           <button class="btn-primary" id="quickPinBtn">CRÉER MON CODE ⚡</button>
           <div class="msg" id="quickMsg"></div>`;
-        document.getElementById('wrap').appendChild(pinDiv);
+        document.getElementById('main').appendChild(pinDiv);
         document.getElementById('quickPinBtn').addEventListener('click', async () => {
           const pin = document.getElementById('quickPin').value.trim();
           if (!/^\d{4}$/.test(pin)) { document.getElementById('quickMsg').textContent = '4 chiffres uniquement'; document.getElementById('quickMsg').className = 'msg err'; return; }
@@ -600,7 +603,7 @@ if (savedId) {
           <button class="btn-primary" id="quickPinBtn">VALIDER ⚡</button>
           <div class="msg" id="quickMsg"></div>
           <button onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pin_ok');window.location.reload()" style="background:transparent;border:none;color:var(--dim);font-size:.7rem;margin-top:10px;cursor:pointer;text-decoration:underline">← Changer de compte</button>`;
-        document.getElementById('wrap').appendChild(pinDiv);
+        document.getElementById('main').appendChild(pinDiv);
         const validate = async () => {
           const pin = document.getElementById('quickPin').value.trim();
           if (pin.length < 4) { document.getElementById('quickMsg').textContent = 'Code à 4 chiffres'; document.getElementById('quickMsg').className = 'msg err'; return; }
@@ -610,6 +613,11 @@ if (savedId) {
         };
         document.getElementById('quickPinBtn').addEventListener('click', validate);
         document.getElementById('quickPin').addEventListener('keydown', e => { if(e.key==='Enter') validate(); });
+      }
+      } catch(e) {
+        // Erreur Firebase — nettoie et laisse le client se reconnecter manuellement
+        localStorage.removeItem('xgames_client_id');
+        localStorage.removeItem('xgames_pin_ok');
       }
     })();
   }
