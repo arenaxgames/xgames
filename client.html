@@ -340,32 +340,6 @@ body{padding-bottom:0}
 <body>
 <div id="pts"></div>
 
-<!-- ÉCRAN PIN -->
-<div id="pinOv" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
-  <div style="font-size:2.5rem">🔐</div>
-  <div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--gold);text-shadow:0 0 20px var(--gold)">CODE SECRET</div>
-  <div id="pinOvName" style="font-size:.8rem;color:var(--dim)"></div>
-  <input id="pinOvInp" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="width:160px;background:rgba(0,0,0,.6);border:2px solid rgba(255,214,10,.5);border-radius:14px;color:var(--gold);font-size:2rem;text-align:center;letter-spacing:.4em;padding:12px;outline:none;font-family:'Orbitron',monospace">
-  <!-- Rester connecté -->
-  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.75rem;color:var(--dim)">
-    <input type="checkbox" id="stayLoggedIn" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer">
-    Rester connecté sur cet appareil
-  </label>
-  <button onclick="checkPinEntry()" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:14px 32px;cursor:pointer">VALIDER</button>
-  <div id="pinOvMsg" style="font-size:.75rem;color:var(--red);min-height:20px"></div>
-  <button onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pin_ok');window.location.href='register.html'" style="background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:20px;color:var(--dim);font-size:.65rem;padding:8px 20px;cursor:pointer;font-family:'Orbitron',monospace">← Changer de compte</button>
-</div>
-
-<!-- ÉCRAN CRÉER PIN (première fois) -->
-<div id="pinCreateOv" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center">
-  <div style="font-size:2.5rem">🔐</div>
-  <div style="font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;color:var(--gold)">CRÉE TON CODE SECRET</div>
-  <div style="font-size:.75rem;color:var(--dim);max-width:280px;line-height:1.6">Pour protéger ta carte, crée un code à 4 chiffres.<br>⚠️ Ne le donne jamais à quelqu'un d'autre !</div>
-  <input id="pinCreateInp" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="width:160px;background:rgba(0,0,0,.6);border:2px solid rgba(255,214,10,.5);border-radius:14px;color:var(--gold);font-size:2rem;text-align:center;letter-spacing:.4em;padding:12px;outline:none;font-family:'Orbitron',monospace">
-  <button onclick="savePinEntry()" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.8rem;font-weight:900;padding:14px 32px;cursor:pointer">CRÉER MON CODE</button>
-  <div id="pinCreateMsg" style="font-size:.75rem;color:var(--red);min-height:20px"></div>
-</div>
-
 <div id="loadOv">
   <div class="ll">X-GAMES</div>
   <div class="lb"><div class="lf"></div></div>
@@ -2302,37 +2276,6 @@ if ('serviceWorker' in navigator) {
 }
 mkPts();
 initCoinCanvas();
-
-// ── PIN ──
-window.checkPinEntry = async function() {
-  const pin = document.getElementById('pinOvInp').value.trim();
-  const msg = document.getElementById('pinOvMsg');
-  if (!pin || pin.length < 4) { msg.textContent = 'Entre ton code à 4 chiffres'; return; }
-  const snap = await getDoc(doc(db, 'clients', clientId));
-  if (!snap.exists()) return;
-  if (snap.data().pin !== pin) {
-    msg.textContent = '❌ Code incorrect. Demande une réinitialisation au stand.';
-    document.getElementById('pinOvInp').value = '';
-    return;
-  }
-  // Rester connecté ?
-  if (document.getElementById('stayLoggedIn')?.checked) {
-    localStorage.setItem('xgames_pin_ok', clientId);
-  }
-  _pinVerified = true;
-  document.getElementById('pinOv').style.display = 'none';
-  document.getElementById('main').style.display = 'flex';
-};
-
-window.savePinEntry = async function() {
-  const pin = document.getElementById('pinCreateInp').value.trim();
-  const msg = document.getElementById('pinCreateMsg');
-  if (!pin || !/^\d{4}$/.test(pin)) { msg.textContent = '4 chiffres uniquement (ex: 1234)'; return; }
-  await updateDoc(doc(db, 'clients', clientId), { pin });
-  _pinVerified = true;
-  document.getElementById('pinCreateOv').style.display = 'none';
-  document.getElementById('main').style.display = 'flex';
-};
 
 // ── EXPOSITION WINDOW — toutes les fonctions appelées en onclick ──
 window.switchTab       = switchTab;

@@ -267,6 +267,10 @@ body::after{
       <label class="inp-label" style="margin-top:10px">🔐 Ton PIN secret (4 chiffres)</label>
       <input class="inp" id="returnPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="off" style="letter-spacing:.4em;font-size:1.3rem;text-align:center">
       <div style="font-size:.68rem;color:var(--dim);margin-top:4px;text-align:center">⚠️ Ne donne jamais ton PIN à quelqu'un d'autre</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.75rem;color:var(--dim);margin-top:10px">
+        <input type="checkbox" id="stayConnected" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer">
+        Rester connecté sur cet appareil
+      </label>
     </div>
     <button class="btn-primary" id="returnBtn">ACCÉDER À MA CARTE ⚡</button>
     <div class="msg" id="returnMsg"></div>
@@ -428,16 +432,21 @@ document.getElementById('returnBtn').addEventListener('click', async () => {
   const data = _returnClientDoc.data();
 
   if (!data.pin) {
-    // Nouveau PIN — l'enregistre
     if (!/^\d{4}$/.test(pin)) { showMsg('returnMsg', 'Le PIN doit contenir 4 chiffres uniquement', 'err'); return; }
     await updateDoc(doc(db,'clients',_returnClientDoc.id), { pin });
-    showMsg('returnMsg', '✓ PIN créé avec succès !', 'ok');
   } else {
-    // Vérifie le PIN
     if (pin !== data.pin) {
       showMsg('returnMsg', '❌ PIN incorrect. Demande une réinitialisation au stand.', 'err');
       return;
     }
+  }
+
+  // PIN validé — sauvegarde si "rester connecté" coché
+  const stayEl = document.getElementById('stayConnected');
+  if (stayEl?.checked) {
+    localStorage.setItem('xgames_pin_ok', _returnClientDoc.id);
+  } else {
+    localStorage.removeItem('xgames_pin_ok');
   }
 
   localStorage.setItem('xgames_client_id', _returnClientDoc.id);
