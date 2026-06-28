@@ -502,7 +502,72 @@ document.getElementById('newPseudo').addEventListener('keydown', e => {
 // ── AUTO-RECONNEXION ──
 const savedId = localStorage.getItem('xgames_client_id');
 if (savedId) {
-  window.location.href = `client.html?id=${savedId}`;
+  // Si "rester connecté" activé → passe direct
+  if (localStorage.getItem('xgames_pin_ok') === savedId) {
+    window.location.href = `client.html?id=${savedId}`;
+  } else {
+    // Demande le PIN ici avant de rediriger
+    (async () => {
+      const snap = await getDoc(doc(db, 'clients', savedId));
+      if (!snap.exists()) {
+        localStorage.removeItem('xgames_client_id');
+        window.location.reload();
+        return;
+      }
+      const data = snap.data();
+      // Cache les formulaires
+      document.getElementById('returnCard').style.display = 'none';
+      document.getElementById('newCard').style.display = 'none';
+      document.querySelectorAll('.divider').forEach(d => d.style.display = 'none');
+
+      // Crée l'écran PIN inline
+      const pinDiv = document.createElement('div');
+      pinDiv.className = 'card';
+      pinDiv.style.textAlign = 'center';
+      if (!data.pin) {
+        pinDiv.innerHTML = `
+          <div style="font-size:2rem;margin-bottom:8px">🔐</div>
+          <div class="card-title">Crée ton code secret</div>
+          <p style="font-size:.75rem;color:var(--dim);margin-bottom:14px;line-height:1.6">Pour protéger ta carte, crée un code à 4 chiffres.<br>⚠️ Ne le donne jamais à quelqu'un d'autre !</p>
+          <input class="inp" id="quickPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="letter-spacing:.4em;font-size:1.5rem;text-align:center">
+          <label style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:.75rem;color:var(--dim);margin:10px 0">
+            <input type="checkbox" id="quickStay" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer"> Rester connecté sur cet appareil
+          </label>
+          <button class="btn-primary" id="quickPinBtn">CRÉER MON CODE ⚡</button>
+          <div class="msg" id="quickMsg"></div>`;
+        document.getElementById('wrap').appendChild(pinDiv);
+        document.getElementById('quickPinBtn').addEventListener('click', async () => {
+          const pin = document.getElementById('quickPin').value.trim();
+          if (!/^\d{4}$/.test(pin)) { document.getElementById('quickMsg').textContent = '4 chiffres uniquement'; document.getElementById('quickMsg').className = 'msg err'; return; }
+          await updateDoc(doc(db, 'clients', savedId), { pin });
+          if (document.getElementById('quickStay').checked) localStorage.setItem('xgames_pin_ok', savedId);
+          window.location.href = `client.html?id=${savedId}`;
+        });
+      } else {
+        pinDiv.innerHTML = `
+          <div style="font-size:2rem;margin-bottom:8px">🔐</div>
+          <div class="card-title">Bienvenue ${data.pseudo} 👋</div>
+          <p style="font-size:.75rem;color:var(--dim);margin-bottom:14px">Entre ton code secret pour accéder à ta carte</p>
+          <input class="inp" id="quickPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="letter-spacing:.4em;font-size:1.5rem;text-align:center">
+          <label style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:.75rem;color:var(--dim);margin:10px 0">
+            <input type="checkbox" id="quickStay" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer"> Rester connecté sur cet appareil
+          </label>
+          <button class="btn-primary" id="quickPinBtn">VALIDER ⚡</button>
+          <div class="msg" id="quickMsg"></div>
+          <button onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pin_ok');window.location.reload()" style="background:transparent;border:none;color:var(--dim);font-size:.7rem;margin-top:10px;cursor:pointer;text-decoration:underline">← Changer de compte</button>`;
+        document.getElementById('wrap').appendChild(pinDiv);
+        const validate = async () => {
+          const pin = document.getElementById('quickPin').value.trim();
+          if (pin.length < 4) { document.getElementById('quickMsg').textContent = 'Code à 4 chiffres'; document.getElementById('quickMsg').className = 'msg err'; return; }
+          if (pin !== data.pin) { document.getElementById('quickMsg').textContent = '❌ Code incorrect'; document.getElementById('quickMsg').className = 'msg err'; document.getElementById('quickPin').value = ''; return; }
+          if (document.getElementById('quickStay').checked) localStorage.setItem('xgames_pin_ok', savedId);
+          window.location.href = `client.html?id=${savedId}`;
+        };
+        document.getElementById('quickPinBtn').addEventListener('click', validate);
+        document.getElementById('quickPin').addEventListener('keydown', e => { if(e.key==='Enter') validate(); });
+      }
+    })();
+  }
 }
 
 // ── BANNIÈRE INSTALLATION ──

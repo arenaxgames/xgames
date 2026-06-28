@@ -1403,35 +1403,6 @@ if (clientId) {
       return;
     }
     const data = snap.data();
-
-    // Vérif PIN — une seule fois par session
-    if (!_pinVerified) {
-      // Si "rester connecté" activé pour cet appareil/compte
-      if (localStorage.getItem('xgames_pin_ok') === clientId) {
-        _pinVerified = true;
-      } else if (!data.pin) {
-        // Pas de PIN → demande d'en créer un
-        const ov = document.getElementById('pinCreateOv');
-        ov.style.display = 'flex';
-        document.getElementById('main').style.display = 'none';
-        return;
-      } else {
-        // A un PIN → demande de le saisir
-        const ov = document.getElementById('pinOv');
-        if (ov.style.display === 'none' || ov.style.display === '') {
-          ov.style.display = 'flex';
-          const nameEl = document.getElementById('pinOvName');
-          if (nameEl) nameEl.textContent = `Bienvenue ${data.pseudo} 👋`;
-          document.getElementById('main').style.display = 'none';
-          document.getElementById('pinOvInp').addEventListener('keydown', e => {
-            if (e.key === 'Enter') checkPinEntry();
-          });
-          return;
-        }
-        if (ov.style.display === 'flex') return; // Attend la saisie
-      }
-    }
-
     clientData = data;
     checkDailySpin(data);
     if (data.scores) {
