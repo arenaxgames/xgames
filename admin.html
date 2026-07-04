@@ -399,7 +399,8 @@ function userIsTyping() {
         return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
       });
     if (userIsTyping()) return;
-    if (window._addingXP) return; // Ne recharge pas pendant addXP
+    if (window._addingXP || window._addXPRunning) return;
+    if (window._scannerActive) return;
     if (curTab === 'clients') renderTab('clients');
     if (curTab === 'stats') renderTab('stats');
   });
@@ -742,108 +743,79 @@ window.addXP = async function(id) {
   const xpToAdd = Math.floor(euros);
   if (xpToAdd <= 0) { showDetFb('Entre un montant valide', 'err'); return; }
 
-  // Verrou anti-double clic immédiat
-  const btn = document.querySelector('.ctrl-btn.ctrl-add');
-  if (btn?._locked) return; // Déjà en cours
-  if (btn) { btn._locked = true; btn.disabled = true; btn.textContent = '⏳...'; }
+  // Verrou global indestructible
+  if (window._addXPRunning) { showDetFb('Opération en cours...', 'err'); return; }
+  window._addXPRunning = true;
   window._addingXP = true;
+
+  const btn = document.querySelector('.ctrl-btn.ctrl-add');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+
+  // ID unique pour cette opération — clé anti-doublon absolue
+  const opId = `op-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
   try {
     const sortedTiers = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
     const maxXP = sortedTiers.length ? sortedTiers[sortedTiers.length-1].xp : 100;
 
-    // Transaction Firebase — lecture + écriture atomiques, impossible d'exécuter deux fois en parallèle
     let jackpotSpins = 0;
-    let newCoupons = [];
+    let couponCount = 0;
 
     await runTransaction(db, async (transaction) => {
-      const clientRef  = doc(db, 'clients', id);
-      const freshSnap  = await transaction.get(clientRef);
+      const clientRef = doc(db, 'clients', id);
+      const freshSnap = await transaction.get(clientRef);
       if (!freshSnap.exists()) throw new Error('Client introuvable');
       const freshCl = freshSnap.data();
+
+      // Si cette opération a déjà été appliquée → stop (idempotence)
+      if ((freshCl.lastOpId || '') === opId) return;
 
       let curLevel = freshCl.level || 0;
       let simXP = freshCl.xp || 0;
       let totalRemaining = xpToAdd;
-      let cycles = 0;
       jackpotSpins = 0;
-      newCoupons = [];
-
-      // Timestamp unique garanti par transaction + compteur
-      const baseTs = Date.now();
+      const coupons = [];
       let cpSeq = 0;
 
       while (totalRemaining > 0) {
         const spaceLeft = maxXP - simXP;
-        if (spaceLeft <= 0) { simXP = 0; curLevel++; cycles++; continue; }
+        if (spaceLeft <= 0) { simXP = 0; curLevel++; continue; }
         const xpThisCycle = Math.min(totalRemaining, spaceLeft);
         const newSimXP = simXP + xpThisCycle;
 
         sortedTiers.filter(t => t.xp > simXP && t.xp <= newSimXP).forEach(t => {
           const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
-          if (m) {
-            jackpotSpins += parseInt(m[1])||1;
-          } else {
-            // ID unique : timestamp + seq + xp + level + random
-            newCoupons.push({
-              id: `cp-${baseTs}-${cpSeq++}-${t.xp}-${curLevel}-${Math.random().toString(36).slice(2,6)}`,
-              type: 'xp', name: t.name, icon: t.icon||'🎁',
-              used: false, earnedAt: new Date().toLocaleDateString('fr-FR')
-            });
-          }
+          if (m) { jackpotSpins += parseInt(m[1])||1; }
+          else { coupons.push({ id:`${opId}-${cpSeq++}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
         });
 
-        if (newSimXP >= maxXP) { simXP = 0; curLevel++; cycles++; totalRemaining -= xpThisCycle; }
+        if (newSimXP >= maxXP) { simXP = 0; curLevel++; totalRemaining -= xpThisCycle; }
         else { simXP = newSimXP; totalRemaining -= xpThisCycle; }
       }
 
-      // Fusion anti-doublon — filtre par ID ET par nom+niveau actuel
-      // Permet plusieurs cycles par jour mais bloque les vrais doublons
+      couponCount = coupons.length;
       const existing = freshCl.coupons || [];
-      const existingIds = new Set(existing.map(c => c.id));
-      // Bloque si même nom + même niveau + créé dans les 30 dernières secondes
-      const nowTs = Date.now();
-      const recentNames = new Set(
-        existing
-          .filter(c => c.type === 'xp' && c._ts && (nowTs - c._ts) < 30000)
-          .map(c => (c.name?.trim() || '') + '-' + (c._level || 0))
-      );
-      const uniqueNew = newCoupons.filter(c =>
-        !existingIds.has(c.id) &&
-        !recentNames.has((c.name?.trim() || '') + '-' + (c._level || 0))
-      );
-      // Ajoute timestamp et niveau aux nouveaux coupons pour le filtre futur
-      const uniqueNewWithTs = uniqueNew.map(c => ({ ...c, _ts: nowTs, _level: freshCl.level || 0 }));
 
       transaction.update(clientRef, {
-        xp: simXP,
-        level: curLevel,
+        xp: simXP, level: curLevel,
         totalEuros: (freshCl.totalEuros || 0) + euros,
-        coupons: [...existing, ...uniqueNewWithTs],
+        coupons: [...existing, ...coupons],
+        lastOpId: opId,  // Marque cette opération comme appliquée
         updatedAt: serverTimestamp()
       });
     });
 
-    // Jackpot après la transaction
     if (jackpotSpins > 0) {
       const slotSnap = await getDoc(doc(db, 'slots', id));
-      const currentSpins = (slotSnap.exists() && slotSnap.data().status === 'armed') ? (slotSnap.data().multiCount || 0) : 0;
-      await setDoc(doc(db, 'slots', id), {
-        status: 'armed', clientId: id,
-        clientPseudo: allClients.find(x=>x._id===id)?.pseudo || '—',
-        multiCount: currentSpins + jackpotSpins,
-        autoGranted: true, unlockedAt: serverTimestamp()
-      });
+      const cur = (slotSnap.exists() && slotSnap.data().status === 'armed') ? (slotSnap.data().multiCount || 0) : 0;
+      await setDoc(doc(db, 'slots', id), { status:'armed', clientId:id, clientPseudo:allClients.find(x=>x._id===id)?.pseudo||'—', multiCount:cur+jackpotSpins, autoGranted:true, unlockedAt:serverTimestamp() });
       toast(`🎰 ${jackpotSpins} lancer(s) jackpot débloqué(s)`);
     }
 
-    await addDoc(collection(db, 'clients', id, 'history'), {
-      type: 'add', label: `+${xpToAdd} XP (${euros}€)`,
-      euros, xp: xpToAdd, timestamp: serverTimestamp()
-    });
+    await addDoc(collection(db,'clients',id,'history'), { type:'add', label:`+${xpToAdd} XP (${euros}€)`, euros, xp:xpToAdd, timestamp:serverTimestamp() });
 
     let msg = `✓ +${xpToAdd} XP`;
-    if (newCoupons.length) msg += ` · ${newCoupons.length} coupon(s)`;
+    if (couponCount) msg += ` · ${couponCount} coupon(s)`;
     showDetFb(msg, 'ok');
     document.getElementById('euroInp').value = '';
     document.querySelectorAll('.preset').forEach(x => x.classList.remove('on'));
@@ -852,8 +824,12 @@ window.addXP = async function(id) {
   } catch(e) {
     showDetFb('Erreur : ' + e.message, 'err');
   } finally {
+    window._addXPRunning = false;
     window._addingXP = false;
-    if (btn) { btn._locked = false; btn.disabled = false; btn.textContent = '➕ AJOUTER'; }
+    const btn2 = document.querySelector('.ctrl-btn.ctrl-add');
+    if (btn2) { btn2.disabled = false; btn2.textContent = '➕ AJOUTER'; }
+    // Force le rafraîchissement du profil après l'opération
+    setTimeout(() => { if (selClientId) renderDetail(selClientId); }, 500);
   }
 };
 
@@ -1041,6 +1017,7 @@ function renderCoupons(c) {
   stopBtnFresh.addEventListener('click', stopScan);
 
   async function startScan() {
+    window._scannerActive = true;
     document.getElementById('scanContainer').style.display = 'block';
     document.getElementById('startScanBtn').style.display  = 'none';
     try {
@@ -1056,6 +1033,7 @@ function renderCoupons(c) {
   }
 
   function stopScan() {
+    window._scannerActive = false;
     if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
     clearInterval(scanTimer);
     document.getElementById('scanContainer').style.display = 'none';
@@ -1118,8 +1096,18 @@ function renderCoupons(c) {
       if (v.validated)         { showScanFb('Coupon déjà utilisé', 'err'); return; }
       if (v.expiresAt < Date.now()) { showScanFb('QR expiré — le client doit en générer un nouveau', 'err'); return; }
 
-      // Valide
+      // Valide dans la collection validations
       await setDoc(doc(db, 'validations', token), { ...v, validated: true, validatedAt: serverTimestamp() });
+
+      // Marque le coupon comme utilisé dans la fiche client
+      const clSnap = await getDoc(doc(db, 'clients', clId));
+      if (clSnap.exists()) {
+        const coupons = (clSnap.data().coupons || []).map(cp =>
+          cp.id === v.couponId ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
+        );
+        await updateDoc(doc(db, 'clients', clId), { coupons, updatedAt: serverTimestamp() });
+      }
+
       await addDoc(collection(db, 'logs'), {
         type: 'coupon_used', clientId: clId, clientName: v.pseudo,
         couponName: v.couponName, timestamp: serverTimestamp()
@@ -1169,7 +1157,21 @@ function renderCoupons(c) {
       const vSnap = await getDoc(doc(db, 'validations', tok));
       if (!vSnap.exists()) { toast('Coupon introuvable'); return; }
       if (vSnap.data().validated) { toast('Déjà validé'); return; }
-      await setDoc(doc(db, 'validations', tok), { ...vSnap.data(), validated: true, validatedAt: serverTimestamp() });
+      const vData = vSnap.data();
+
+      // Valide dans validations
+      await setDoc(doc(db, 'validations', tok), { ...vData, validated: true, validatedAt: serverTimestamp() });
+
+      // Marque le coupon comme utilisé dans la fiche client
+      const clSnap = await getDoc(doc(db, 'clients', clId));
+      if (clSnap.exists()) {
+        const couponId = vData.couponId;
+        const coupons = (clSnap.data().coupons || []).map(cp =>
+          cp.id === couponId ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
+        );
+        await updateDoc(doc(db, 'clients', clId), { coupons, updatedAt: serverTimestamp() });
+      }
+
       await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:clId, clientName:pseudo, couponName:cpName, timestamp:serverTimestamp() });
       toast(`✓ Validé pour ${pseudo}`);
     } catch(e) { toast('Erreur: ' + e.message); }
