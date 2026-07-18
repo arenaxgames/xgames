@@ -18,25 +18,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#00040f;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff9f1c;--txt:#e0e7ff;--dim:#4a5568}
+:root{--bg:#00040f;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff8c00;--txt:#e0e7ff;--dim:#4a5568}
 html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',Arial,sans-serif;overflow-x:hidden}
 
-/* Grille holographique de fond */
+/* Grille néon orange */
 body::before{content:'';position:fixed;inset:0;
   background:
-    linear-gradient(rgba(0,245,255,.03) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,245,255,.03) 1px,transparent 1px);
+    linear-gradient(rgba(255,140,0,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,140,0,.03) 1px,transparent 1px);
   background-size:40px 40px;
   pointer-events:none;z-index:0}
 
-/* Halos de couleur */
+/* Halos de couleur — plus vivants avec orange */
 body::after{content:'';position:fixed;inset:0;
   background:
-    radial-gradient(ellipse at 20% 10%,rgba(114,9,183,.25) 0%,transparent 50%),
-    radial-gradient(ellipse at 80% 90%,rgba(247,37,133,.2) 0%,transparent 50%),
-    radial-gradient(ellipse at 50% 50%,rgba(67,97,238,.15) 0%,transparent 60%);
+    radial-gradient(ellipse at 15% 10%,rgba(255,140,0,.15) 0%,transparent 45%),
+    radial-gradient(ellipse at 85% 85%,rgba(114,9,183,.22) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(67,97,238,.12) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 5%,rgba(247,37,133,.15) 0%,transparent 40%);
   pointer-events:none;z-index:0;animation:halo-shift 8s ease-in-out infinite alternate}
-@keyframes halo-shift{0%{opacity:.7}100%{opacity:1}}
+@keyframes halo-shift{0%{opacity:.6}100%{opacity:1}}
 
 /* Particules */
 #pts{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
@@ -277,6 +278,9 @@ body::after{content:'';position:fixed;inset:0;
 .vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green);text-shadow:0 0 20px var(--green)}
 .vld-ok-sub{font-size:.78rem;color:var(--dim)}
 
+@keyframes arrowBounce{from{transform:translateX(0)}to{transform:translateX(5px)}}
+@keyframes arrowTextBlink{from{opacity:.6;text-shadow:0 0 6px rgba(255,140,0,.4)}to{opacity:1;text-shadow:0 0 15px rgba(255,140,0,.8)}}
+
 /* Bouton MON QR CODE — surbrillance jaune néon */
 .my-qr-btn{
   width:100%;
@@ -299,27 +303,49 @@ body::after{content:'';position:fixed;inset:0;
 /* ── NAVIGATION BAS D'ÉCRAN ── */
 .bottom-nav{
   position:fixed;bottom:0;left:0;right:0;z-index:1000;
-  background:rgba(5,8,20,.99);
-  border-top:1px solid rgba(0,245,255,.15);
+  background:rgba(4,6,18,.97);
+  border-top:none;
   display:flex;align-items:center;
-  padding:8px 0 max(8px,env(safe-area-inset-bottom));
+  padding:6px 8px max(10px,env(safe-area-inset-bottom));
   backdrop-filter:blur(20px);
-  box-shadow:0 -4px 30px rgba(0,0,0,.8)
+  box-shadow:0 -8px 40px rgba(0,0,0,.9);
 }
+/* Trait néon orange en haut de la nav */
+.bottom-nav::before{
+  content:'';position:absolute;top:0;left:8%;right:8%;height:1.5px;
+  background:linear-gradient(90deg,transparent,rgba(255,140,0,.9),rgba(255,214,10,.7),rgba(255,140,0,.9),transparent);
+  box-shadow:0 0 12px rgba(255,140,0,.6);
+  animation:navTopGlow 2s ease-in-out infinite alternate;
+}
+@keyframes navTopGlow{from{opacity:.6;box-shadow:0 0 8px rgba(255,140,0,.4)}to{opacity:1;box-shadow:0 0 20px rgba(255,140,0,.8)}}
 .nav-btn{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
   background:transparent;border:none;cursor:pointer;
-  padding:6px 4px;position:relative;transition:all .2s
+  padding:8px 3px 5px;position:relative;border-radius:14px;
+  transition:all .25s;
 }
-.nav-icon{font-size:1.4rem;transition:transform .2s}
-.nav-label{font-family:'Orbitron',monospace;font-size:.48rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
-.nav-btn.active .nav-icon{transform:scale(1.15)}
-.nav-btn.active .nav-label{color:var(--cyan)}
-.nav-btn.active::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:30px;height:2px;background:var(--cyan);border-radius:2px;box-shadow:0 0 8px var(--cyan)}
+/* Contour néon orange sur l'onglet actif */
+.nav-btn.active{
+  background:rgba(255,140,0,.07);
+}
+.nav-btn.active::before{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  border:1.5px solid rgba(255,140,0,.8);
+  box-shadow:0 0 14px rgba(255,140,0,.35),inset 0 0 8px rgba(255,140,0,.05);
+  animation:navBtnGlow 1.5s ease-in-out infinite alternate;
+}
+@keyframes navBtnGlow{
+  from{border-color:rgba(255,140,0,.5);box-shadow:0 0 8px rgba(255,140,0,.2)}
+  to{border-color:rgba(255,214,10,.9);box-shadow:0 0 20px rgba(255,140,0,.5)}
+}
+.nav-icon{font-size:1.6rem;transition:transform .2s}
+.nav-label{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;transition:color .2s}
+.nav-btn.active .nav-icon{transform:scale(1.2);filter:drop-shadow(0 0 6px rgba(255,140,0,.7))}
+.nav-btn.active .nav-label{color:var(--orange);text-shadow:0 0 8px rgba(255,140,0,.6)}
 .nav-badge{
-  position:absolute;top:2px;right:22%;
+  position:absolute;top:3px;right:20%;
   background:var(--red);color:#fff;
-  font-family:'Orbitron',monospace;font-size:.45rem;font-weight:700;
+  font-family:'Orbitron',monospace;font-size:.42rem;font-weight:700;
   min-width:16px;height:16px;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 8px var(--red)
@@ -458,7 +484,10 @@ body{padding-bottom:0}
       <div class="ptop">
         <div class="pavatar" id="pavatar">🎮</div>
         <div class="pinfo">
-          <div class="pname" id="pname" style="opacity:.5">—</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="pname" id="pname" style="opacity:.5">—</div>
+            <div id="pxpInline" style="display:none;background:linear-gradient(135deg,rgba(255,140,0,.2),rgba(255,214,10,.15));border:1px solid rgba(255,140,0,.5);border-radius:20px;padding:2px 10px;font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;color:var(--orange);text-shadow:0 0 8px rgba(255,140,0,.5);white-space:nowrap"></div>
+          </div>
           <div class="plevel" id="plevel" style="opacity:.5">Connexion…</div>
           <div class="pbadge" id="pbadge" style="background:linear-gradient(90deg,var(--gold),var(--orange));opacity:.5">—</div>
         </div>
@@ -477,6 +506,12 @@ body{padding-bottom:0}
           <div class="nr-pts" id="nrPts">—</div>
         </div>
       </div>
+    </div>
+
+    <!-- FLÈCHE QR CLIGNOTANTE -->
+    <div style="display:flex;align-items:center;gap:6px;animation:arrowBounce .8s ease-in-out infinite alternate;padding:0 4px">
+      <span style="font-size:1.1rem;filter:drop-shadow(0 0 6px rgba(255,140,0,.8))">👇</span>
+      <span style="font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;color:var(--orange);text-shadow:0 0 10px rgba(255,140,0,.7);letter-spacing:.06em;animation:arrowTextBlink .8s ease-in-out infinite alternate">VOTRE QR CODE — MONTREZ-LE AU STAND !</span>
     </div>
 
     <!-- BOUTON QR IDENTITÉ -->
@@ -1504,7 +1539,6 @@ function renderProfile(data) {
   const plevel  = document.getElementById('plevel');
   const pbadge  = document.getElementById('pbadge');
   document.getElementById('pavatar').textContent = data.avatar || '🎮';
-  // Insigne tombola si gagnant
   const isTombolaWinner = data.tombolaWinner === true;
   pname.textContent   = (data.pseudo || '—') + (isTombolaWinner ? ' 🏆' : '');
   pname.style.opacity = '1';
@@ -1514,6 +1548,12 @@ function renderProfile(data) {
   pbadge.style.background = `linear-gradient(90deg, ${lvlInfo.color}, ${lvlInfo.color}aa)`;
   pbadge.textContent  = `${lvlInfo.star} ${lvlInfo.name.toUpperCase()}`;
   pbadge.style.opacity = '1';
+  // XP inline à côté du nom
+  const xpInline = document.getElementById('pxpInline');
+  if (xpInline) {
+    xpInline.textContent = `⚡ ${data.xp || 0} XP`;
+    xpInline.style.display = 'block';
+  }
 }
 
 function renderXP(data) {
@@ -1547,66 +1587,74 @@ function renderXP(data) {
 function renderLeaderboard(list) {
   const el = document.getElementById('lbList');
 
-  // Message si vide
   if (!list.length) {
     el.innerHTML = '<div class="empty-c"><div class="empty-i">🏆</div>Sois le premier sur le classement !</div>';
     return;
   }
 
-  // Header motivant
-  let html = `<div style="text-align:center;margin-bottom:14px;padding:10px;background:linear-gradient(135deg,rgba(255,214,10,.08),rgba(67,97,238,.08));border:1px solid rgba(255,214,10,.15);border-radius:12px">
-    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.1em">🏆 TOP JOUEURS X-GAMES</div>
-    <div style="font-size:.7rem;color:var(--dim);margin-top:4px">Joue plus pour grimper dans le classement !</div>
-  </div>`;
+  const maxXP = Math.max(...list.map(p => (p.xp||0) + (p.level||0)*180), 1);
 
-  const top3Styles = [
-    { bg:'linear-gradient(135deg,rgba(255,214,10,.18),rgba(255,159,28,.1))', border:'rgba(255,214,10,.5)', glow:'0 0 25px rgba(255,214,10,.25)' },
-    { bg:'linear-gradient(135deg,rgba(192,192,192,.14),rgba(148,163,184,.08))', border:'rgba(192,192,192,.4)', glow:'0 0 15px rgba(192,192,192,.15)' },
-    { bg:'linear-gradient(135deg,rgba(205,127,50,.14),rgba(180,100,30,.08))', border:'rgba(205,127,50,.4)', glow:'0 0 15px rgba(205,127,50,.15)' },
+  const medals = ['🥇','🥈','🥉'];
+  const rankColors = ['rgba(255,214,10,.5)','rgba(192,192,192,.4)','rgba(205,127,50,.4)'];
+  const rankBg = [
+    'linear-gradient(135deg,rgba(255,214,10,.12),rgba(255,159,28,.07))',
+    'linear-gradient(135deg,rgba(192,192,192,.1),rgba(148,163,184,.06))',
+    'linear-gradient(135deg,rgba(205,127,50,.1),rgba(160,90,30,.06))'
   ];
-  const rankIcons = ['👑','🥈','🥉','4','5','6','7','8','9','10'];
+
+  let html = `<div style="text-align:center;margin-bottom:12px;padding:9px;background:linear-gradient(135deg,rgba(255,140,0,.08),rgba(67,97,238,.08));border:1px solid rgba(255,140,0,.2);border-radius:12px">
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--orange);letter-spacing:.1em;text-shadow:0 0 10px rgba(255,140,0,.4)">🏆 TOP JOUEURS X-GAMES</div>
+    <div style="font-size:.7rem;color:var(--dim);margin-top:3px">Classement par niveau puis XP</div>
+  </div>`;
 
   html += list.map((p, i) => {
     const isMe    = p._id === clientId;
     const level   = p.level || 0;
+    const xp      = p.xp || 0;
     const lvlInfo = getLevelInfo(level);
-    const style   = i < 3 ? top3Styles[i] : null;
     const isTop   = i < 3;
+    // Barre XP proportionnelle au meilleur
+    const totalScore = xp + level * 180;
+    const barPct = Math.min(100, Math.round(totalScore / maxXP * 100));
 
-    // Barre de progression vers le prochain niveau
-    const nextLevel = LEVELS.find(l => l.minLevel > level);
-    const prevLevel = getLevelInfo(level);
-    const progressPct = nextLevel
-      ? Math.min(100, Math.round((level - prevLevel.minLevel) / (nextLevel.minLevel - prevLevel.minLevel) * 100))
-      : 100;
+    const borderColor = isMe ? 'rgba(0,245,255,.4)' : isTop ? rankColors[i] : 'rgba(255,255,255,.06)';
+    const bgStyle = isMe
+      ? 'linear-gradient(135deg,rgba(0,245,255,.06),rgba(67,97,238,.06))'
+      : isTop ? rankBg[i] : 'rgba(5,10,25,.7)';
+    const barColor = isTop
+      ? (i===0 ? 'linear-gradient(90deg,var(--gold),var(--orange))' : i===1 ? 'linear-gradient(90deg,#c0c0c0,#a0a0c0)' : 'linear-gradient(90deg,#cd7f32,#b06020)')
+      : isMe ? 'linear-gradient(90deg,var(--cyan),var(--blue))' : 'linear-gradient(90deg,var(--violet),var(--orange))';
+    const medalColor = isTop ? rankColors[i] : isMe ? 'rgba(0,245,255,.5)' : 'rgba(255,255,255,.08)';
 
-    return `<div class="lb-item ${isMe?'me':''}" style="${isTop?`background:${style.bg};border-color:${style.border};box-shadow:${style.glow};`:''}${i===0?'transform:scale(1.02);':''}">
-      <div style="font-size:${isTop?'1.4':'1rem'};font-weight:900;min-width:28px;text-align:center;color:${isTop?style.border:'var(--dim)'}">${rankIcons[i]||i+1}</div>
-      <div style="font-size:${isTop?'1.5':'1.2'}rem;flex-shrink:0">${p.avatar||'🎮'}</div>
+    return `<div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;margin-bottom:7px;background:${bgStyle};border:1px solid ${borderColor};box-shadow:${isTop?`0 0 15px ${rankColors[i].replace('.4','.12')}`:'none'};position:relative;overflow:hidden">
+      <!-- Barre de couleur à gauche -->
+      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${medalColor};border-radius:14px 0 0 14px;box-shadow:0 0 6px ${medalColor}"></div>
+      <!-- Rang -->
+      <div style="font-family:'Orbitron',monospace;font-size:${isTop?'1.3rem':'.85rem'};font-weight:900;min-width:30px;text-align:center;color:${isTop?rankColors[i]:isMe?'var(--cyan)':'var(--dim)'}">${isTop?medals[i]:String(i+1).padStart(2,'0')}</div>
+      <!-- Avatar -->
+      <div style="font-size:${isTop?'1.5rem':'1.2rem'};flex-shrink:0">${p.avatar||'🎮'}</div>
+      <!-- Info -->
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="font-size:${isTop?'.88':'.8'}rem;font-weight:${isTop?'800':'600'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.pseudo||'—'}${p.tombolaWinner?'<span style="color:var(--gold);font-size:.8rem"> 🏆</span>':''}</div>
-          ${isMe?'<span class="lb-you">MOI</span>':''}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div style="font-size:${isTop?'.88rem':'.8rem'};font-weight:${isTop?800:600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--txt)'}">${p.pseudo||'—'}${p.tombolaWinner?' 🏆':''}</div>
+          ${isMe?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.3);border-radius:10px;padding:1px 6px;color:var(--cyan)">MOI</span>':''}
         </div>
-        <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
-          <span style="font-size:.75rem">${lvlInfo.star}</span>
-          <span style="font-size:.62rem;color:${lvlInfo.color};font-weight:700">${lvlInfo.name}</span>
-          ${level===0?'<span style="font-size:.58rem;color:var(--dim)">· Débutant</span>':''}
-        </div>
-        <div style="margin-top:5px;height:4px;background:rgba(0,0,0,.4);border-radius:2px;overflow:hidden">
-          <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,${lvlInfo.color},var(--cyan));border-radius:2px;transition:width .5s"></div>
+        <!-- XP + mini barre -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <div style="flex:1;height:4px;background:rgba(0,0,0,.5);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${barPct}%;background:${barColor};border-radius:2px"></div>
+          </div>
+          <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--dim);white-space:nowrap">⚡${xp} XP</span>
         </div>
       </div>
-      ${isTop?`<div style="font-family:'Orbitron',monospace;font-size:.6rem;color:${style.border};font-weight:700;text-align:right">TOP ${i+1}</div>`:''}
+      <!-- Badge niveau -->
+      <div style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:900;background:${isTop?`linear-gradient(135deg,${rankColors[i].replace('.4','.2')},${rankColors[i].replace('.4','.1')})`:'rgba(255,255,255,.05)'};border:1px solid ${isTop?rankColors[i]:'rgba(255,255,255,.1)'};border-radius:8px;padding:3px 8px;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--dim)'};white-space:nowrap">NV.${level}</div>
     </div>`;
   }).join('');
 
-  // Message pour ceux pas encore dans le top
   const meInList = list.find(p => p._id === clientId);
   if (!meInList) {
-    html += `<div style="text-align:center;margin-top:10px;padding:10px;border:1px dashed rgba(0,245,255,.15);border-radius:10px;font-size:.72rem;color:var(--dim)">
-      🎯 Continue à jouer pour apparaître dans le top 10 !
-    </div>`;
+    html += `<div style="text-align:center;margin-top:8px;padding:10px;border:1px dashed rgba(255,140,0,.2);border-radius:10px;font-size:.72rem;color:var(--dim)">🎯 Continue à jouer pour apparaître dans le top 10 !</div>`;
   }
 
   el.innerHTML = html;

@@ -2,10 +2,10 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta htequiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" contentp-t="0">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -743,7 +743,7 @@ window.addXP = async function(id) {
   const xpToAdd = Math.floor(euros);
   if (xpToAdd <= 0) { showDetFb('Entre un montant valide', 'err'); return; }
 
-  // Verrou global indestructible
+  // Verrou global — vérifié EN PREMIER avant tout
   if (window._addXPRunning) { showDetFb('Opération en cours...', 'err'); return; }
   window._addXPRunning = true;
   window._addingXP = true;
@@ -751,8 +751,8 @@ window.addXP = async function(id) {
   const btn = document.querySelector('.ctrl-btn.ctrl-add');
   if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
 
-  // ID unique pour cette opération — clé anti-doublon absolue
-  const opId = `op-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  // opId généré APRÈS le verrou — garantit unicité
+  const opId = `op-${id}-${Date.now()}`;
 
   try {
     const sortedTiers = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
@@ -767,8 +767,13 @@ window.addXP = async function(id) {
       if (!freshSnap.exists()) throw new Error('Client introuvable');
       const freshCl = freshSnap.data();
 
-      // Si cette opération a déjà été appliquée → stop (idempotence)
+      // Anti-doublon : si même opId OU si dernière op < 3 secondes avec même montant → stop
       if ((freshCl.lastOpId || '') === opId) return;
+      const lastOpTime = freshCl.lastOpTime || 0;
+      const lastOpEuros = freshCl.lastOpEuros || -1;
+      if (Date.now() - lastOpTime < 3000 && lastOpEuros === euros) {
+        throw new Error('DOUBLON_BLOQUE');
+      }
 
       let curLevel = freshCl.level || 0;
       let simXP = freshCl.xp || 0;
@@ -800,7 +805,9 @@ window.addXP = async function(id) {
         xp: simXP, level: curLevel,
         totalEuros: (freshCl.totalEuros || 0) + euros,
         coupons: [...existing, ...coupons],
-        lastOpId: opId,  // Marque cette opération comme appliquée
+        lastOpId: opId,
+        lastOpTime: Date.now(),
+        lastOpEuros: euros,
         updatedAt: serverTimestamp()
       });
     });
@@ -822,7 +829,11 @@ window.addXP = async function(id) {
     toast(`+${xpToAdd} XP`);
 
   } catch(e) {
-    showDetFb('Erreur : ' + e.message, 'err');
+    if (e.message === 'DOUBLON_BLOQUE') {
+      showDetFb('⚠️ Opération déjà effectuée — attends quelques secondes', 'err');
+    } else {
+      showDetFb('Erreur : ' + e.message, 'err');
+    }
   } finally {
     window._addXPRunning = false;
     window._addingXP = false;
