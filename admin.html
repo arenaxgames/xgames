@@ -266,7 +266,8 @@ const firebaseConfig = {
 // ════════════════════════════════════
 
 // ⚠️ CHANGE CE MOT DE PASSE
-const ADMIN_PWD = "xgames2024";
+// Hash SHA-256 du mot de passe — le vrai mot de passe n'est plus visible dans le code
+const ADMIN_HASH = "e6051bb480bf66cb904dbcc39562ef2a248e4549158fcd9f8641988e8bbe7270";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -278,30 +279,63 @@ let selClientId = null;
 let selEuros = null;
 let toastT;
 
-// ── LOGIN ──
-// ── SW CLEANUP ──
+// Anti-brute force
+let _loginAttempts = 0;
+let _loginBlockedUntil = 0;
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
   if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
 }
 
+// Hash SHA-256
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('pwdInp').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
-function doLogin() {
+async function doLogin() {
+  const errEl = document.getElementById('loginErr');
+
+  // Vérifie si bloqué (anti-brute force)
+  if (Date.now() < _loginBlockedUntil) {
+    const secs = Math.ceil((_loginBlockedUntil - Date.now()) / 1000);
+    errEl.textContent = `⏳ Trop de tentatives — attends ${secs}s`;
+    return;
+  }
+
   const v = document.getElementById('pwdInp').value;
-  if (v === ADMIN_PWD) {
+  const hash = await sha256(v);
+
+  if (hash === ADMIN_HASH) {
+    _loginAttempts = 0;
     document.getElementById('loginScr').style.display = 'none';
     document.getElementById('adm').style.display = 'flex';
-    // Demande permission notifications pour les alertes jackpot
+    // Session admin — déconnexion auto après 2h
+    setTimeout(() => {
+      document.getElementById('adm').style.display = 'none';
+      document.getElementById('loginScr').style.display = 'flex';
+      document.getElementById('loginErr').textContent = '⏱️ Session expirée — reconnecte-toi';
+    }, 2 * 60 * 60 * 1000);
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
     initAdmin();
   } else {
-    document.getElementById('loginErr').textContent = 'Mot de passe incorrect';
+    _loginAttempts++;
     document.getElementById('pwdInp').value = '';
-    setTimeout(() => document.getElementById('loginErr').textContent = '', 3000);
+    if (_loginAttempts >= 3) {
+      _loginBlockedUntil = Date.now() + 30000;
+      _loginAttempts = 0;
+      errEl.textContent = '🚫 3 tentatives échouées — bloqué 30 secondes';
+      setTimeout(() => errEl.textContent = '', 30000);
+    } else {
+      errEl.textContent = `❌ Mot de passe incorrect (${3 - _loginAttempts} essai(s) restant(s))`;
+      setTimeout(() => errEl.textContent = '', 3000);
+    }
   }
 }
 
@@ -1378,7 +1412,7 @@ function renderConfig(c) {
     <div class="st">Mot de passe admin</div>
     <div class="card">
       <p style="font-size:.74rem;color:var(--dim);line-height:1.5">
-        Modifie la ligne <code style="color:var(--cyan);background:rgba(0,245,255,.07);padding:1px 5px;border-radius:4px">const ADMIN_PWD = "…"</code> dans admin.html
+        Modifie le hash dans <code style="color:var(--cyan);background:rgba(0,245,255,.07);padding:1px 5px;border-radius:4px">const ADMIN_HASH</code> dans admin.html
       </p>
     </div>`;
 

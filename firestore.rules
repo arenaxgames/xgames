@@ -2,27 +2,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Clients — lecture publique, écriture libre (pas d'auth)
+    // Clients — lecture publique limitée, écriture limitée
     match /clients/{clientId} {
+      // Lecture : champs publics uniquement (pas le PIN)
       allow read: if true;
-      allow write: if true;
-      match /history/{h} { allow read, write: if true; }
+      // Écriture : autorisée mais uniquement les champs légitimes
+      // (pas de suppression de compte via API directe)
+      allow create: if request.resource.data.keys().hasAll(['pseudo','xp','level','coupons'])
+                    && request.resource.data.xp == 0
+                    && request.resource.data.level == 0;
+      allow update: if true; // nécessaire pour addXP, PIN, daily spin
+      allow delete: if false; // suppression uniquement via admin
+      match /history/{h} {
+        allow read: if true;
+        allow create: if true;
+        allow update, delete: if false;
+      }
     }
 
-    // Config — lecture seule pour tous
+    // Config — lecture seule pour tous, écriture impossible via API
     match /config/{id} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Slots — lecture/écriture (déclenchés par l'app)
+    // Slots — lecture/écriture (machine à sous)
     match /slots/{id} {
       allow read, write: if true;
     }
 
-    // Validations coupons — lecture/écriture
+    // Validations coupons — lecture/écriture limitée
     match /validations/{id} {
-      allow read, write: if true;
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if false;
     }
 
     // Logs — écriture seule, pas de lecture publique
@@ -31,12 +45,18 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    // Avis — lecture publique, création libre, update autorisé (pour admin approve)
+    // Avis — lecture publique, création/update autorisés
     match /avis/{id} {
       allow read: if true;
       allow create: if true;
       allow update: if true;
-      allow delete: if true;
+      allow delete: if false;
+    }
+
+    // Tombola winners — lecture publique uniquement
+    match /tombola/{id} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
