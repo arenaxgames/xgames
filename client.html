@@ -18,13 +18,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#000814;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff9f1c;--txt:#e0e7ff;--dim:#4a5568}
+:root{--bg:#00040f;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff8c00;--txt:#e0e7ff;--dim:#4a5568}
 html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',Arial,sans-serif;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,245,255,.012) 2px,rgba(0,245,255,.012) 4px);pointer-events:none;z-index:0}
-body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(67,97,238,.18) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(114,9,183,.15) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* Grille néon orange */
+body::before{content:'';position:fixed;inset:0;
+  background:
+    linear-gradient(rgba(255,140,0,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,140,0,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0}
+
+/* Halos de couleur — plus vivants avec orange */
+body::after{content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 15% 10%,rgba(255,140,0,.15) 0%,transparent 45%),
+    radial-gradient(ellipse at 85% 85%,rgba(114,9,183,.22) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(67,97,238,.12) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 5%,rgba(247,37,133,.15) 0%,transparent 40%);
+  pointer-events:none;z-index:0;animation:halo-shift 8s ease-in-out infinite alternate}
+@keyframes halo-shift{0%{opacity:.6}100%{opacity:1}}
+
+/* Particules */
 #pts{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
 .pt{position:absolute;width:2px;height:2px;border-radius:50%;animation:fl linear infinite}
 @keyframes fl{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) translateX(var(--dx));opacity:0}}
+
 #loadOv{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px}
 .ll{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);text-shadow:0 0 30px var(--cyan);animation:blink 1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
@@ -35,32 +54,49 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .err-t{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--red)}
 #main{position:relative;z-index:2;min-height:100vh;padding:16px 14px 50px;max-width:430px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
-.hdr-logo{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan);text-shadow:0 0 15px var(--cyan);letter-spacing:.08em}
-.hdr-back{background:transparent;border:1px solid rgba(0,245,255,.15);border-radius:8px;color:var(--cyan);font-size:.7rem;padding:5px 11px;cursor:pointer;font-family:'Orbitron',monospace}
-.profile-card{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(0,245,255,.18);border-radius:20px;padding:18px;position:relative;overflow:hidden}
-.profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent)}
+.hdr-logo{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan);text-shadow:0 0 15px var(--cyan),0 0 30px rgba(0,245,255,.4);letter-spacing:.08em}
+.hdr-back{background:transparent;border:1px solid rgba(0,245,255,.2);border-radius:8px;color:var(--cyan);font-size:.7rem;padding:5px 11px;cursor:pointer;font-family:'Orbitron',monospace}
+
+/* Carte profil — holographique */
+.profile-card{
+  background:linear-gradient(135deg,rgba(5,10,25,.97),rgba(10,18,45,.97));
+  border:1px solid transparent;
+  border-radius:20px;padding:18px;position:relative;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,245,255,.08),0 8px 32px rgba(0,0,0,.6);
+}
+.profile-card::before{content:'';position:absolute;inset:0;border-radius:20px;padding:1px;
+  background:linear-gradient(135deg,rgba(0,245,255,.4),rgba(114,9,183,.3),rgba(247,37,133,.2),rgba(0,245,255,.4));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+/* Balayage holographique */
+.profile-card::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(0,245,255,.04) 50%,transparent 60%);
+  animation:holo-card 4s ease-in-out infinite;pointer-events:none}
+@keyframes holo-card{0%,100%{transform:translateX(-100%)}50%{transform:translateX(200%)}}
+
 .ptop{display:flex;align-items:center;gap:13px;margin-bottom:16px}
-.pavatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid rgba(0,245,255,.35);flex-shrink:0}
+.pavatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid rgba(0,245,255,.5);flex-shrink:0;box-shadow:0 0 20px rgba(0,245,255,.2)}
 .pinfo{flex:1;min-width:0}
-.pname{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pname{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 10px rgba(224,231,255,.3)}
 .plevel{font-size:.7rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
 .pbadge{display:inline-block;padding:2px 9px;border-radius:20px;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:#000;margin-top:4px}
 .xp-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
 .xp-lbl{font-size:.62rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase}
-.xp-cnt{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;color:var(--cyan)}
-.xp-wrap{position:relative;height:24px;background:rgba(0,0,0,.6);border-radius:12px;border:1px solid rgba(0,245,255,.12);overflow:hidden;margin-bottom:6px}
-.xp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:12px;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--pink));transition:width 1.2s cubic-bezier(.34,1.56,.64,1)}
+.xp-cnt{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;color:var(--cyan);text-shadow:0 0 10px var(--cyan)}
+.xp-wrap{position:relative;height:24px;background:rgba(0,0,0,.6);border-radius:12px;border:1px solid rgba(0,245,255,.15);overflow:hidden;margin-bottom:6px;box-shadow:inset 0 0 10px rgba(0,0,0,.5)}
+.xp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:12px;background:linear-gradient(90deg,var(--violet),var(--blue),var(--cyan));transition:width 1.2s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 15px rgba(0,245,255,.4)}
 .xp-milestones{display:flex;gap:3px;margin-top:4px}
 .xm{flex:1;text-align:center;font-size:.5rem;color:rgba(0,245,255,.3);font-family:'Orbitron',monospace}
 .xm.done{color:var(--cyan)}
-.next-rwd{background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.18);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-top:10px}
+.next-rwd{background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.2);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-top:10px;box-shadow:0 0 15px rgba(255,214,10,.05)}
 .nr-icon{font-size:1.3rem}
 .nr-info{flex:1}
 .nr-lbl{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
-.nr-name{font-size:.82rem;color:var(--gold);font-weight:700;margin-top:1px}
+.nr-name{font-size:.82rem;color:var(--gold);font-weight:700;margin-top:1px;text-shadow:0 0 10px rgba(255,214,10,.3)}
 .nr-pts{font-size:.65rem;color:rgba(255,214,10,.55);margin-top:1px}
-.sec-t{font-family:'Orbitron',monospace;font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.45);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.18),transparent)}
+.sec-t{font-family:'Orbitron',monospace;font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.6);margin-bottom:10px;display:flex;align-items:center;gap:8px;text-shadow:0 0 8px rgba(0,245,255,.4)}
+.sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.3),transparent)}
 /* ── MACHINE À SOUS ── */
 .slot-machine-wrap{position:relative;margin:0 auto;max-width:360px}
 /* Pieds de la machine */
@@ -194,52 +230,122 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 @keyframes holographic-sweep{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
 @keyframes notif-slide-in{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @keyframes winner-pulse{from{box-shadow:0 0 20px rgba(255,214,10,.3)}to{box-shadow:0 0 50px rgba(255,214,10,.6),0 0 80px rgba(255,214,10,.3)}}
-#validateOv{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+#validateOv{position:fixed;inset:0;z-index:8000;
+  background:linear-gradient(135deg,rgba(0,4,15,.98),rgba(5,0,20,.98));
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
 #validateOv.show{display:flex}
-.vld-cp-badge{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px 16px;max-width:300px;width:100%}
+.vld-cp-badge{display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(0,245,255,.2);
+  border-radius:14px;padding:10px 16px;max-width:320px;width:100%}
 .vld-cp-icon{font-size:2.2rem;flex-shrink:0}
 .vld-cp-info{flex:1;text-align:left;min-width:0}
 .vld-cp-name{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;color:#fff}
 .vld-cp-sub{font-size:.62rem;color:var(--dim);margin-top:2px}
-.vld-qr-frame{background:#fff;border-radius:20px;padding:12px;box-shadow:0 0 50px rgba(0,245,255,.25)}
+
+/* QR CODE — Énorme, jaune néon, impossible à louper */
+.vld-qr-frame{
+  background:#fff;
+  border-radius:24px;
+  padding:20px;
+  position:relative;
+  box-shadow:
+    0 0 0 4px rgba(255,214,10,.9),
+    0 0 40px rgba(255,214,10,.8),
+    0 0 80px rgba(255,214,10,.5),
+    0 0 140px rgba(255,214,10,.25);
+  animation:qr-pulse 1.3s ease-in-out infinite alternate
+}
+@keyframes qr-pulse{
+  from{box-shadow:0 0 0 4px rgba(255,214,10,.7),0 0 30px rgba(255,214,10,.6),0 0 60px rgba(255,214,10,.3)}
+  to{box-shadow:0 0 0 6px rgba(255,214,10,1),0 0 60px rgba(255,214,10,1),0 0 120px rgba(255,214,10,.6),0 0 200px rgba(255,214,10,.3)}
+}
 .vld-qr-frame canvas{display:block;border-radius:10px}
-.vld-instruction{font-size:.76rem;color:var(--dim);max-width:240px;line-height:1.6}
-.vld-instruction b{color:var(--cyan)}
-.vld-timer-wrap{width:100%;max-width:280px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
-.vld-timer-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));border-radius:2px;transition:width 1s linear}
-.vld-timer-bar.warn{background:linear-gradient(90deg,var(--red),var(--orange))}
-.vld-timer-txt{font-family:'Orbitron',monospace;font-size:.62rem;color:var(--dim)}
-.vld-cancel{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:20px;color:var(--dim);font-size:.68rem;padding:8px 24px;cursor:pointer;font-family:'Orbitron',monospace}
+
+.vld-instruction{font-size:.8rem;color:var(--txt);max-width:260px;line-height:1.6;
+  background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.15);
+  border-radius:10px;padding:8px 14px}
+.vld-instruction b{color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
+.vld-timer-wrap{width:100%;max-width:300px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.vld-timer-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:3px;transition:width 1s linear;box-shadow:0 0 8px var(--cyan)}
+.vld-timer-bar.warn{background:linear-gradient(90deg,var(--red),var(--orange));box-shadow:0 0 8px var(--red)}
+.vld-timer-txt{font-family:'Orbitron',monospace;font-size:.65rem;color:var(--cyan)}
+.vld-cancel{background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:20px;color:var(--dim);font-size:.68rem;padding:8px 24px;cursor:pointer;font-family:'Orbitron',monospace}
 .vld-confirmed{display:none;flex-direction:column;align-items:center;gap:12px}
 .vld-confirmed.show{display:flex}
 .vld-check{font-size:5rem;animation:check-pop .6s cubic-bezier(.34,1.56,.64,1)}
 @keyframes check-pop{0%{transform:scale(0)}100%{transform:scale(1)}}
-.vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green)}
+.vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green);text-shadow:0 0 20px var(--green)}
 .vld-ok-sub{font-size:.78rem;color:var(--dim)}
+
+@keyframes arrowBounce{from{transform:translateX(0)}to{transform:translateX(5px)}}
+@keyframes arrowTextBlink{from{opacity:.6;text-shadow:0 0 6px rgba(255,140,0,.4)}to{opacity:1;text-shadow:0 0 15px rgba(255,140,0,.8)}}
+
+/* Bouton MON QR CODE — surbrillance jaune néon */
+.my-qr-btn{
+  width:100%;
+  background:linear-gradient(135deg,rgba(255,214,10,.18),rgba(255,159,28,.14));
+  border:2px solid rgba(255,214,10,.8);
+  border-radius:14px;
+  color:var(--gold);
+  font-family:'Orbitron',monospace;
+  font-size:.7rem;font-weight:900;
+  padding:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 0 20px rgba(255,214,10,.4),0 0 40px rgba(255,214,10,.15);
+  animation:my-qr-glow 1.5s ease-in-out infinite alternate;
+  text-shadow:0 0 10px rgba(255,214,10,.6);
+}
+@keyframes my-qr-glow{
+  from{box-shadow:0 0 15px rgba(255,214,10,.3),0 0 30px rgba(255,214,10,.1);border-color:rgba(255,214,10,.6)}
+  to{box-shadow:0 0 30px rgba(255,214,10,.7),0 0 60px rgba(255,214,10,.35),0 0 90px rgba(255,214,10,.15);border-color:rgba(255,214,10,1)}
+}
 /* ── NAVIGATION BAS D'ÉCRAN ── */
 .bottom-nav{
   position:fixed;bottom:0;left:0;right:0;z-index:1000;
-  background:rgba(5,8,20,.99);
-  border-top:1px solid rgba(0,245,255,.15);
+  background:rgba(4,6,18,.97);
+  border-top:none;
   display:flex;align-items:center;
-  padding:8px 0 max(8px,env(safe-area-inset-bottom));
+  padding:6px 8px max(10px,env(safe-area-inset-bottom));
   backdrop-filter:blur(20px);
-  box-shadow:0 -4px 30px rgba(0,0,0,.8)
+  box-shadow:0 -8px 40px rgba(0,0,0,.9);
 }
+/* Trait néon orange en haut de la nav */
+.bottom-nav::before{
+  content:'';position:absolute;top:0;left:8%;right:8%;height:1.5px;
+  background:linear-gradient(90deg,transparent,rgba(255,140,0,.9),rgba(255,214,10,.7),rgba(255,140,0,.9),transparent);
+  box-shadow:0 0 12px rgba(255,140,0,.6);
+  animation:navTopGlow 2s ease-in-out infinite alternate;
+}
+@keyframes navTopGlow{from{opacity:.6;box-shadow:0 0 8px rgba(255,140,0,.4)}to{opacity:1;box-shadow:0 0 20px rgba(255,140,0,.8)}}
 .nav-btn{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
   background:transparent;border:none;cursor:pointer;
-  padding:6px 4px;position:relative;transition:all .2s
+  padding:8px 3px 5px;position:relative;border-radius:14px;
+  transition:all .25s;
 }
-.nav-icon{font-size:1.4rem;transition:transform .2s}
-.nav-label{font-family:'Orbitron',monospace;font-size:.48rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
-.nav-btn.active .nav-icon{transform:scale(1.15)}
-.nav-btn.active .nav-label{color:var(--cyan)}
-.nav-btn.active::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:30px;height:2px;background:var(--cyan);border-radius:2px;box-shadow:0 0 8px var(--cyan)}
+/* Contour néon orange sur l'onglet actif */
+.nav-btn.active{
+  background:rgba(255,140,0,.07);
+}
+.nav-btn.active::before{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  border:1.5px solid rgba(255,140,0,.8);
+  box-shadow:0 0 14px rgba(255,140,0,.35),inset 0 0 8px rgba(255,140,0,.05);
+  animation:navBtnGlow 1.5s ease-in-out infinite alternate;
+}
+@keyframes navBtnGlow{
+  from{border-color:rgba(255,140,0,.5);box-shadow:0 0 8px rgba(255,140,0,.2)}
+  to{border-color:rgba(255,214,10,.9);box-shadow:0 0 20px rgba(255,140,0,.5)}
+}
+.nav-icon{font-size:1.6rem;transition:transform .2s}
+.nav-label{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;transition:color .2s}
+.nav-btn.active .nav-icon{transform:scale(1.2);filter:drop-shadow(0 0 6px rgba(255,140,0,.7))}
+.nav-btn.active .nav-label{color:var(--orange);text-shadow:0 0 8px rgba(255,140,0,.6)}
 .nav-badge{
-  position:absolute;top:2px;right:22%;
+  position:absolute;top:3px;right:20%;
   background:var(--red);color:#fff;
-  font-family:'Orbitron',monospace;font-size:.45rem;font-weight:700;
+  font-family:'Orbitron',monospace;font-size:.42rem;font-weight:700;
   min-width:16px;height:16px;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
   padding:0 3px;box-shadow:0 0 8px var(--red)
@@ -335,7 +441,7 @@ body{padding-bottom:0}
 <div id="myQrOv" style="position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px">
   <div style="font-family:'Orbitron',monospace;font-size:.9rem;color:var(--cyan);font-weight:900">📱 MON QR CODE</div>
   <div style="font-size:.72rem;color:var(--dim);text-align:center">Montre ce QR à l'opérateur pour qu'il accède à ton profil</div>
-  <div id="myQrFrame" style="background:#fff;border-radius:16px;padding:14px"></div>
+  <div id="myQrFrame" class="vld-qr-frame" style="margin:4px 0"></div>
   <div id="myQrPseudo" style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--txt)"></div>
   <button onclick="document.getElementById('myQrOv').style.display='none'" style="background:transparent;border:1px solid rgba(0,245,255,.3);border-radius:20px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.72rem;padding:10px 28px;cursor:pointer">FERMER</button>
 </div>
@@ -357,7 +463,7 @@ body{padding-bottom:0}
 <div id="main">
   <div class="hdr">
     <div class="hdr-logo">X-GAMES</div>
-    <button class="hdr-back" onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pseudo');window.location.href='register.html'">⬅ Changer</button>
+    <button class="hdr-back" onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pin_ok');window.location.href='register.html'">⬅ Changer</button>
   </div>
   <!-- ONGLET : CARTE (défaut) -->
   <div id="tab-carte" class="tab-content active">
@@ -378,13 +484,16 @@ body{padding-bottom:0}
       <div class="ptop">
         <div class="pavatar" id="pavatar">🎮</div>
         <div class="pinfo">
-          <div class="pname" id="pname" style="opacity:.5">—</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="pname" id="pname" style="opacity:.5">—</div>
+            <div id="pxpInline" style="display:none;background:linear-gradient(135deg,rgba(255,140,0,.2),rgba(255,214,10,.15));border:1px solid rgba(255,140,0,.5);border-radius:20px;padding:2px 10px;font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;color:var(--orange);text-shadow:0 0 8px rgba(255,140,0,.5);white-space:nowrap"></div>
+          </div>
           <div class="plevel" id="plevel" style="opacity:.5">Connexion…</div>
           <div class="pbadge" id="pbadge" style="background:linear-gradient(90deg,var(--gold),var(--orange));opacity:.5">—</div>
         </div>
       </div>
       <div class="xp-hdr">
-        <div class="xp-lbl">Barre XP</div>
+        <div class="xp-lbl">Barre XP <span style="font-size:.55rem;opacity:.5;font-family:'Rajdhani',sans-serif;font-weight:400;letter-spacing:.05em">· 1€ = 1 XP</span></div>
         <div class="xp-cnt"><span id="xpCur">0</span> XP</div>
       </div>
       <div class="xp-wrap"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
@@ -399,8 +508,14 @@ body{padding-bottom:0}
       </div>
     </div>
 
+    <!-- FLÈCHE QR CLIGNOTANTE -->
+    <div style="display:flex;align-items:center;gap:6px;animation:arrowBounce .8s ease-in-out infinite alternate;padding:0 4px">
+      <span style="font-size:1.1rem;filter:drop-shadow(0 0 6px rgba(255,140,0,.8))">👇</span>
+      <span style="font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;color:var(--orange);text-shadow:0 0 10px rgba(255,140,0,.7);letter-spacing:.06em;animation:arrowTextBlink .8s ease-in-out infinite alternate">VOTRE QR CODE — MONTREZ-LE AU STAND !</span>
+    </div>
+
     <!-- BOUTON QR IDENTITÉ -->
-    <button onclick="showMyQR()" style="width:100%;background:linear-gradient(135deg,rgba(0,245,255,.1),rgba(67,97,238,.1));border:1px solid rgba(0,245,255,.25);border-radius:14px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;padding:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+    <button onclick="showMyQR()" class="my-qr-btn">
       <span style="font-size:1.2rem">📱</span> MON QR CODE — À SCANNER AU STAND
     </button>
 
@@ -588,53 +703,54 @@ body{padding-bottom:0}
 
   <!-- ONGLET : MINI-JEU -->
   <div id="tab-jeu" class="tab-content">
-
+    <!-- Sélecteur de jeu -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="btnGameJet" onclick="selectGame('jet')" style="flex:1;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:10px;cursor:pointer">💧 Jet d'eau</button>
+      <button id="btnGameSnake" onclick="selectGame('snake')" style="flex:1;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.2);border-radius:10px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:10px;cursor:pointer">🐍 Serpent</button>
     </div>
 
-
-
-    <!-- NOUVEAU MINI-JEU ARENA -->
-    <div style="text-align:center;margin-bottom:14px">
-      <div style="display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,rgba(0,245,255,.1),rgba(247,37,133,.08));border:1px solid rgba(0,245,255,.25);border-radius:22px;padding:5px 14px;animation:newBlink 1.5s ease-in-out infinite">
-        <span style="font-size:.58rem;font-weight:900;letter-spacing:.22em;color:var(--cyan);text-transform:uppercase">🆕 NOUVEAU</span>
-        <span style="font-size:.52rem;color:var(--dim)">·</span>
-        <span style="font-size:.56rem;font-weight:700;letter-spacing:.14em;color:var(--pink)">ARCADE PREMIUM 2026</span>
+    <!-- JET D'EAU -->
+    <div id="gameJet">
+      <div id="game-wrap" style="position:relative;width:100%;max-width:400px;margin:0 auto">
+        <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none;background:#000814;min-height:280px"></canvas>
+        <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px;min-height:280px">
+          <div style="font-size:3rem">💧</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900;letter-spacing:.1em">JET D'EAU</div>
+          <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Déplace le jet et détruis les balles jaunes !</div>
+          <button onclick="startJetGame()" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:14px 30px;cursor:pointer;margin-top:4px;z-index:10;position:relative">▶ JOUER</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Score <span id="gameScore" style="color:var(--cyan)">0</span></span>
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Record <span id="gameHigh" style="color:var(--gold)">0</span></span>
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Vies <span id="gameLives">❤️❤️❤️</span></span>
       </div>
     </div>
-    <style>
-    @keyframes newBlink{0%,100%{box-shadow:0 0 8px rgba(0,245,255,.2),0 0 18px rgba(247,37,133,.1)}50%{box-shadow:0 0 18px rgba(0,245,255,.5),0 0 35px rgba(247,37,133,.25)}}
-    </style>
-    <!-- Carte info XP -->
-    <div style="background:linear-gradient(135deg,rgba(0,245,255,.06),rgba(67,97,238,.08));border:1px solid rgba(0,245,255,.18);border-radius:14px;padding:14px 16px;margin-bottom:12px">
-      <div style="font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;color:var(--cyan);letter-spacing:.1em;margin-bottom:10px">🎯 GAGNE DE L'XP EN JOUANT !</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:1.4rem;margin-bottom:3px">💧</div>
-          <div style="font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;color:var(--cyan)">5 balles</div>
-          <div style="font-size:.55rem;color:var(--dim);margin-top:2px">= 1 XP gagné</div>
-        </div>
-        <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:1.4rem;margin-bottom:3px">⭐</div>
-          <div style="font-family:'Orbitron',monospace;font-size:.7rem;font-weight:700;color:var(--gold)">Fidélité</div>
-          <div style="font-size:.55rem;color:var(--dim);margin-top:2px">points gagnés</div>
+
+    <!-- SERPENT -->
+    <div id="gameSnake" style="display:none">
+      <div style="position:relative;width:100%;max-width:400px;margin:0 auto">
+        <canvas id="snakeCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(6,214,160,.2);display:block;background:#000814"></canvas>
+        <div id="snakeOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px">
+          <div style="font-size:3rem">🐍</div>
+          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--green);font-weight:900;letter-spacing:.1em">SERPENT</div>
+          <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Glisse pour diriger le serpent et mange les pommes !</div>
+          <button id="startSnakeBtn" onclick="startSnakeGame()" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border-radius:10px;padding:9px 12px">
-        <span style="font-size:.9rem">🔥</span>
-        <div>
-          <div style="font-size:.62rem;font-weight:700;color:var(--txt)">3 phases de difficulté</div>
-          <div style="font-size:.55rem;color:var(--dim)">RAPIDE → FRENZY → CHAOS</div>
-        </div>
-        <div style="margin-left:auto;font-family:'Orbitron',monospace;font-size:.6rem;color:var(--cyan)">3 parties/jour</div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Score <span id="snakeScore" style="color:var(--green)">0</span></span>
+        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Record <span id="snakeHigh" style="color:var(--gold)">0</span></span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:150px;margin:12px auto 0">
+        <div></div>
+        <button onclick="snakeDir('UP')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▲</button>
+        <div></div>
+        <button onclick="snakeDir('LEFT')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">◀</button>
+        <button onclick="snakeDir('DOWN')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▼</button>
+        <button onclick="snakeDir('RIGHT')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▶</button>
       </div>
     </div>
-    <!-- Bouton de lancement -->
-    <button onclick="lancerJetBallArena()" style="width:100%;position:relative;overflow:hidden;height:58px;border-radius:29px;border:none;cursor:pointer;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;letter-spacing:.16em;color:#fff;background:linear-gradient(135deg,#00f5ff 0%,#4361ee 50%,#f72585 100%);box-shadow:0 0 0 1px rgba(0,245,255,.3),0 6px 28px rgba(67,97,238,.5),inset 0 1px 0 rgba(255,255,255,.15);margin-bottom:10px">
-      <span style="position:relative;z-index:1">⚡ JOUER AU JET BALL ARENA</span>
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.12) 0%,transparent 55%);border-radius:inherit"></div>
-    </button>
-    <div style="text-align:center;font-size:.58rem;color:var(--dim);letter-spacing:.08em">Tes points sont automatiquement ajoutés à ton compte fidélité</div>
-  </div>
   </div>
 </div>
 
@@ -649,10 +765,9 @@ body{padding-bottom:0}
     <div class="nav-label">Coupons</div>
     <div class="nav-badge" id="navBadge" style="display:none">0</div>
   </button>
-  <button class="nav-btn" id="nav-jeu" onclick="switchTab('jeu')" style="position:relative">
+  <button class="nav-btn" id="nav-jeu" onclick="switchTab('jeu')">
     <div class="nav-icon">🕹️</div>
     <div class="nav-label">Mini-Jeu</div>
-    <div style="position:absolute;top:4px;right:6px;background:var(--pink);color:#fff;font-size:.38rem;font-weight:900;letter-spacing:.08em;padding:1px 5px;border-radius:8px;animation:newBlink 1.5s ease-in-out infinite;white-space:nowrap">NEW</div>
   </button>
   <button class="nav-btn" id="nav-avis" onclick="switchTab('avis')">
     <div class="nav-icon">⭐</div>
@@ -679,10 +794,19 @@ function switchTab(name) {
   const btn = document.getElementById('nav-' + name);
   if (btn) btn.classList.add('active');
   window.scrollTo(0, 0);
-
+  if (name === 'snake') setTimeout(initSnakeGame, 80);
 }
 
-// selectGame supprimé
+function selectGame(name) {
+  document.getElementById('gameJet').style.display   = name==='jet'   ? 'block' : 'none';
+  document.getElementById('gameSnake').style.display = name==='snake' ? 'block' : 'none';
+  const bJ = document.getElementById('btnGameJet');
+  const bS = document.getElementById('btnGameSnake');
+  bJ.style.cssText += ';background:' + (name==='jet' ? 'linear-gradient(135deg,#00f5ff,#4361ee);color:#000;border:none' : 'rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.2)');
+  bS.style.cssText += ';background:' + (name==='snake' ? 'linear-gradient(135deg,#06d6a0,#4361ee);color:#000;border:none' : 'rgba(6,214,160,.1);color:#06d6a0;border:1px solid rgba(6,214,160,.2)');
+  if (name==='snake') setTimeout(initSnakeGame, 80);
+  if (name==='jet' && window._resizeJet) setTimeout(window._resizeJet, 80);
+}
 
 // ── ÉTOILES AVIS ──
 var _selectedStars = 0;
@@ -705,8 +829,418 @@ function submitAvis() {
 }
 
 // ── SERPENT ──
+var CELL = 20, snakeLoop, snake, sDir, sNextDir, sFood, sRunning = false;
+var snakeScore = 0, snakeHigh = 0;
 
-// [Anciens mini-jeux supprimés — remplacés par Jet Ball Arena]
+function initSnakeGame() {
+  var cv = document.getElementById('snakeCanvas');
+  if (!cv) return;
+  var wrap = document.getElementById('gameSnake');
+  var W = wrap.offsetWidth || 360;
+  var cols = Math.floor(W / CELL);
+  var rows = Math.floor(W * 1.1 / CELL);
+  cv.width  = cols * CELL;
+  cv.height = rows * CELL;
+}
+
+function startSnakeGame() {
+  var cv = document.getElementById('snakeCanvas');
+  if (!cv || !cv.width) initSnakeGame();
+  var cols = Math.floor(cv.width  / CELL);
+  var rows = Math.floor(cv.height / CELL);
+  snake    = [{x: Math.floor(cols/2), y: Math.floor(rows/2)}];
+  sDir     = {x:1, y:0};
+  sNextDir = {x:1, y:0};
+  snakeScore = 0;
+  sRunning = true;
+  document.getElementById('snakeScore').textContent = 0;
+  document.getElementById('snakeOverlay').style.display = 'none';
+  placeSnakeFood();
+  clearInterval(snakeLoop);
+  snakeLoop = setInterval(tickSnake, 140);
+}
+
+function placeSnakeFood() {
+  var cv   = document.getElementById('snakeCanvas');
+  var cols = Math.floor(cv.width  / CELL);
+  var rows = Math.floor(cv.height / CELL);
+  do { sFood = {x: Math.floor(Math.random()*cols), y: Math.floor(Math.random()*rows)}; }
+  while (snake.some(function(s){return s.x===sFood.x && s.y===sFood.y;}));
+}
+
+var _sAC = null;
+function snakeBeep(freq, dur, type) {
+  try {
+    if (!_sAC) _sAC = new (window.AudioContext||window.webkitAudioContext)();
+    if (_sAC.state==='suspended') _sAC.resume();
+    var o=_sAC.createOscillator(), g=_sAC.createGain();
+    o.connect(g); g.connect(_sAC.destination);
+    o.frequency.value=freq; o.type=type||'square';
+    g.gain.setValueAtTime(0.12,_sAC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,_sAC.currentTime+dur);
+    o.start(); o.stop(_sAC.currentTime+dur);
+  } catch(e){}
+}
+
+function tickSnake() {
+  var cv   = document.getElementById('snakeCanvas');
+  var cols = Math.floor(cv.width  / CELL);
+  var rows = Math.floor(cv.height / CELL);
+  sDir = {x: sNextDir.x, y: sNextDir.y};
+  var head = {x: snake[0].x + sDir.x, y: snake[0].y + sDir.y};
+  if (head.x<0||head.x>=cols||head.y<0||head.y>=rows) return snakeGameOver();
+  if (snake.some(function(s){return s.x===head.x&&s.y===head.y;})) return snakeGameOver();
+  snake.unshift(head);
+  if (head.x===sFood.x && head.y===sFood.y) {
+    snakeScore += 10;
+    document.getElementById('snakeScore').textContent = snakeScore;
+    snakeBeep(660, 0.1, 'sine'); // Son manger
+    placeSnakeFood();
+  } else { snake.pop(); }
+  drawSnake();
+}
+
+function drawSnake() {
+  var cv  = document.getElementById('snakeCanvas');
+  var ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height;
+  // Fond
+  ctx.fillStyle = '#000814'; ctx.fillRect(0,0,W,H);
+  // Grille
+  ctx.strokeStyle = 'rgba(6,214,160,.06)'; ctx.lineWidth = 1;
+  for(var x=0;x<W;x+=CELL){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(var y=0;y<H;y+=CELL){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // Filigrane X-GAMES
+  ctx.save();
+  ctx.globalAlpha = 0.04;
+  ctx.font = 'bold ' + Math.floor(W/6) + 'px Orbitron, monospace';
+  ctx.fillStyle = '#00f5ff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('X-GAMES', W/2, H/2);
+  ctx.restore();
+  // Serpent
+  snake.forEach(function(s,i){
+    ctx.fillStyle = i===0 ? '#00ffcc' : '#06d6a0';
+    ctx.shadowColor = '#06d6a0'; ctx.shadowBlur = i===0?12:4;
+    ctx.beginPath(); ctx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,4); ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+  // Nourriture
+  ctx.fillStyle='#f72585'; ctx.shadowColor='#f72585'; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.arc(sFood.x*CELL+CELL/2,sFood.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur=0;
+  // Score en haut
+  ctx.fillStyle='rgba(0,245,255,.5)'; ctx.font='bold 11px Orbitron,monospace';
+  ctx.textAlign='right'; ctx.textBaseline='top';
+  ctx.fillText('LVL '+(Math.floor(snakeScore/50)+1), W-6, 4);
+}
+
+function snakeGameOver() {
+  clearInterval(snakeLoop); sRunning=false;
+  snakeBeep(200, 0.4, 'sawtooth');
+  var isNewRecord = snakeScore > snakeHigh;
+  if (isNewRecord) {
+    snakeHigh = snakeScore;
+    document.getElementById('snakeHigh').textContent = snakeHigh;
+    if (window._db && window._clientId) {
+      try { window._updateDoc(window._doc(window._db,'clients',window._clientId),{'scores.snake':snakeHigh}); } catch(e){}
+    }
+  }
+  var ov = document.getElementById('snakeOverlay');
+  ov.style.display='flex';
+  ov.innerHTML='<div style="font-size:2rem">💀</div>'
+    +'<div style="font-family:Orbitron,monospace;font-size:.9rem;color:#ff006e;font-weight:900">GAME OVER</div>'
+    +'<div style="font-family:Orbitron,monospace;font-size:.8rem;color:#06d6a0">Score : '+snakeScore+'</div>'
+    +(isNewRecord&&snakeScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
+    +'<button onclick="startSnakeGame()" style="background:linear-gradient(135deg,#06d6a0,#4361ee);border:none;border-radius:20px;color:#000;font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>';
+}
+
+// ── INSTALLATION PWA ──
+var _deferredInstall = null;
+var _installBarShown = false;
+
+function closeInstallBar() {
+  document.getElementById('installBar').style.display = 'none';
+  sessionStorage.setItem('installDismissed', '1');
+}
+
+function showInstallBar() {
+  if (_installBarShown) return;
+  if (sessionStorage.getItem('installDismissed')) return;
+  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (isStandalone) return; // Déjà installée
+  
+  var bar = document.getElementById('installBar');
+  var txt = document.getElementById('installBarTxt');
+  var btn = document.getElementById('installBarBtn');
+  
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    txt.textContent = 'Appuie sur ⎙ Partager → Sur l\'écran d\'accueil';
+    btn.textContent = 'COMMENT ?';
+    btn.onclick = function() {
+      alert('iPhone :\n1. Appuie sur ⎙ (Partager) en bas\n2. Choisis "Sur l\'écran d\'accueil"\n3. Appuie Ajouter');
+    };
+  } else if (_deferredInstall) {
+    txt.textContent = 'Installe l\'app pour un accès rapide !';
+    btn.onclick = async function() {
+      _deferredInstall.prompt();
+      var result = await _deferredInstall.userChoice;
+      if (result.outcome === 'accepted') {
+        bar.style.display = 'none';
+      }
+      _deferredInstall = null;
+    };
+  } else {
+    return; // Android sans prompt disponible
+  }
+  
+  bar.style.display = 'flex';
+  _installBarShown = true;
+}
+
+// Capture l'événement Android
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferredInstall = e;
+  setTimeout(showInstallBar, 3000);
+});
+
+// iOS : affiche après 3s
+if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+  var isStandalone = window.navigator.standalone;
+  if (!isStandalone) setTimeout(showInstallBar, 3000);
+}
+
+// Cache la barre si l'app est installée
+window.addEventListener('appinstalled', function() {
+  document.getElementById('installBar').style.display = 'none';
+});
+
+// Levier machine à sous
+function pullLever() {
+  const lever = document.getElementById('slotLever');
+  if (!lever || lever.classList.contains('pulled')) return;
+  lever.classList.add('pulled');
+  setTimeout(() => lever.classList.remove('pulled'), 400);
+  lancerJackpot();
+}
+
+function snakeDir(d) {
+  if (!sRunning) return;
+  var m={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
+  var nd=m[d]; if(nd.x!==-sDir.x||nd.y!==-sDir.y) sNextDir=nd;
+}
+
+// ── JACKPOT UI — en sync pour être disponible immédiatement ──
+var isSpinning = false;
+var availableSpins = 0;
+
+function updateSpinsUI() {
+  var spinsDiv = document.getElementById('spinsAvailable');
+  var slotBtns = document.getElementById('slotBtns');
+  var countEl  = document.getElementById('spinsCount');
+  if (!spinsDiv || !slotBtns) return;
+  if (availableSpins > 0 && !isSpinning) {
+    spinsDiv.style.display = 'block';
+    slotBtns.style.display = 'none';
+    if (countEl) countEl.textContent = availableSpins;
+  } else if (!isSpinning) {
+    spinsDiv.style.display = 'none';
+    slotBtns.style.display = 'flex';
+  }
+}
+
+function closeWin() {
+  document.getElementById('winOv').classList.remove('show');
+  if (window._stopCoinExplosion) window._stopCoinExplosion();
+  isSpinning = false;
+  updateSpinsUI();
+}
+
+// ── JET D'EAU — entièrement en sync comme le serpent ──
+var jetCanvas, jetCtx, jetRunning = false, jetAnimId;
+var jetW, jetH, jetScore = 0, jetHigh = 0, jetLives = 3, jetLevel = 1;
+var jetPlayer, jetBullets, jetBalls, jetTouchX = null;
+var jetKeys = {};
+
+function startJetGame() {
+  jetCanvas = document.getElementById('gameCanvas');
+  jetCtx = jetCanvas.getContext('2d');
+  jetW = Math.min(window.innerWidth - 28, 400);
+  jetH = Math.min(jetW * 1.4, window.innerHeight * 0.55);
+  jetCanvas.width = jetW; jetCanvas.height = jetH;
+  document.getElementById('gameOverlay').style.display = 'none';
+  jetScore = 0; jetLives = 3; jetLevel = 1;
+  jetPlayer = { x: jetW/2, y: jetH-60, w: 44, h: 28, speed: 6 };
+  jetBullets = []; jetBalls = [];
+  jetSpawnBalls();
+  jetRunning = true;
+  cancelAnimationFrame(jetAnimId);
+  jetLoop();
+}
+
+function jetSpawnBalls() {
+  var count = 4 + jetLevel * 2;
+  for (var i = 0; i < count; i++) {
+    jetBalls.push({
+      x: 30 + (i%8) * ((jetW-60)/8),
+      y: 40 + Math.floor(i/8) * 48,
+      r: 14,
+      vx: (Math.random()<0.5?1:-1) * (0.8 + jetLevel*0.3),
+      vy: 0.4 + Math.random()*0.4
+    });
+  }
+}
+
+function jetLoop() {
+  if (!jetRunning) return;
+  jetAnimId = requestAnimationFrame(jetLoop);
+  jetUpdate();
+  jetDraw();
+}
+
+function jetUpdate() {
+  if (jetKeys['ArrowLeft']||jetKeys['a']) jetPlayer.x -= jetPlayer.speed;
+  if (jetKeys['ArrowRight']||jetKeys['d']) jetPlayer.x += jetPlayer.speed;
+  jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x));
+  jetBullets.forEach(function(b){ b.y -= 10; });
+  jetBullets = jetBullets.filter(function(b){ return b.y > 0; });
+  jetBalls.forEach(function(b){
+    b.x += b.vx; b.y += b.vy;
+    if (b.x<b.r||b.x>jetW-b.r) b.vx=-b.vx;
+    if (b.y<b.r) b.vy=-b.vy;
+    if (b.y>jetH-b.r) { jetLives--; b.y=b.r; b.vy=-Math.abs(b.vy); if(jetLives<=0){jetGameOver();return;} }
+  });
+  // Collisions balles/bullets
+  jetBullets = jetBullets.filter(function(bul){
+    var hit = false;
+    jetBalls = jetBalls.filter(function(ball){
+      if (Math.hypot(bul.x-ball.x, bul.y-ball.y) < ball.r+6) { hit=true; jetScore+=10; return false; }
+      return true;
+    });
+    return !hit;
+  });
+  if (!jetBalls.length) { jetLevel++; jetSpawnBalls(); }
+  document.getElementById('gameScore').textContent = jetScore;
+  document.getElementById('gameLives').textContent = '❤️'.repeat(Math.max(0,jetLives));
+  document.getElementById('gameHigh').textContent = Math.max(jetHigh, jetScore);
+}
+
+function jetDraw() {
+  jetCtx.fillStyle='#000814'; jetCtx.fillRect(0,0,jetW,jetH);
+  // Grille
+  jetCtx.strokeStyle='rgba(0,245,255,.04)'; jetCtx.lineWidth=1;
+  for(var x=0;x<jetW;x+=30){jetCtx.beginPath();jetCtx.moveTo(x,0);jetCtx.lineTo(x,jetH);jetCtx.stroke();}
+  for(var y=0;y<jetH;y+=30){jetCtx.beginPath();jetCtx.moveTo(0,y);jetCtx.lineTo(jetW,y);jetCtx.stroke();}
+  // Balles
+  jetBalls.forEach(function(b){
+    jetCtx.beginPath(); jetCtx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    jetCtx.fillStyle='#ffd60a'; jetCtx.shadowColor='#ffd60a'; jetCtx.shadowBlur=12;
+    jetCtx.fill(); jetCtx.shadowBlur=0;
+  });
+  // Bullets
+  jetBullets.forEach(function(b){
+    jetCtx.fillStyle='#00f5ff'; jetCtx.shadowColor='#00f5ff'; jetCtx.shadowBlur=8;
+    jetCtx.fillRect(b.x-3,b.y-8,6,16); jetCtx.shadowBlur=0;
+  });
+  // Joueur
+  var grd = jetCtx.createLinearGradient(jetPlayer.x-jetPlayer.w/2,0,jetPlayer.x+jetPlayer.w/2,0);
+  grd.addColorStop(0,'#1a3a5c'); grd.addColorStop(0.5,'#2a6a9c'); grd.addColorStop(1,'#1a3a5c');
+  jetCtx.fillStyle=grd;
+  jetCtx.beginPath(); jetCtx.roundRect(jetPlayer.x-jetPlayer.w/2,jetPlayer.y-jetPlayer.h/2,jetPlayer.w,jetPlayer.h,8); jetCtx.fill();
+  // Tuyau
+  jetCtx.fillStyle='#00f5ff'; jetCtx.shadowColor='#00f5ff'; jetCtx.shadowBlur=6;
+  jetCtx.fillRect(jetPlayer.x-4, jetPlayer.y-jetPlayer.h/2-14, 8, 15); jetCtx.shadowBlur=0;
+  // Filigrane X-GAMES
+  jetCtx.save(); jetCtx.globalAlpha=0.04;
+  jetCtx.font='bold '+Math.floor(jetW/6)+'px Orbitron,monospace';
+  jetCtx.fillStyle='#00f5ff'; jetCtx.textAlign='center'; jetCtx.textBaseline='middle';
+  jetCtx.fillText('X-GAMES',jetW/2,jetH/2); jetCtx.restore();
+}
+
+var _jetAC = null;
+function jetBeep(freq, dur) {
+  try {
+    if (!_jetAC) _jetAC = new (window.AudioContext||window.webkitAudioContext)();
+    if (_jetAC.state==='suspended') _jetAC.resume();
+    var o=_jetAC.createOscillator(), g=_jetAC.createGain();
+    o.connect(g); g.connect(_jetAC.destination);
+    o.frequency.value=freq; o.type='sine';
+    g.gain.setValueAtTime(0.1,_jetAC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,_jetAC.currentTime+dur);
+    o.start(); o.stop(_jetAC.currentTime+dur);
+  } catch(e){}
+}
+
+function jetShoot() {
+  if (!jetRunning) return;
+  jetBullets.push({x:jetPlayer.x, y:jetPlayer.y-jetPlayer.h/2});
+  jetBeep(440, 0.06);
+}
+
+function jetGameOver() {
+  jetRunning = false; cancelAnimationFrame(jetAnimId);
+  jetBeep(150, 0.5);
+  if (jetScore>jetHigh) {
+    jetHigh=jetScore;
+    if (window._db && window._clientId) {
+      try{ window._updateDoc(window._doc(window._db,'clients',window._clientId),{'scores.jet':jetHigh}); }catch(e){}
+    }
+  }
+  var ov = document.getElementById('gameOverlay');
+  ov.style.display='flex';
+  ov.innerHTML='<div style="font-size:2rem">💥</div>'
+    +'<div style="font-family:Orbitron,monospace;font-size:.9rem;color:#ff006e;font-weight:900">GAME OVER</div>'
+    +'<div style="font-family:Orbitron,monospace;font-size:.8rem;color:#00f5ff">Score : '+jetScore+'</div>'
+    +(jetScore>=jetHigh&&jetScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
+    +'<button onclick="startJetGame()" style="background:linear-gradient(135deg,#00f5ff,#4361ee);border:none;border-radius:20px;color:#000;font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>';
+}
+
+// Contrôles jet d'eau
+document.addEventListener('keydown', function(e){ jetKeys[e.key]=true; if(e.key===' ')jetShoot(); });
+document.addEventListener('keyup',   function(e){ jetKeys[e.key]=false; });
+
+// Touch jet d'eau — doigt = position du jet, tap = tirer
+var _jtActive = false, _jtStartX = 0, _jtStartTime = 0;
+document.addEventListener('touchstart', function(e){
+  if(!jetRunning) return;
+  var cv = document.getElementById('gameCanvas');
+  if(!cv) return;
+  var rect = cv.getBoundingClientRect();
+  var tx = e.touches[0].clientX, ty = e.touches[0].clientY;
+  if(tx >= rect.left && tx <= rect.right && ty >= rect.top && ty <= rect.bottom){
+    _jtActive = true;
+    _jtStartX = tx;
+    _jtStartTime = Date.now();
+    // Déplace immédiatement le jet à la position du doigt
+    var relX = (tx - rect.left) * (jetW / rect.width);
+    if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW - jetPlayer.w/2, relX));
+    e.preventDefault();
+  }
+},{passive:false});
+
+document.addEventListener('touchmove', function(e){
+  if(!jetRunning || !_jtActive) return;
+  var cv = document.getElementById('gameCanvas');
+  if(!cv) return;
+  var rect = cv.getBoundingClientRect();
+  var tx = e.touches[0].clientX;
+  // Suit le doigt en temps réel
+  var relX = (tx - rect.left) * (jetW / rect.width);
+  if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW - jetPlayer.w/2, relX));
+  e.preventDefault();
+},{passive:false});
+
+document.addEventListener('touchend', function(e){
+  if(!_jtActive) return;
+  _jtActive = false;
+  // Tap court (< 200ms et < 10px de déplacement) = tir
+  var dt = Date.now() - _jtStartTime;
+  var dx = Math.abs(e.changedTouches[0].clientX - _jtStartX);
+  if(dt < 200 && dx < 10 && jetRunning) jetShoot();
+},{passive:true});
+
 // Swipe tactile serpent
 var _tx=0, _ty=0;
 document.addEventListener('touchstart', function(e){_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;},{passive:true});
@@ -785,7 +1319,6 @@ if (savedPseudo) {
 
 // Redirect if no ID
 if (!clientId) {
-  // Vérifie si un ID est sauvegardé localement
   const savedId = localStorage.getItem('xgames_client_id');
   if (savedId) {
     window.location.href = `client.html?id=${savedId}`;
@@ -793,12 +1326,12 @@ if (!clientId) {
     window.location.href = 'register.html';
   }
 } else {
-  // Sauvegarde l'ID pour la prochaine visite
   localStorage.setItem('xgames_client_id', clientId);
 }
 
 // Global state
 let clientData  = null;
+let _pinVerified = false; // PIN vérifié une fois par session
 let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratuite',icon:'🎯'}] }, sumupLink:'', slotPrice:'2€', cashEnabled:false };
 let prevXP      = null;
 let lastSpinTime = 0;
@@ -874,7 +1407,6 @@ if (clientId) {
     if (!snap.exists()) {
       document.getElementById('errScreen').style.display = 'flex';
       document.getElementById('errMsg').textContent = 'Ce compte n\'existe plus. Tu peux créer un nouveau compte sur la page d\'accueil.';
-      // Nettoie le localStorage pour éviter boucle
       localStorage.removeItem('xgames_client_id');
       localStorage.removeItem('xgames_pseudo');
       return;
@@ -927,16 +1459,22 @@ if (clientId) {
     document.getElementById('errMsg').textContent = 'Erreur : ' + err.message;
   });
 
-  // Leaderboard — récupère top 10 et tri côté client
-  onSnapshot(query(collection(db, 'clients'), limit(50)), snap => {
-    const sorted = snap.docs
-      .map(d => ({ ...d.data(), _id: d.id }))
-      .sort((a,b) => {
-        const lvlDiff = (b.level||0) - (a.level||0);
-        return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
-      })
-      .slice(0, 10);
+  // Leaderboard — tri Firestore (level puis xp), vrai top 10
+  onSnapshot(query(collection(db, 'clients'), orderBy('level', 'desc'), orderBy('xp', 'desc'), limit(10)), snap => {
+    const sorted = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
     renderLeaderboard(sorted);
+  }, err => {
+    // Fallback si l'index composite n'existe pas encore — tri manuel sur plus de clients
+    onSnapshot(query(collection(db, 'clients'), limit(200)), snap => {
+      const sorted = snap.docs
+        .map(d => ({ ...d.data(), _id: d.id }))
+        .sort((a,b) => {
+          const lvlDiff = (b.level||0) - (a.level||0);
+          return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
+        })
+        .slice(0, 10);
+      renderLeaderboard(sorted);
+    });
   });
 
   // Slot listener — le client appuie sur LANCER lui-même
@@ -945,16 +1483,20 @@ if (clientId) {
     const d = snap.data();
 
     if (d.status === 'ready') {
-      // Mémorise le nb de lancers et passe à 'armed' une seule fois
-      availableSpins = d.multiCount || 1;
+      // Nouveau lancer débloqué par admin — additionne aux lancers existants
+      const newSpins = d.multiCount || 1;
+      availableSpins += newSpins;
       setDoc(doc(db, 'slots', clientId), { ...d, status:'armed', multiCount: availableSpins }).catch(()=>{});
       document.getElementById('waitOv').classList.remove('show');
       updateSpinsUI();
     }
-    // Sur 'armed' après refresh : relit le nb restant depuis Firebase
-    if (d.status === 'armed' && availableSpins === 0) {
-      availableSpins = d.multiCount || 0;
-      updateSpinsUI();
+    // Sur 'armed' : relit depuis Firebase si on a moins de lancers qu'en Firebase
+    if (d.status === 'armed') {
+      const firebaseSpins = d.multiCount || 0;
+      if (firebaseSpins > availableSpins) {
+        availableSpins = firebaseSpins;
+        updateSpinsUI();
+      }
     }
     if (d.status === 'idle' || d.status === 'used') {
       availableSpins = 0;
@@ -997,7 +1539,6 @@ function renderProfile(data) {
   const plevel  = document.getElementById('plevel');
   const pbadge  = document.getElementById('pbadge');
   document.getElementById('pavatar').textContent = data.avatar || '🎮';
-  // Insigne tombola si gagnant
   const isTombolaWinner = data.tombolaWinner === true;
   pname.textContent   = (data.pseudo || '—') + (isTombolaWinner ? ' 🏆' : '');
   pname.style.opacity = '1';
@@ -1007,6 +1548,12 @@ function renderProfile(data) {
   pbadge.style.background = `linear-gradient(90deg, ${lvlInfo.color}, ${lvlInfo.color}aa)`;
   pbadge.textContent  = `${lvlInfo.star} ${lvlInfo.name.toUpperCase()}`;
   pbadge.style.opacity = '1';
+  // XP inline à côté du nom
+  const xpInline = document.getElementById('pxpInline');
+  if (xpInline) {
+    xpInline.textContent = `⚡ ${data.xp || 0} XP`;
+    xpInline.style.display = 'block';
+  }
 }
 
 function renderXP(data) {
@@ -1040,66 +1587,74 @@ function renderXP(data) {
 function renderLeaderboard(list) {
   const el = document.getElementById('lbList');
 
-  // Message si vide
   if (!list.length) {
     el.innerHTML = '<div class="empty-c"><div class="empty-i">🏆</div>Sois le premier sur le classement !</div>';
     return;
   }
 
-  // Header motivant
-  let html = `<div style="text-align:center;margin-bottom:14px;padding:10px;background:linear-gradient(135deg,rgba(255,214,10,.08),rgba(67,97,238,.08));border:1px solid rgba(255,214,10,.15);border-radius:12px">
-    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.1em">🏆 TOP JOUEURS X-GAMES</div>
-    <div style="font-size:.7rem;color:var(--dim);margin-top:4px">Joue plus pour grimper dans le classement !</div>
-  </div>`;
+  const maxXP = Math.max(...list.map(p => (p.xp||0) + (p.level||0)*180), 1);
 
-  const top3Styles = [
-    { bg:'linear-gradient(135deg,rgba(255,214,10,.18),rgba(255,159,28,.1))', border:'rgba(255,214,10,.5)', glow:'0 0 25px rgba(255,214,10,.25)' },
-    { bg:'linear-gradient(135deg,rgba(192,192,192,.14),rgba(148,163,184,.08))', border:'rgba(192,192,192,.4)', glow:'0 0 15px rgba(192,192,192,.15)' },
-    { bg:'linear-gradient(135deg,rgba(205,127,50,.14),rgba(180,100,30,.08))', border:'rgba(205,127,50,.4)', glow:'0 0 15px rgba(205,127,50,.15)' },
+  const medals = ['🥇','🥈','🥉'];
+  const rankColors = ['rgba(255,214,10,.5)','rgba(192,192,192,.4)','rgba(205,127,50,.4)'];
+  const rankBg = [
+    'linear-gradient(135deg,rgba(255,214,10,.12),rgba(255,159,28,.07))',
+    'linear-gradient(135deg,rgba(192,192,192,.1),rgba(148,163,184,.06))',
+    'linear-gradient(135deg,rgba(205,127,50,.1),rgba(160,90,30,.06))'
   ];
-  const rankIcons = ['👑','🥈','🥉','4','5','6','7','8','9','10'];
+
+  let html = `<div style="text-align:center;margin-bottom:12px;padding:9px;background:linear-gradient(135deg,rgba(255,140,0,.08),rgba(67,97,238,.08));border:1px solid rgba(255,140,0,.2);border-radius:12px">
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--orange);letter-spacing:.1em;text-shadow:0 0 10px rgba(255,140,0,.4)">🏆 TOP JOUEURS X-GAMES</div>
+    <div style="font-size:.7rem;color:var(--dim);margin-top:3px">Classement par niveau puis XP</div>
+  </div>`;
 
   html += list.map((p, i) => {
     const isMe    = p._id === clientId;
     const level   = p.level || 0;
+    const xp      = p.xp || 0;
     const lvlInfo = getLevelInfo(level);
-    const style   = i < 3 ? top3Styles[i] : null;
     const isTop   = i < 3;
+    // Barre XP proportionnelle au meilleur
+    const totalScore = xp + level * 180;
+    const barPct = Math.min(100, Math.round(totalScore / maxXP * 100));
 
-    // Barre de progression vers le prochain niveau
-    const nextLevel = LEVELS.find(l => l.minLevel > level);
-    const prevLevel = getLevelInfo(level);
-    const progressPct = nextLevel
-      ? Math.min(100, Math.round((level - prevLevel.minLevel) / (nextLevel.minLevel - prevLevel.minLevel) * 100))
-      : 100;
+    const borderColor = isMe ? 'rgba(0,245,255,.4)' : isTop ? rankColors[i] : 'rgba(255,255,255,.06)';
+    const bgStyle = isMe
+      ? 'linear-gradient(135deg,rgba(0,245,255,.06),rgba(67,97,238,.06))'
+      : isTop ? rankBg[i] : 'rgba(5,10,25,.7)';
+    const barColor = isTop
+      ? (i===0 ? 'linear-gradient(90deg,var(--gold),var(--orange))' : i===1 ? 'linear-gradient(90deg,#c0c0c0,#a0a0c0)' : 'linear-gradient(90deg,#cd7f32,#b06020)')
+      : isMe ? 'linear-gradient(90deg,var(--cyan),var(--blue))' : 'linear-gradient(90deg,var(--violet),var(--orange))';
+    const medalColor = isTop ? rankColors[i] : isMe ? 'rgba(0,245,255,.5)' : 'rgba(255,255,255,.08)';
 
-    return `<div class="lb-item ${isMe?'me':''}" style="${isTop?`background:${style.bg};border-color:${style.border};box-shadow:${style.glow};`:''}${i===0?'transform:scale(1.02);':''}">
-      <div style="font-size:${isTop?'1.4':'1rem'};font-weight:900;min-width:28px;text-align:center;color:${isTop?style.border:'var(--dim)'}">${rankIcons[i]||i+1}</div>
-      <div style="font-size:${isTop?'1.5':'1.2'}rem;flex-shrink:0">${p.avatar||'🎮'}</div>
+    return `<div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;margin-bottom:7px;background:${bgStyle};border:1px solid ${borderColor};box-shadow:${isTop?`0 0 15px ${rankColors[i].replace('.4','.12')}`:'none'};position:relative;overflow:hidden">
+      <!-- Barre de couleur à gauche -->
+      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${medalColor};border-radius:14px 0 0 14px;box-shadow:0 0 6px ${medalColor}"></div>
+      <!-- Rang -->
+      <div style="font-family:'Orbitron',monospace;font-size:${isTop?'1.3rem':'.85rem'};font-weight:900;min-width:30px;text-align:center;color:${isTop?rankColors[i]:isMe?'var(--cyan)':'var(--dim)'}">${isTop?medals[i]:String(i+1).padStart(2,'0')}</div>
+      <!-- Avatar -->
+      <div style="font-size:${isTop?'1.5rem':'1.2rem'};flex-shrink:0">${p.avatar||'🎮'}</div>
+      <!-- Info -->
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="font-size:${isTop?'.88':'.8'}rem;font-weight:${isTop?'800':'600'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.pseudo||'—'}${p.tombolaWinner?'<span style="color:var(--gold);font-size:.8rem"> 🏆</span>':''}</div>
-          ${isMe?'<span class="lb-you">MOI</span>':''}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div style="font-size:${isTop?'.88rem':'.8rem'};font-weight:${isTop?800:600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--txt)'}">${p.pseudo||'—'}${p.tombolaWinner?' 🏆':''}</div>
+          ${isMe?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.3);border-radius:10px;padding:1px 6px;color:var(--cyan)">MOI</span>':''}
         </div>
-        <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
-          <span style="font-size:.75rem">${lvlInfo.star}</span>
-          <span style="font-size:.62rem;color:${lvlInfo.color};font-weight:700">${lvlInfo.name}</span>
-          ${level===0?'<span style="font-size:.58rem;color:var(--dim)">· Débutant</span>':''}
-        </div>
-        <div style="margin-top:5px;height:4px;background:rgba(0,0,0,.4);border-radius:2px;overflow:hidden">
-          <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,${lvlInfo.color},var(--cyan));border-radius:2px;transition:width .5s"></div>
+        <!-- XP + mini barre -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <div style="flex:1;height:4px;background:rgba(0,0,0,.5);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${barPct}%;background:${barColor};border-radius:2px"></div>
+          </div>
+          <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--dim);white-space:nowrap">⚡${xp} XP</span>
         </div>
       </div>
-      ${isTop?`<div style="font-family:'Orbitron',monospace;font-size:.6rem;color:${style.border};font-weight:700;text-align:right">TOP ${i+1}</div>`:''}
+      <!-- Badge niveau -->
+      <div style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:900;background:${isTop?`linear-gradient(135deg,${rankColors[i].replace('.4','.2')},${rankColors[i].replace('.4','.1')})`:'rgba(255,255,255,.05)'};border:1px solid ${isTop?rankColors[i]:'rgba(255,255,255,.1)'};border-radius:8px;padding:3px 8px;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--dim)'};white-space:nowrap">NV.${level}</div>
     </div>`;
   }).join('');
 
-  // Message pour ceux pas encore dans le top
   const meInList = list.find(p => p._id === clientId);
   if (!meInList) {
-    html += `<div style="text-align:center;margin-top:10px;padding:10px;border:1px dashed rgba(0,245,255,.15);border-radius:10px;font-size:.72rem;color:var(--dim)">
-      🎯 Continue à jouer pour apparaître dans le top 10 !
-    </div>`;
+    html += `<div style="text-align:center;margin-top:8px;padding:10px;border:1px dashed rgba(255,140,0,.2);border-radius:10px;font-size:.72rem;color:var(--dim)">🎯 Continue à jouer pour apparaître dans le top 10 !</div>`;
   }
 
   el.innerHTML = html;
@@ -1213,8 +1768,8 @@ function drawValidationQR(url) {
 
   new QRCode(qrDiv, {
     text: url,
-    width: 200,
-    height: 200,
+    width: 300,
+    height: 300,
     colorDark: '#000000',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
@@ -1455,7 +2010,7 @@ window.showMyQR = function() {
   frame.innerHTML = '';
   // URL vers admin avec le clientId
   const adminUrl = window.location.origin + window.location.pathname.replace('client.html','admin.html') + '?clientId=' + clientId;
-  new QRCode(frame, { text: adminUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  new QRCode(frame, { text: adminUrl, width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
   if (pseudo) pseudo.textContent = clientData?.pseudo || '—';
   ov.style.display = 'flex';
 };
@@ -1469,11 +2024,9 @@ function checkDailySpin(data) {
 
 window.useDailySpin = async function() {
   if (!clientData) return;
-  // Relit depuis Firebase pour éviter toute manipulation locale
   const snap = await getDoc(doc(db, 'clients', clientId));
   if (!snap.exists()) return;
   const freshData = snap.data();
-  // Utilise la date serveur Firebase — impossible à manipuler côté client
   const now = new Date();
   const todayStr = now.getUTCFullYear() + '-' + (now.getUTCMonth()+1) + '-' + now.getUTCDate();
   if (freshData.lastDailySpin === todayStr) {
@@ -1483,6 +2036,11 @@ window.useDailySpin = async function() {
   await updateDoc(doc(db, 'clients', clientId), { lastDailySpin: todayStr, lastDailySpinAt: serverTimestamp() });
   document.getElementById('dailySpinBanner').style.display = 'none';
   availableSpins++;
+  // Sauvegarde dans Firebase pour que addXP puisse lire le bon total
+  await setDoc(doc(db, 'slots', clientId), {
+    status: 'armed', clientId, multiCount: availableSpins,
+    autoGranted: true, unlockedAt: serverTimestamp()
+  });
   updateSpinsUI();
 };
 
@@ -1767,11 +2325,17 @@ if ('serviceWorker' in navigator) {
 mkPts();
 initCoinCanvas();
 
-function lancerJetBallArena() {
-  const uid = clientId || localStorage.getItem('xgames_client_id') || '';
-  const url = 'xgames-jeu-visuel.html' + (uid ? '?uid=' + uid : '');
-  window.open(url, '_blank');
-}
+// ── EXPOSITION WINDOW — toutes les fonctions appelées en onclick ──
+window.switchTab       = switchTab;
+window.selectGame      = selectGame;
+window.setStars        = setStars;
+window.submitAvis      = submitAvis;
+window.startSnakeGame  = startSnakeGame;
+window.startJetGame    = startJetGame;
+window.snakeDir        = snakeDir;
+window.pullLever       = pullLever;
+window.closeWin        = closeWin;
+window.closeInstallBar = closeInstallBar;
 </script>
 </body>
 </html>
