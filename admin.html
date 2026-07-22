@@ -224,6 +224,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <button class="tab" data-t="config">⚙️ Config</button>
     <button class="tab" data-t="stats">📊 Stats</button>
     <button class="tab" data-t="avis">⭐ Avis</button>
+    <button class="tab" data-t="minijeu">🎮 Mini-jeu</button>
   </div>
   <div class="content" id="admContent"></div>
 </div>
@@ -249,7 +250,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, collection, setDoc, updateDoc, getDoc, getDocs, addDoc, onSnapshot, query, orderBy, where, limit, serverTimestamp, arrayUnion, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, collection, setDoc, updateDoc, getDoc, getDocs, addDoc, onSnapshot, query, orderBy, where, limit, serverTimestamp, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ════════════════════════════════════
 // 🔧 COLLE TA CONFIG FIREBASE ICI
@@ -266,8 +267,7 @@ const firebaseConfig = {
 // ════════════════════════════════════
 
 // ⚠️ CHANGE CE MOT DE PASSE
-// Hash SHA-256 du mot de passe — le vrai mot de passe n'est plus visible dans le code
-const ADMIN_HASH = "e6051bb480bf66cb904dbcc39562ef2a248e4549158fcd9f8641988e8bbe7270";
+const ADMIN_PWD = "xgames2024";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -279,63 +279,30 @@ let selClientId = null;
 let selEuros = null;
 let toastT;
 
-// Anti-brute force
-let _loginAttempts = 0;
-let _loginBlockedUntil = 0;
-
+// ── LOGIN ──
+// ── SW CLEANUP ──
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
   if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
 }
 
-// Hash SHA-256
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('pwdInp').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 
-async function doLogin() {
-  const errEl = document.getElementById('loginErr');
-
-  // Vérifie si bloqué (anti-brute force)
-  if (Date.now() < _loginBlockedUntil) {
-    const secs = Math.ceil((_loginBlockedUntil - Date.now()) / 1000);
-    errEl.textContent = `⏳ Trop de tentatives — attends ${secs}s`;
-    return;
-  }
-
+function doLogin() {
   const v = document.getElementById('pwdInp').value;
-  const hash = await sha256(v);
-
-  if (hash === ADMIN_HASH) {
-    _loginAttempts = 0;
+  if (v === ADMIN_PWD) {
     document.getElementById('loginScr').style.display = 'none';
     document.getElementById('adm').style.display = 'flex';
-    // Session admin — déconnexion auto après 2h
-    setTimeout(() => {
-      document.getElementById('adm').style.display = 'none';
-      document.getElementById('loginScr').style.display = 'flex';
-      document.getElementById('loginErr').textContent = '⏱️ Session expirée — reconnecte-toi';
-    }, 2 * 60 * 60 * 1000);
+    // Demande permission notifications pour les alertes jackpot
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
     initAdmin();
   } else {
-    _loginAttempts++;
+    document.getElementById('loginErr').textContent = 'Mot de passe incorrect';
     document.getElementById('pwdInp').value = '';
-    if (_loginAttempts >= 3) {
-      _loginBlockedUntil = Date.now() + 30000;
-      _loginAttempts = 0;
-      errEl.textContent = '🚫 3 tentatives échouées — bloqué 30 secondes';
-      setTimeout(() => errEl.textContent = '', 30000);
-    } else {
-      errEl.textContent = `❌ Mot de passe incorrect (${3 - _loginAttempts} essai(s) restant(s))`;
-      setTimeout(() => errEl.textContent = '', 3000);
-    }
+    setTimeout(() => document.getElementById('loginErr').textContent = '', 3000);
   }
 }
 
@@ -432,9 +399,7 @@ function userIsTyping() {
         const lvlDiff = (b.level||0) - (a.level||0);
         return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
       });
-    if (userIsTyping()) return;
-    if (window._addingXP || window._addXPRunning) return;
-    if (window._scannerActive) return;
+    if (userIsTyping()) return; // Ne recharge pas si l'utilisateur tape
     if (curTab === 'clients') renderTab('clients');
     if (curTab === 'stats') renderTab('stats');
   });
@@ -543,6 +508,7 @@ function renderTab(t) {
   else if (t === 'coupons') renderCoupons(c);
   else if (t === 'config') renderConfig(c);
   else if (t === 'stats') renderStats(c);
+  else if (t === 'minijeu') renderMiniJeu(c);
   else if (t === 'avis')    renderAvis(c);
   else if (t === 'tombola') renderTombola(c);
 }
@@ -599,9 +565,7 @@ function displayClients(list) {
     </div>`;
   }).join('');
   el.querySelectorAll('.cl-row').forEach(r => {
-    const fresh = r.cloneNode(true);
-    r.parentNode.replaceChild(fresh, r);
-    fresh.addEventListener('click', () => { selClientId = fresh.dataset.id; displayClients(list); renderDetail(selClientId); });
+    r.addEventListener('click', () => { selClientId = r.dataset.id; displayClients(list); renderDetail(selClientId); });
   });
 }
 
@@ -637,19 +601,25 @@ function renderDetail(id) {
       <div class="xp-preview" id="xpPrev">Sélectionne ou tape un montant</div>
     </div>
     <div class="ctrl-grid">
-      <button class="ctrl-btn ctrl-add" onclick="addXP('${id}')"><div class="ci">⬆️</div>AJOUTER XP</button>
-      <button class="ctrl-btn ctrl-rem" onclick="removeXP('${id}')"><div class="ci">⬇️</div>RETIRER 1 XP</button>
-      <button class="ctrl-btn ctrl-qr" onclick="showQR(allClients.find(x=>x._id==='${id}'))"><div class="ci">📱</div>QR CODE</button>
+      <button class="ctrl-btn ctrl-add" id="addXpBtn"><div class="ci">⬆️</div>AJOUTER XP</button>
+      <button class="ctrl-btn ctrl-rem" id="remXpBtn"><div class="ci">⬇️</div>RETIRER 1 XP</button>
+      <button class="ctrl-btn ctrl-qr" id="qrBtn"><div class="ci">📱</div>QR CODE</button>
     </div>
     <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:12px;padding:12px;margin-top:8px">
       <div style="font-size:.68rem;color:var(--gold);font-weight:700;margin-bottom:8px">🎰 Débloquer des lancers jackpot</div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="font-size:.7rem;color:var(--dim);flex:1">Nombre de lancers :</div>
         <input id="multiSpinInp" type="number" min="1" max="20" value="1" style="width:54px;background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.3);border-radius:6px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.85rem;text-align:center;padding:6px">
-        <button class="btn btn-gold" onclick="const n=parseInt(document.getElementById('multiSpinInp').value)||1;if(n<1||n>20){showDetFb('Entre un nombre entre 1 et 20','err');return;}multiUnlockSlot('${id}','${cl.pseudo}',n)" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
+        <button class="btn btn-gold" id="multiSpinBtn" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
       </div>
     </div>
-    <button class="btn btn-red btn-sm" onclick="deleteClient('${id}')" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>
+    <button class="btn btn-red btn-sm" id="delBtn" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>
+
+    <!-- HISTORIQUE XP -->
+    <div style="margin-top:14px">
+      <div style="font-family:'Orbitron',monospace;font-size:.62rem;color:var(--cyan);font-weight:700;margin-bottom:8px;letter-spacing:.1em">📋 HISTORIQUE XP</div>
+      <div id="histBox" style="font-size:.68rem;color:var(--dim);text-align:center;padding:10px">Chargement…</div>
+    </div>
 
     <!-- DONNER UN TICKET TOMBOLA -->
     <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.25);border-radius:12px;padding:12px;margin-top:8px">
@@ -660,14 +630,6 @@ function renderDetail(id) {
       </div>
       <button onclick="giveTombolaTicket('${id}')" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;padding:10px;cursor:pointer">🎟️ VENDRE 1 TICKET</button>
       <div class="fb" id="tombolaTicketFb" style="margin-top:6px"></div>
-    </div>
-
-    <!-- RESET PIN -->
-    <div style="background:rgba(247,37,133,.06);border:1px solid rgba(247,37,133,.25);border-radius:12px;padding:12px;margin-top:8px">
-      <div style="font-size:.68rem;color:var(--pink);font-weight:700;margin-bottom:6px">🔐 PIN de sécurité</div>
-      <div style="font-size:.65rem;color:var(--dim);margin-bottom:8px">${cl.pin ? '✅ PIN défini' : '⚠️ Pas encore de PIN — le client doit en créer un'}</div>
-      <button onclick="resetPin('${id}')" style="width:100%;background:linear-gradient(135deg,rgba(247,37,133,.3),rgba(114,9,183,.3));border:1px solid rgba(247,37,133,.4);border-radius:10px;color:#fff;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:9px;cursor:pointer">🔄 RÉINITIALISER LE PIN</button>
-      <div class="fb" id="pinFb" style="margin-top:6px"></div>
     </div>
 
     <!-- COUPONS DU CLIENT -->
@@ -706,25 +668,60 @@ function renderDetail(id) {
     if (el) el.textContent = e > 0 ? `${e}€ = +${xp} XP (1€ = 1 XP)` : 'Sélectionne ou tape un montant';
   }
 
+  document.getElementById('addXpBtn').addEventListener('click', () => addXP(id));
+  document.getElementById('remXpBtn').addEventListener('click', () => removeXP(id));
+  document.getElementById('qrBtn').addEventListener('click', () => showQR(cl));
+  document.getElementById('multiSpinBtn').addEventListener('click', () => {
+    const n = parseInt(document.getElementById('multiSpinInp').value) || 1;
+    if (n < 1 || n > 20) { showDetFb('Entre un nombre entre 1 et 20', 'err'); return; }
+    multiUnlockSlot(id, cl.pseudo, n);
+  });
+  // Charger l'historique XP du client
+  (async () => {
+    const hb = document.getElementById('histBox');
+    if(!hb) return;
+    try {
+      const { collection, query, orderBy, limit, getDocs } =
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const q = query(
+        collection(db,'clients',id,'history'),
+        orderBy('timestamp','desc'),
+        limit(30)
+      );
+      const snap = await getDocs(q);
+      if(snap.empty){ hb.textContent='Aucun historique.'; return; }
+      hb.innerHTML = snap.docs.map(d => {
+        const h = d.data();
+        const ts = h.timestamp?.toDate ? h.timestamp.toDate() : null;
+        const date = ts ? ts.toLocaleDateString('fr-FR') : '—';
+        const heure = ts ? ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
+        const isMini = h.type === 'minijeu';
+        const isAdd  = h.type === 'add';
+        const col = isMini ? 'var(--cyan)' : isAdd && (h.xp||0)>0 ? 'var(--green)' : (h.xp||0)<0 ? 'var(--red)' : 'var(--dim)';
+        const xpTxt = h.xp != null ? ((h.xp>0?'+':'')+h.xp+' XP') : '';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(10,15,30,.7);border:1px solid rgba(0,245,255,.07);border-radius:9px;margin-bottom:5px">
+          <div style="font-size:.75rem;flex-shrink:0">${isMini?'🎮':isAdd&&(h.xp||0)>0?'⬆️':(h.xp||0)<0?'⬇️':'🔄'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.68rem;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.label||'—'}</div>
+            <div style="font-size:.54rem;color:var(--dim);margin-top:1px">${date}${heure?' à '+heure:''}</div>
+          </div>
+          ${xpTxt?`<div style="font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;color:${col};flex-shrink:0">${xpTxt}</div>`:''}
+        </div>`;
+      }).join('');
+    } catch(e) {
+      if(document.getElementById('histBox'))
+        document.getElementById('histBox').innerHTML = `<span style="color:var(--red)">Erreur: ${e.message}</span>`;
+    }
+  })();
+
+  document.getElementById('delBtn').addEventListener('click', async() => {
+    if (!confirm(`Supprimer ${cl.pseudo} ?`)) return;
+    await deleteDoc(doc(db, 'clients', id));
+    selClientId = null;
+    box.classList.remove('on');
+    toast('Client supprimé');
+  });
 }
-
-window.resetPin = async function(clientId) {
-  const cl = allClients.find(x => x._id === clientId);
-  if (!confirm(`Réinitialiser le PIN de ${cl?.pseudo} ? Il devra en créer un nouveau à sa prochaine connexion.`)) return;
-  await updateDoc(doc(db, 'clients', clientId), { pin: null, updatedAt: serverTimestamp() });
-  const fb = document.getElementById('pinFb');
-  if (fb) { fb.className='fb ok'; fb.textContent='✓ PIN réinitialisé — le client devra en créer un nouveau'; }
-  toast(`PIN de ${cl?.pseudo} réinitialisé`);
-};
-
-window.deleteClient = async function(id) {
-  const cl = allClients.find(x => x._id === id);
-  if (!confirm(`Supprimer ${cl?.pseudo || 'ce client'} ?`)) return;
-  await deleteDoc(doc(db, 'clients', id));
-  selClientId = null;
-  document.getElementById('detBox').classList.remove('on');
-  toast('Client supprimé');
-};
 
 window.giveTombolaTicket = async function(clientId) {
   const cl = allClients.find(x => x._id === clientId);
@@ -772,113 +769,106 @@ function genTombolaNum() {
   return num;
 }
 
-window.addXP = async function(id) {
+async function addXP(id) {
   const euros  = parseFloat(document.getElementById('euroInp')?.value) || 0;
-  const xpToAdd = Math.floor(euros);
+  const xpToAdd = Math.floor(euros); // 1€ = 1 XP
   if (xpToAdd <= 0) { showDetFb('Entre un montant valide', 'err'); return; }
 
-  // Verrou global — vérifié EN PREMIER avant tout
-  if (window._addXPRunning) { showDetFb('Opération en cours...', 'err'); return; }
-  window._addXPRunning = true;
-  window._addingXP = true;
+  const cl = allClients.find(x => x._id === id);
+  if (!cl) return;
 
-  const btn = document.querySelector('.ctrl-btn.ctrl-add');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  const sortedTiers = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
+  const maxXP = sortedTiers.length ? sortedTiers[sortedTiers.length-1].xp : 100;
 
-  // opId généré APRÈS le verrou — garantit unicité
-  const opId = `op-${id}-${Date.now()}`;
+  let curLevel = cl.level || 0;
+  const newCoupons = [];
+  let jackpotSpins = 0;
+  let simXP = cl.xp || 0;
+  let totalRemaining = xpToAdd;
+  let cpSeq = 0; // Séquence unique pour éviter doublons d'IDs
 
-  try {
-    const sortedTiers = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
-    const maxXP = sortedTiers.length ? sortedTiers[sortedTiers.length-1].xp : 100;
+  while (totalRemaining > 0) {
+    const spaceLeft = maxXP - simXP;
 
-    let jackpotSpins = 0;
-    let couponCount = 0;
-
-    await runTransaction(db, async (transaction) => {
-      const clientRef = doc(db, 'clients', id);
-      const freshSnap = await transaction.get(clientRef);
-      if (!freshSnap.exists()) throw new Error('Client introuvable');
-      const freshCl = freshSnap.data();
-
-      // Anti-doublon : si même opId OU si dernière op < 3 secondes avec même montant → stop
-      if ((freshCl.lastOpId || '') === opId) return;
-      const lastOpTime = freshCl.lastOpTime || 0;
-      const lastOpEuros = freshCl.lastOpEuros || -1;
-      if (Date.now() - lastOpTime < 3000 && lastOpEuros === euros) {
-        throw new Error('DOUBLON_BLOQUE');
-      }
-
-      let curLevel = freshCl.level || 0;
-      let simXP = freshCl.xp || 0;
-      let totalRemaining = xpToAdd;
-      jackpotSpins = 0;
-      const coupons = [];
-      let cpSeq = 0;
-
-      while (totalRemaining > 0) {
-        const spaceLeft = maxXP - simXP;
-        if (spaceLeft <= 0) { simXP = 0; curLevel++; continue; }
-        const xpThisCycle = Math.min(totalRemaining, spaceLeft);
-        const newSimXP = simXP + xpThisCycle;
-
-        sortedTiers.filter(t => t.xp > simXP && t.xp <= newSimXP).forEach(t => {
-          const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
-          if (m) { jackpotSpins += parseInt(m[1])||1; }
-          else { coupons.push({ id:`${opId}-${cpSeq++}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
-        });
-
-        if (newSimXP >= maxXP) { simXP = 0; curLevel++; totalRemaining -= xpThisCycle; }
-        else { simXP = newSimXP; totalRemaining -= xpThisCycle; }
-      }
-
-      couponCount = coupons.length;
-      const existing = freshCl.coupons || [];
-
-      transaction.update(clientRef, {
-        xp: simXP, level: curLevel,
-        totalEuros: (freshCl.totalEuros || 0) + euros,
-        coupons: [...existing, ...coupons],
-        lastOpId: opId,
-        lastOpTime: Date.now(),
-        lastOpEuros: euros,
-        updatedAt: serverTimestamp()
-      });
-    });
-
-    if (jackpotSpins > 0) {
-      const slotSnap = await getDoc(doc(db, 'slots', id));
-      const cur = (slotSnap.exists() && slotSnap.data().status === 'armed') ? (slotSnap.data().multiCount || 0) : 0;
-      await setDoc(doc(db, 'slots', id), { status:'armed', clientId:id, clientPseudo:allClients.find(x=>x._id===id)?.pseudo||'—', multiCount:cur+jackpotSpins, autoGranted:true, unlockedAt:serverTimestamp() });
-      toast(`🎰 ${jackpotSpins} lancer(s) jackpot débloqué(s)`);
+    if (spaceLeft <= 0) {
+      // Barre pleine — repart à 0 SANS redonner les paliers (déjà donnés au tour précédent)
+      simXP = 0; curLevel++;
+      continue;
     }
 
-    await addDoc(collection(db,'clients',id,'history'), { type:'add', label:`+${xpToAdd} XP (${euros}€)`, euros, xp:xpToAdd, timestamp:serverTimestamp() });
+    const xpThisCycle = Math.min(totalRemaining, spaceLeft);
+    const newSimXP    = simXP + xpThisCycle;
 
-    let msg = `✓ +${xpToAdd} XP`;
-    if (couponCount) msg += ` · ${couponCount} coupon(s)`;
+    // Capture tous les paliers franchis dans ce segment
+    sortedTiers.filter(t => t.xp > simXP && t.xp <= newSimXP).forEach((t, idx) => {
+      const m = (t.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/);
+      if (m) { jackpotSpins += parseInt(m[1])||1; }
+      else { newCoupons.push({ id:`cp-${Date.now()}-${cpSeq++}-${t.xp}-${curLevel}`, type:'xp', name:t.name, icon:t.icon||'🎁', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') }); }
+    });
+
+    // Si on atteint exactement maxXP → on repart à 0 au prochain tour
+    if (newSimXP >= maxXP) {
+      simXP = 0; curLevel++;
+      totalRemaining -= xpThisCycle;
+    } else {
+      simXP = newSimXP;
+      totalRemaining -= xpThisCycle;
+    }
+  }
+
+  const newXP = simXP;
+
+  // Lecture fraîche des coupons + dédoublonnage par ID
+  const freshSnap = await getDoc(doc(db, 'clients', id));
+  const existing  = freshSnap.data()?.coupons || [];
+  const existingIds = new Set(existing.map(c => c.id));
+  const uniqueNew = newCoupons.filter(c => !existingIds.has(c.id));
+  const merged    = [...existing, ...uniqueNew];
+
+  try {
+    await updateDoc(doc(db, 'clients', id), {
+      xp: newXP,
+      level: curLevel,
+      totalEuros: (cl.totalEuros || 0) + euros,
+      coupons: merged,
+      updatedAt: serverTimestamp()
+    });
+
+    // Si des paliers JACKPOT ont été franchis → débloque les lancers
+    if (jackpotSpins > 0) {
+      const slotSnap = await getDoc(doc(db, 'slots', id));
+      const currentSpins = (slotSnap.exists() && slotSnap.data().status === 'armed') ? (slotSnap.data().multiCount || 0) : 0;
+      await setDoc(doc(db, 'slots', id), {
+        status: 'armed', clientId: id,
+        clientPseudo: cl.pseudo || '—',
+        multiCount: currentSpins + jackpotSpins,
+        autoGranted: true, unlockedAt: serverTimestamp()
+      });
+      toast(`🎰 ${jackpotSpins} lancer(s) jackpot débloqué(s) pour ${cl.pseudo}`);
+    }
+
+    await addDoc(collection(db, 'clients', id, 'history'), {
+      type: 'add',
+      label: `+${xpToAdd} XP (${euros}€)${cycles > 0 ? ` · ${cycles} niveau(x) gagné(s)` : ''}`,
+      euros, xp: xpToAdd, timestamp: serverTimestamp()
+    });
+    await addDoc(collection(db, 'logs'), {
+      type: 'add', clientId: id, clientName: cl.pseudo,
+      euros, xp: xpToAdd, timestamp: serverTimestamp()
+    });
+
+    let msg = `✓ +${xpToAdd} XP — Total : ${newXP} XP`;
+    if (cycles > 0) msg += ` · 🎖️ Niveau ${curLevel} !`;
+    if (newCoupons.length) msg += ` · ${newCoupons.length} coupon(s)`;
+
     showDetFb(msg, 'ok');
     document.getElementById('euroInp').value = '';
     document.querySelectorAll('.preset').forEach(x => x.classList.remove('on'));
-    toast(`+${xpToAdd} XP`);
+    toast(`+${xpToAdd} XP pour ${cl.pseudo}`);
+  } catch(e) { showDetFb('Erreur : ' + e.message, 'err'); }
+}
 
-  } catch(e) {
-    if (e.message === 'DOUBLON_BLOQUE') {
-      showDetFb('⚠️ Opération déjà effectuée — attends quelques secondes', 'err');
-    } else {
-      showDetFb('Erreur : ' + e.message, 'err');
-    }
-  } finally {
-    window._addXPRunning = false;
-    window._addingXP = false;
-    const btn2 = document.querySelector('.ctrl-btn.ctrl-add');
-    if (btn2) { btn2.disabled = false; btn2.textContent = '➕ AJOUTER'; }
-    // Force le rafraîchissement du profil après l'opération
-    setTimeout(() => { if (selClientId) renderDetail(selClientId); }, 500);
-  }
-};
-
-window.removeXP = async function(id) {
+async function removeXP(id) {
   const cl = allClients.find(x => x._id === id);
   if (!cl || (cl.xp||0) <= 0) { showDetFb('Déjà à 0 XP', 'err'); return; }
   await updateDoc(doc(db, 'clients', id), { xp: Math.max(0, (cl.xp||0)-1), updatedAt: serverTimestamp() });
@@ -894,7 +884,7 @@ async function unlockSlot(id) {
   toast(`Partie débloquée pour ${cl?.pseudo}`);
 }
 
-window.multiUnlockSlot = async function(id, pseudo, count) {
+async function multiUnlockSlot(id, pseudo, count) {
   const cl = allClients.find(x => x._id === id);
   await setDoc(doc(db, 'slots', id), {
     status: 'ready', clientId: id,
@@ -955,11 +945,9 @@ function renderSlots(c) {
     </div>`;
 
   c.querySelectorAll('[data-action]').forEach(b => {
-    const fresh = b.cloneNode(true);
-    b.parentNode.replaceChild(fresh, b);
-    fresh.addEventListener('click', async () => {
-      const cid = fresh.dataset.cid;
-      if (fresh.dataset.action === 'unlock') {
+    b.addEventListener('click', async () => {
+      const cid = b.dataset.cid;
+      if (b.dataset.action === 'unlock') {
         await setDoc(doc(db, 'slots', cid), { status: 'ready', clientId: cid, forced: false, unlockedAt: serverTimestamp() });
         toast('Partie débloquée');
       } else {
@@ -1052,17 +1040,10 @@ function renderCoupons(c) {
   let scanStream  = null;
   let scanTimer   = null;
 
-  const startBtnEl = document.getElementById('startScanBtn');
-  const stopBtnEl  = document.getElementById('stopScanBtn');
-  const startBtnFresh = startBtnEl.cloneNode(true);
-  startBtnEl.parentNode.replaceChild(startBtnFresh, startBtnEl);
-  const stopBtnFresh = stopBtnEl.cloneNode(true);
-  stopBtnEl.parentNode.replaceChild(stopBtnFresh, stopBtnEl);
-  startBtnFresh.addEventListener('click', startScan);
-  stopBtnFresh.addEventListener('click', stopScan);
+  document.getElementById('startScanBtn').addEventListener('click', startScan);
+  document.getElementById('stopScanBtn').addEventListener('click', stopScan);
 
   async function startScan() {
-    window._scannerActive = true;
     document.getElementById('scanContainer').style.display = 'block';
     document.getElementById('startScanBtn').style.display  = 'none';
     try {
@@ -1078,14 +1059,12 @@ function renderCoupons(c) {
   }
 
   function stopScan() {
-    window._scannerActive = false;
     if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
     clearInterval(scanTimer);
     document.getElementById('scanContainer').style.display = 'none';
     document.getElementById('startScanBtn').style.display  = 'flex';
   }
 
-  let _jsQRModule = null;
   function scanLoop(video) {
     // Use BarcodeDetector if available (Chrome/Android), fallback to jsQR
     if ('BarcodeDetector' in window) {
@@ -1097,29 +1076,23 @@ function renderCoupons(c) {
         } catch {}
       }, 300);
     } else {
-      // Fallback iOS/Safari: charge jsQR une seule fois puis décode en boucle
+      // Fallback: draw frame to canvas and decode
       const cvs = document.createElement('canvas');
       const ctx = cvs.getContext('2d');
-
-      const runDecode = async () => {
-        if (!_jsQRModule) {
-          try {
-            const m = await import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js');
-            _jsQRModule = m.default || window.jsQR;
-          } catch { return; }
-        }
+      scanTimer = setInterval(() => {
         if (!video.videoWidth) return;
         cvs.width  = video.videoWidth;
         cvs.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
+        // Try to find QR via URL pattern in title (simplified)
+        // For full decode we'd need jsQR — use a basic URL check
         const imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-        try {
-          const result = _jsQRModule(imageData.data, imageData.width, imageData.height);
+        // Import jsQR dynamically
+        import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js').then(m => {
+          const result = (m.default || window.jsQR)(imageData.data, imageData.width, imageData.height);
           if (result?.data) { stopScan(); handleScanResult(result.data); }
-        } catch {}
-      };
-
-      scanTimer = setInterval(runDecode, 300);
+        }).catch(() => {});
+      }, 400);
     }
   }
 
@@ -1141,18 +1114,8 @@ function renderCoupons(c) {
       if (v.validated)         { showScanFb('Coupon déjà utilisé', 'err'); return; }
       if (v.expiresAt < Date.now()) { showScanFb('QR expiré — le client doit en générer un nouveau', 'err'); return; }
 
-      // Valide dans la collection validations
+      // Valide
       await setDoc(doc(db, 'validations', token), { ...v, validated: true, validatedAt: serverTimestamp() });
-
-      // Marque le coupon comme utilisé dans la fiche client
-      const clSnap = await getDoc(doc(db, 'clients', clId));
-      if (clSnap.exists()) {
-        const coupons = (clSnap.data().coupons || []).map(cp =>
-          cp.id === v.couponId ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
-        );
-        await updateDoc(doc(db, 'clients', clId), { coupons, updatedAt: serverTimestamp() });
-      }
-
       await addDoc(collection(db, 'logs'), {
         type: 'coupon_used', clientId: clId, clientName: v.pseudo,
         couponName: v.couponName, timestamp: serverTimestamp()
@@ -1193,40 +1156,22 @@ function renderCoupons(c) {
           <div style="font-size:.7rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.couponName}</div>
           <div style="font-size:.6rem;color:var(--dim);margin-top:2px">${Math.max(0,Math.round((v.expiresAt-Date.now())/1000))}s restantes</div>
         </div>
-        <button class="btn btn-green btn-sm" onclick="validatePending('${v._id}','${v.pseudo}','${v.couponName}','${v.clientId}')">✓ Valider</button>
+        <button class="btn btn-green btn-sm" data-tok="${v._id}" data-pseudo="${v.pseudo}" data-cpname="${v.couponName}" data-clid="${v.clientId}">✓ Valider</button>
       </div>`).join('');
+
+    box.querySelectorAll('[data-tok]').forEach(b => {
+      b.addEventListener('click', async () => {
+        const vSnap = await getDoc(doc(db, 'validations', b.dataset.tok));
+        if (!vSnap.exists()) return;
+        await setDoc(doc(db, 'validations', b.dataset.tok), { ...vSnap.data(), validated: true, validatedAt: serverTimestamp() });
+        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:b.dataset.clid, clientName:b.dataset.pseudo, couponName:b.dataset.cpname, timestamp:serverTimestamp() });
+        toast(`✓ Validé pour ${b.dataset.pseudo}`);
+      });
+    });
   });
 
-  window.validatePending = async function(tok, pseudo, cpName, clId) {
-    try {
-      const vSnap = await getDoc(doc(db, 'validations', tok));
-      if (!vSnap.exists()) { toast('Coupon introuvable'); return; }
-      if (vSnap.data().validated) { toast('Déjà validé'); return; }
-      const vData = vSnap.data();
-
-      // Valide dans validations
-      await setDoc(doc(db, 'validations', tok), { ...vData, validated: true, validatedAt: serverTimestamp() });
-
-      // Marque le coupon comme utilisé dans la fiche client
-      const clSnap = await getDoc(doc(db, 'clients', clId));
-      if (clSnap.exists()) {
-        const couponId = vData.couponId;
-        const coupons = (clSnap.data().coupons || []).map(cp =>
-          cp.id === couponId ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
-        );
-        await updateDoc(doc(db, 'clients', clId), { coupons, updatedAt: serverTimestamp() });
-      }
-
-      await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:clId, clientName:pseudo, couponName:cpName, timestamp:serverTimestamp() });
-      toast(`✓ Validé pour ${pseudo}`);
-    } catch(e) { toast('Erreur: ' + e.message); }
-  };
-
   // ── MANUEL PAR PSEUDO ──
-  const cpSearchEl = document.getElementById('cpSearch');
-  const cpSearchFresh = cpSearchEl.cloneNode(true);
-  cpSearchEl.parentNode.replaceChild(cpSearchFresh, cpSearchEl);
-  cpSearchFresh.addEventListener('click', () => {
+  document.getElementById('cpSearch').addEventListener('click', () => {
     const pseudo = document.getElementById('cpPseudo').value.trim();
     const cl = allClients.find(x => x.pseudo?.toLowerCase() === pseudo.toLowerCase());
     const res = document.getElementById('cpResults');
@@ -1245,25 +1190,20 @@ function renderCoupons(c) {
         </div>`).join('') + `</div>`;
 
     res.querySelectorAll('[data-cpid]').forEach(b => {
-      const fresh = b.cloneNode(true);
-      b.parentNode.replaceChild(fresh, b);
-      fresh.addEventListener('click', async () => {
-        const clData = allClients.find(x => x._id === fresh.dataset.clid);
+      b.addEventListener('click', async () => {
+        const clData = allClients.find(x => x._id === b.dataset.clid);
         if (!clData) return;
         const updated = (clData.coupons||[]).map(cp =>
-          cp.id === fresh.dataset.cpid ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
+          cp.id === b.dataset.cpid ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
         );
-        await updateDoc(doc(db, 'clients', fresh.dataset.clid), { coupons: updated });
-        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:fresh.dataset.clid, clientName:fresh.dataset.clname, timestamp:serverTimestamp() });
+        await updateDoc(doc(db, 'clients', b.dataset.clid), { coupons: updated });
+        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:b.dataset.clid, clientName:b.dataset.clname, timestamp:serverTimestamp() });
         toast('✓ Coupon validé');
-        cpSearchFresh.click();
+        document.getElementById('cpSearch').click();
       });
     });
   });
-  const cpPseudoEl = document.getElementById('cpPseudo');
-  const cpPseudoFresh = cpPseudoEl.cloneNode(true);
-  cpPseudoEl.parentNode.replaceChild(cpPseudoFresh, cpPseudoEl);
-  cpPseudoFresh.addEventListener('keydown', e => { if(e.key==='Enter') cpSearchFresh.click(); });
+  document.getElementById('cpPseudo').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('cpSearch').click(); });
 }
 
 // ── GESTION SCAN DEPUIS URL (?scan=1&token=...) ──────────────────
@@ -1412,7 +1352,7 @@ function renderConfig(c) {
     <div class="st">Mot de passe admin</div>
     <div class="card">
       <p style="font-size:.74rem;color:var(--dim);line-height:1.5">
-        Modifie le hash dans <code style="color:var(--cyan);background:rgba(0,245,255,.07);padding:1px 5px;border-radius:4px">const ADMIN_HASH</code> dans admin.html
+        Modifie la ligne <code style="color:var(--cyan);background:rgba(0,245,255,.07);padding:1px 5px;border-radius:4px">const ADMIN_PWD = "…"</code> dans admin.html
       </p>
     </div>`;
 
@@ -1476,12 +1416,10 @@ function renderConfig(c) {
     });
   }
 
-  const addTierBtnEl = document.getElementById('addTierBtn');
-  const addTierBtnFresh = addTierBtnEl.cloneNode(true);
-  addTierBtnEl.parentNode.replaceChild(addTierBtnFresh, addTierBtnEl);
-  addTierBtnFresh.addEventListener('click', () => {
+  document.getElementById('addTierBtn').addEventListener('click', () => {
     localTiers.push({ xp: 0, name: '', icon: '🎁' });
     rebuildTiers();
+    // Scroll to bottom
     document.getElementById('tiersContainer').lastElementChild?.scrollIntoView({ behavior:'smooth' });
   });
 
@@ -1532,10 +1470,7 @@ function renderConfig(c) {
     });
   }
 
-  const addPrizeBtnEl = document.getElementById('addPrizeBtn');
-  const addPrizeBtnFresh = addPrizeBtnEl.cloneNode(true);
-  addPrizeBtnEl.parentNode.replaceChild(addPrizeBtnFresh, addPrizeBtnEl);
-  addPrizeBtnFresh.addEventListener('click', () => {
+  document.getElementById('addPrizeBtn').addEventListener('click', () => {
     localPrizes.push({ name: '', icon: '🎁' });
     rebuildPrizes();
   });
@@ -1543,31 +1478,98 @@ function renderConfig(c) {
   rebuildPrizes();
 
   // Win rate slider
-  const winRateInpEl = document.getElementById('winRateInp');
-  if (winRateInpEl) {
-    const winRateInpFresh = winRateInpEl.cloneNode(true);
-    winRateInpEl.parentNode.replaceChild(winRateInpFresh, winRateInpEl);
-    winRateInpFresh.addEventListener('input', function() {
-      document.getElementById('winRateVal').textContent = this.value + '%';
-    });
-  }
+  // winRate slider
+  document.getElementById('winRateInp')?.addEventListener('input', function() {
+    document.getElementById('winRateVal').textContent = this.value + '%';
+  });
 
   // Cash toggle
   let cashEnabled = config.cashEnabled || false;
-  const cashToggleEl = document.getElementById('cashToggle');
-  if (cashToggleEl) {
-    const cashToggleFresh = cashToggleEl.cloneNode(true);
-    cashToggleEl.parentNode.replaceChild(cashToggleFresh, cashToggleEl);
-    cashToggleFresh.addEventListener('click', function() {
-      cashEnabled = !cashEnabled;
-      this.classList.toggle('on', cashEnabled);
-    });
-  }
+  document.getElementById('cashToggle')?.addEventListener('click', function() {
+    cashEnabled = !cashEnabled;
+    this.classList.toggle('on', cashEnabled);
+  });
 }
 
 // ═══════════════════════════════════════
 // STATS TAB
 // ═══════════════════════════════════════
+
+function renderMiniJeu(c) {
+  c.innerHTML = `
+    <div style="font-family:'Orbitron',monospace;font-size:.85rem;font-weight:700;color:var(--cyan);letter-spacing:.12em;margin-bottom:14px">
+      🎮 HISTORIQUE MINI-JEU JET BALL
+    </div>
+    <div id="mjStats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px"></div>
+    <div class="st">Dernières parties (50 max)</div>
+    <div id="mjList"><div style="text-align:center;color:var(--dim);padding:20px;font-size:.75rem">Chargement…</div></div>`;
+
+  // Stats globales
+  const computeStats = (logs) => {
+    const totalXP    = logs.reduce((s,l) => s+(l.xp||0), 0);
+    const totalParties = logs.length;
+    const totalHits  = logs.reduce((s,l) => s+(l.hits||0), 0);
+    const moyScore   = totalParties ? Math.round(logs.reduce((s,l)=>s+(l.score||0),0)/totalParties) : 0;
+    document.getElementById('mjStats').innerHTML = `
+      <div style="background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.14);border-radius:11px;padding:11px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--cyan)">${totalParties}</div>
+        <div style="font-size:.55rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Parties jouées</div>
+      </div>
+      <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.14);border-radius:11px;padding:11px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--gold)">${totalXP}</div>
+        <div style="font-size:.55rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:3px">XP distribués</div>
+      </div>
+      <div style="background:rgba(247,37,133,.06);border:1px solid rgba(247,37,133,.14);border-radius:11px;padding:11px;text-align:center">
+        <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;color:var(--pink)">${totalHits}</div>
+        <div style="font-size:.55rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Balles touchées</div>
+      </div>`;
+  };
+
+  // Charger les logs mini-jeu depuis Firestore
+  import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').then(({ collection, query, where, orderBy, limit, getDocs }) => {
+    const q = query(
+      collection(db, 'logs'),
+      where('type','==','minijeu'),
+      orderBy('timestamp','desc'),
+      limit(50)
+    );
+    getDocs(q).then(snap => {
+      const logs = snap.docs.map(d => ({...d.data(), _id: d.id}));
+      computeStats(logs);
+      if(!logs.length){
+        document.getElementById('mjList').innerHTML =
+          '<div style="text-align:center;color:var(--dim);padding:20px;font-size:.75rem">Aucune partie enregistrée pour l\'instant.</div>';
+        return;
+      }
+      document.getElementById('mjList').innerHTML = logs.map(l => {
+        const ts = l.timestamp?.toDate ? l.timestamp.toDate() : new Date();
+        const date = ts.toLocaleDateString('fr-FR');
+        const heure = ts.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+        const prec = l.precision != null ? l.precision+'%' : '—';
+        return `
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(10,15,30,.75);border:1px solid rgba(0,245,255,.08);border-radius:10px;padding:9px 12px;margin-bottom:6px">
+            <div style="font-size:1.1rem;flex-shrink:0">🎮</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                <span style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:var(--txt)">${l.clientName||'—'}</span>
+                <span style="font-size:.6rem;color:var(--dim)">${date} ${heure}</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span style="font-size:.6rem;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.18);border-radius:6px;padding:1px 6px;color:var(--cyan)">+${l.xp||0} XP</span>
+                <span style="font-size:.6rem;color:var(--dim)">${l.hits||0} balles</span>
+                <span style="font-size:.6rem;color:var(--dim)">score ${l.score||0}</span>
+                <span style="font-size:.6rem;color:var(--dim)">précision ${prec}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }).catch(e => {
+      document.getElementById('mjList').innerHTML =
+        `<div style="text-align:center;color:var(--pink);padding:14px;font-size:.72rem">Erreur de chargement : ${e.message}</div>`;
+    });
+  });
+}
+
 function renderStats(c) {
   const total      = allClients.length;
   const totalXP    = allClients.reduce((s,cl)=>s+(cl.xp||0),0);
@@ -1999,7 +2001,7 @@ function exportData() {
 }
 
 // ── QR ──
-window.showQR = function(cl) {
+function showQR(cl) {
   const url = `${window.location.origin}/client.html?id=${cl._id}`;
   document.getElementById('qrSub').textContent = `Carte de ${cl.pseudo}`;
   document.getElementById('qrName').textContent = cl.pseudo;
