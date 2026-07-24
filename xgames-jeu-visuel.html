@@ -200,6 +200,8 @@ canvas{position:fixed;inset:0;display:block;touch-action:none;z-index:1}
 <body>
 <canvas id="gc"></canvas>
 
+<button id="btnAppClose" style="position:fixed;top:max(10px,env(safe-area-inset-top));right:10px;z-index:9999;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(4,6,14,.65);color:rgba(240,244,255,.75);font-size:.95rem;line-height:1;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);cursor:pointer">✕</button>
+
 <!-- ══ INTRO ══ -->
 <div id="sIntro" class="screen">
   <div class="ideco">
@@ -966,7 +968,11 @@ async function initFirebase(){
     PD.name    = pseudo;
     PD.totalXP = xpTotal;
     PD.level   = niveau;
-    // Ne pas toucher todayGames (géré localement)
+    // Le compteur "parties du jour" vient du compte Firestore (pas du device) :
+    // ça empêche de rejouer 3 parties de plus juste en changeant de téléphone.
+    const today = todayStr();
+    PD.lastDate  = today;
+    PD.todayGames = (fbClientData.jbaGamesDate === today) ? (fbClientData.jbaGamesToday || 0) : 0;
     saveP();
     refreshCard();
 
@@ -974,17 +980,23 @@ async function initFirebase(){
 
     // Stocker les fonctions Firestore pour les utiliser à la fin
     window._fbSaveGameXP = async (xpGained, hits, score, shots) => {
-      if(!fbDb||!fbClientId||xpGained<=0) return;
+      if(!fbDb||!fbClientId) return;
       try {
         const cl = fbClientData;
-        const now = new Date();
-        const newXP = (cl.xp||0) + xpGained;
+        const newXP = (cl.xp||0) + Math.max(0, xpGained);
+        const today = todayStr();
+        const gamesToday = (cl.jbaGamesDate === today) ? (cl.jbaGamesToday||0) + 1 : 1;
 
-        // 1. Mettre à jour l'XP du client
+        // 1. Mettre à jour l'XP + le compteur de parties du jour du client
         await updateDoc(doc(fbDb,'clients',fbClientId),{
           xp: newXP,
+          jbaGamesToday: gamesToday,
+          jbaGamesDate: today,
+          jbaLastGameAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
+        cl.jbaGamesToday = gamesToday;
+        cl.jbaGamesDate = today;
 
         // 2. Ajouter à l'historique du client
         await addDoc(collection(fbDb,'clients',fbClientId,'history'),{
@@ -1032,7 +1044,7 @@ window.endGame = function(){
   _origEndGame();
   // Récupérer l'XP réellement gagné
   const xpG = calcXP(hits);
-  if(window._fbSaveGameXP && xpG > 0){
+  if(window._fbSaveGameXP){
     window._fbSaveGameXP(xpG, hits, score, shots);
   }
 };
@@ -1040,6 +1052,15 @@ window.endGame = function(){
 // Override btnRep et btnMen pour utiliser la nouvelle endGame
 document.getElementById('btnRep').onclick=()=>startGame();
 document.getElementById('btnMen').onclick=()=>goMenu();
+
+// Bouton retour vers la carte fidélité (ferme l'overlay plein écran du parent)
+document.getElementById('btnAppClose').onclick = () => {
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'jba:close' }, '*');
+  } else {
+    history.back();
+  }
+};
 
 // Init Firebase au chargement
 initFirebase();

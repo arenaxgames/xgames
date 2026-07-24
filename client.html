@@ -703,53 +703,30 @@ body{padding-bottom:0}
 
   <!-- ONGLET : MINI-JEU -->
   <div id="tab-jeu" class="tab-content">
-    <!-- Sélecteur de jeu -->
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button id="btnGameJet" onclick="selectGame('jet')" style="flex:1;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:10px;cursor:pointer">💧 Jet d'eau</button>
-      <button id="btnGameSnake" onclick="selectGame('snake')" style="flex:1;background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.2);border-radius:10px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:10px;cursor:pointer">🐍 Serpent</button>
+    <div style="text-align:center;padding:6px 0 4px">
+      <div style="font-size:2.6rem;line-height:1">💧</div>
+      <div style="font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:900;color:var(--cyan);letter-spacing:.06em;margin-top:8px">JET BALL ARENA</div>
+      <div style="font-size:.74rem;color:var(--dim);margin-top:8px;max-width:280px;margin-left:auto;margin-right:auto;line-height:1.55">Vise et tire sur les balles qui flottent sur le jet d'eau. Chaque groupe de <strong style="color:#fff">5 balles touchées</strong> te rapporte <strong style="color:var(--gold)">+1 point fidélité</strong>, sans plafond !</div>
     </div>
 
-    <!-- JET D'EAU -->
-    <div id="gameJet">
-      <div id="game-wrap" style="position:relative;width:100%;max-width:400px;margin:0 auto">
-        <canvas id="gameCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(0,245,255,.2);display:block;touch-action:none;background:#000814;min-height:280px"></canvas>
-        <div id="gameOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px;min-height:280px">
-          <div style="font-size:3rem">💧</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan);font-weight:900;letter-spacing:.1em">JET D'EAU</div>
-          <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Déplace le jet et détruis les balles jaunes !</div>
-          <button onclick="startJetGame()" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:14px 30px;cursor:pointer;margin-top:4px;z-index:10;position:relative">▶ JOUER</button>
-        </div>
+    <div style="background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.15);border-radius:14px;padding:14px;margin:16px 0;display:flex;justify-content:space-around;text-align:center">
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--gold)" id="jbaPartiesLeft">3</div>
+        <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">PARTIES / JOUR</div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
-        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Score <span id="gameScore" style="color:var(--cyan)">0</span></span>
-        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Record <span id="gameHigh" style="color:var(--gold)">0</span></span>
-        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Vies <span id="gameLives">❤️❤️❤️</span></span>
+      <div style="width:1px;background:rgba(0,245,255,.15)"></div>
+      <div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--cyan)" id="jbaTotalXP">0</div>
+        <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">XP FIDÉLITÉ</div>
       </div>
     </div>
 
-    <!-- SERPENT -->
-    <div id="gameSnake" style="display:none">
-      <div style="position:relative;width:100%;max-width:400px;margin:0 auto">
-        <canvas id="snakeCanvas" style="width:100%;border-radius:16px;border:1px solid rgba(6,214,160,.2);display:block;background:#000814"></canvas>
-        <div id="snakeOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,8,20,.92);border-radius:16px;gap:10px">
-          <div style="font-size:3rem">🐍</div>
-          <div style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--green);font-weight:900;letter-spacing:.1em">SERPENT</div>
-          <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:200px;line-height:1.6">Glisse pour diriger le serpent et mange les pommes !</div>
-          <button id="startSnakeBtn" onclick="startSnakeGame()" style="background:linear-gradient(135deg,var(--green),var(--blue));border:none;border-radius:20px;color:#000;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;padding:11px 26px;cursor:pointer;margin-top:4px">▶ JOUER</button>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px;padding:0 4px">
-        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Score <span id="snakeScore" style="color:var(--green)">0</span></span>
-        <span style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--dim)">Record <span id="snakeHigh" style="color:var(--gold)">0</span></span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:150px;margin:12px auto 0">
-        <div></div>
-        <button onclick="snakeDir('UP')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▲</button>
-        <div></div>
-        <button onclick="snakeDir('LEFT')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">◀</button>
-        <button onclick="snakeDir('DOWN')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▼</button>
-        <button onclick="snakeDir('RIGHT')" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.3);border-radius:8px;color:var(--green);font-size:1.2rem;padding:10px;cursor:pointer">▶</button>
-      </div>
+    <button id="jbaPlayBtn" onclick="openJetBallArena()" style="width:100%;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:16px;color:#000;font-family:'Orbitron',monospace;font-size:.92rem;font-weight:900;padding:16px;cursor:pointer;letter-spacing:.04em">▶ JOUER</button>
+    <div id="jbaLimitMsg" style="display:none;text-align:center;margin-top:10px;font-size:.72rem;color:var(--dim)">🎮 Parties du jour épuisées — reviens demain !</div>
+
+    <!-- Plein écran : le jeu -->
+    <div id="jbaOverlay" style="display:none;position:fixed;inset:0;z-index:9500;background:#050810">
+      <iframe id="jbaFrame" title="Jet Ball Arena" src="" style="width:100%;height:100%;border:0;display:block"></iframe>
     </div>
   </div>
 </div>
@@ -794,462 +771,8 @@ function switchTab(name) {
   const btn = document.getElementById('nav-' + name);
   if (btn) btn.classList.add('active');
   window.scrollTo(0, 0);
-  if (name === 'snake') setTimeout(initSnakeGame, 80);
 }
 
-function selectGame(name) {
-  document.getElementById('gameJet').style.display   = name==='jet'   ? 'block' : 'none';
-  document.getElementById('gameSnake').style.display = name==='snake' ? 'block' : 'none';
-  const bJ = document.getElementById('btnGameJet');
-  const bS = document.getElementById('btnGameSnake');
-  bJ.style.cssText += ';background:' + (name==='jet' ? 'linear-gradient(135deg,#00f5ff,#4361ee);color:#000;border:none' : 'rgba(0,245,255,.1);color:#00f5ff;border:1px solid rgba(0,245,255,.2)');
-  bS.style.cssText += ';background:' + (name==='snake' ? 'linear-gradient(135deg,#06d6a0,#4361ee);color:#000;border:none' : 'rgba(6,214,160,.1);color:#06d6a0;border:1px solid rgba(6,214,160,.2)');
-  if (name==='snake') setTimeout(initSnakeGame, 80);
-  if (name==='jet' && window._resizeJet) setTimeout(window._resizeJet, 80);
-}
-
-// ── ÉTOILES AVIS ──
-var _selectedStars = 0;
-function setStars(n) {
-  _selectedStars = n;
-  window._selectedStars = n;
-  document.querySelectorAll('.star-btn').forEach(function(s) {
-    var v = parseInt(s.dataset.v);
-    s.style.opacity   = v <= n ? '1'   : '0.3';
-    s.style.transform = v <= n ? 'scale(1.15)' : 'scale(1)';
-    s.style.filter    = v <= n ? 'drop-shadow(0 0 6px gold)' : 'none';
-  });
-}
-function submitAvis() {
-  if (window._submitAvisModule) {
-    window._submitAvisModule();
-  } else {
-    document.getElementById('avisFb').innerHTML = '<span style="color:#ffd60a">⏳ Chargement… réessaie dans 2s.</span>';
-  }
-}
-
-// ── SERPENT ──
-var CELL = 20, snakeLoop, snake, sDir, sNextDir, sFood, sRunning = false;
-var snakeScore = 0, snakeHigh = 0;
-
-function initSnakeGame() {
-  var cv = document.getElementById('snakeCanvas');
-  if (!cv) return;
-  var wrap = document.getElementById('gameSnake');
-  var W = wrap.offsetWidth || 360;
-  var cols = Math.floor(W / CELL);
-  var rows = Math.floor(W * 1.1 / CELL);
-  cv.width  = cols * CELL;
-  cv.height = rows * CELL;
-}
-
-function startSnakeGame() {
-  var cv = document.getElementById('snakeCanvas');
-  if (!cv || !cv.width) initSnakeGame();
-  var cols = Math.floor(cv.width  / CELL);
-  var rows = Math.floor(cv.height / CELL);
-  snake    = [{x: Math.floor(cols/2), y: Math.floor(rows/2)}];
-  sDir     = {x:1, y:0};
-  sNextDir = {x:1, y:0};
-  snakeScore = 0;
-  sRunning = true;
-  document.getElementById('snakeScore').textContent = 0;
-  document.getElementById('snakeOverlay').style.display = 'none';
-  placeSnakeFood();
-  clearInterval(snakeLoop);
-  snakeLoop = setInterval(tickSnake, 140);
-}
-
-function placeSnakeFood() {
-  var cv   = document.getElementById('snakeCanvas');
-  var cols = Math.floor(cv.width  / CELL);
-  var rows = Math.floor(cv.height / CELL);
-  do { sFood = {x: Math.floor(Math.random()*cols), y: Math.floor(Math.random()*rows)}; }
-  while (snake.some(function(s){return s.x===sFood.x && s.y===sFood.y;}));
-}
-
-var _sAC = null;
-function snakeBeep(freq, dur, type) {
-  try {
-    if (!_sAC) _sAC = new (window.AudioContext||window.webkitAudioContext)();
-    if (_sAC.state==='suspended') _sAC.resume();
-    var o=_sAC.createOscillator(), g=_sAC.createGain();
-    o.connect(g); g.connect(_sAC.destination);
-    o.frequency.value=freq; o.type=type||'square';
-    g.gain.setValueAtTime(0.12,_sAC.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,_sAC.currentTime+dur);
-    o.start(); o.stop(_sAC.currentTime+dur);
-  } catch(e){}
-}
-
-function tickSnake() {
-  var cv   = document.getElementById('snakeCanvas');
-  var cols = Math.floor(cv.width  / CELL);
-  var rows = Math.floor(cv.height / CELL);
-  sDir = {x: sNextDir.x, y: sNextDir.y};
-  var head = {x: snake[0].x + sDir.x, y: snake[0].y + sDir.y};
-  if (head.x<0||head.x>=cols||head.y<0||head.y>=rows) return snakeGameOver();
-  if (snake.some(function(s){return s.x===head.x&&s.y===head.y;})) return snakeGameOver();
-  snake.unshift(head);
-  if (head.x===sFood.x && head.y===sFood.y) {
-    snakeScore += 10;
-    document.getElementById('snakeScore').textContent = snakeScore;
-    snakeBeep(660, 0.1, 'sine'); // Son manger
-    placeSnakeFood();
-  } else { snake.pop(); }
-  drawSnake();
-}
-
-function drawSnake() {
-  var cv  = document.getElementById('snakeCanvas');
-  var ctx = cv.getContext('2d');
-  var W = cv.width, H = cv.height;
-  // Fond
-  ctx.fillStyle = '#000814'; ctx.fillRect(0,0,W,H);
-  // Grille
-  ctx.strokeStyle = 'rgba(6,214,160,.06)'; ctx.lineWidth = 1;
-  for(var x=0;x<W;x+=CELL){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(var y=0;y<H;y+=CELL){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  // Filigrane X-GAMES
-  ctx.save();
-  ctx.globalAlpha = 0.04;
-  ctx.font = 'bold ' + Math.floor(W/6) + 'px Orbitron, monospace';
-  ctx.fillStyle = '#00f5ff';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('X-GAMES', W/2, H/2);
-  ctx.restore();
-  // Serpent
-  snake.forEach(function(s,i){
-    ctx.fillStyle = i===0 ? '#00ffcc' : '#06d6a0';
-    ctx.shadowColor = '#06d6a0'; ctx.shadowBlur = i===0?12:4;
-    ctx.beginPath(); ctx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,4); ctx.fill();
-    ctx.shadowBlur = 0;
-  });
-  // Nourriture
-  ctx.fillStyle='#f72585'; ctx.shadowColor='#f72585'; ctx.shadowBlur=10;
-  ctx.beginPath(); ctx.arc(sFood.x*CELL+CELL/2,sFood.y*CELL+CELL/2,CELL/2-2,0,Math.PI*2); ctx.fill();
-  ctx.shadowBlur=0;
-  // Score en haut
-  ctx.fillStyle='rgba(0,245,255,.5)'; ctx.font='bold 11px Orbitron,monospace';
-  ctx.textAlign='right'; ctx.textBaseline='top';
-  ctx.fillText('LVL '+(Math.floor(snakeScore/50)+1), W-6, 4);
-}
-
-function snakeGameOver() {
-  clearInterval(snakeLoop); sRunning=false;
-  snakeBeep(200, 0.4, 'sawtooth');
-  var isNewRecord = snakeScore > snakeHigh;
-  if (isNewRecord) {
-    snakeHigh = snakeScore;
-    document.getElementById('snakeHigh').textContent = snakeHigh;
-    if (window._db && window._clientId) {
-      try { window._updateDoc(window._doc(window._db,'clients',window._clientId),{'scores.snake':snakeHigh}); } catch(e){}
-    }
-  }
-  var ov = document.getElementById('snakeOverlay');
-  ov.style.display='flex';
-  ov.innerHTML='<div style="font-size:2rem">💀</div>'
-    +'<div style="font-family:Orbitron,monospace;font-size:.9rem;color:#ff006e;font-weight:900">GAME OVER</div>'
-    +'<div style="font-family:Orbitron,monospace;font-size:.8rem;color:#06d6a0">Score : '+snakeScore+'</div>'
-    +(isNewRecord&&snakeScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
-    +'<button onclick="startSnakeGame()" style="background:linear-gradient(135deg,#06d6a0,#4361ee);border:none;border-radius:20px;color:#000;font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>';
-}
-
-// ── INSTALLATION PWA ──
-var _deferredInstall = null;
-var _installBarShown = false;
-
-function closeInstallBar() {
-  document.getElementById('installBar').style.display = 'none';
-  sessionStorage.setItem('installDismissed', '1');
-}
-
-function showInstallBar() {
-  if (_installBarShown) return;
-  if (sessionStorage.getItem('installDismissed')) return;
-  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-  if (isStandalone) return; // Déjà installée
-  
-  var bar = document.getElementById('installBar');
-  var txt = document.getElementById('installBarTxt');
-  var btn = document.getElementById('installBarBtn');
-  
-  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-    txt.textContent = 'Appuie sur ⎙ Partager → Sur l\'écran d\'accueil';
-    btn.textContent = 'COMMENT ?';
-    btn.onclick = function() {
-      alert('iPhone :\n1. Appuie sur ⎙ (Partager) en bas\n2. Choisis "Sur l\'écran d\'accueil"\n3. Appuie Ajouter');
-    };
-  } else if (_deferredInstall) {
-    txt.textContent = 'Installe l\'app pour un accès rapide !';
-    btn.onclick = async function() {
-      _deferredInstall.prompt();
-      var result = await _deferredInstall.userChoice;
-      if (result.outcome === 'accepted') {
-        bar.style.display = 'none';
-      }
-      _deferredInstall = null;
-    };
-  } else {
-    return; // Android sans prompt disponible
-  }
-  
-  bar.style.display = 'flex';
-  _installBarShown = true;
-}
-
-// Capture l'événement Android
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  _deferredInstall = e;
-  setTimeout(showInstallBar, 3000);
-});
-
-// iOS : affiche après 3s
-if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-  var isStandalone = window.navigator.standalone;
-  if (!isStandalone) setTimeout(showInstallBar, 3000);
-}
-
-// Cache la barre si l'app est installée
-window.addEventListener('appinstalled', function() {
-  document.getElementById('installBar').style.display = 'none';
-});
-
-// Levier machine à sous
-function pullLever() {
-  const lever = document.getElementById('slotLever');
-  if (!lever || lever.classList.contains('pulled')) return;
-  lever.classList.add('pulled');
-  setTimeout(() => lever.classList.remove('pulled'), 400);
-  lancerJackpot();
-}
-
-function snakeDir(d) {
-  if (!sRunning) return;
-  var m={UP:{x:0,y:-1},DOWN:{x:0,y:1},LEFT:{x:-1,y:0},RIGHT:{x:1,y:0}};
-  var nd=m[d]; if(nd.x!==-sDir.x||nd.y!==-sDir.y) sNextDir=nd;
-}
-
-// ── JACKPOT UI — en sync pour être disponible immédiatement ──
-var isSpinning = false;
-var availableSpins = 0;
-
-function updateSpinsUI() {
-  var spinsDiv = document.getElementById('spinsAvailable');
-  var slotBtns = document.getElementById('slotBtns');
-  var countEl  = document.getElementById('spinsCount');
-  if (!spinsDiv || !slotBtns) return;
-  if (availableSpins > 0 && !isSpinning) {
-    spinsDiv.style.display = 'block';
-    slotBtns.style.display = 'none';
-    if (countEl) countEl.textContent = availableSpins;
-  } else if (!isSpinning) {
-    spinsDiv.style.display = 'none';
-    slotBtns.style.display = 'flex';
-  }
-}
-
-function closeWin() {
-  document.getElementById('winOv').classList.remove('show');
-  if (window._stopCoinExplosion) window._stopCoinExplosion();
-  isSpinning = false;
-  updateSpinsUI();
-}
-
-// ── JET D'EAU — entièrement en sync comme le serpent ──
-var jetCanvas, jetCtx, jetRunning = false, jetAnimId;
-var jetW, jetH, jetScore = 0, jetHigh = 0, jetLives = 3, jetLevel = 1;
-var jetPlayer, jetBullets, jetBalls, jetTouchX = null;
-var jetKeys = {};
-
-function startJetGame() {
-  jetCanvas = document.getElementById('gameCanvas');
-  jetCtx = jetCanvas.getContext('2d');
-  jetW = Math.min(window.innerWidth - 28, 400);
-  jetH = Math.min(jetW * 1.4, window.innerHeight * 0.55);
-  jetCanvas.width = jetW; jetCanvas.height = jetH;
-  document.getElementById('gameOverlay').style.display = 'none';
-  jetScore = 0; jetLives = 3; jetLevel = 1;
-  jetPlayer = { x: jetW/2, y: jetH-60, w: 44, h: 28, speed: 6 };
-  jetBullets = []; jetBalls = [];
-  jetSpawnBalls();
-  jetRunning = true;
-  cancelAnimationFrame(jetAnimId);
-  jetLoop();
-}
-
-function jetSpawnBalls() {
-  var count = 4 + jetLevel * 2;
-  for (var i = 0; i < count; i++) {
-    jetBalls.push({
-      x: 30 + (i%8) * ((jetW-60)/8),
-      y: 40 + Math.floor(i/8) * 48,
-      r: 14,
-      vx: (Math.random()<0.5?1:-1) * (0.8 + jetLevel*0.3),
-      vy: 0.4 + Math.random()*0.4
-    });
-  }
-}
-
-function jetLoop() {
-  if (!jetRunning) return;
-  jetAnimId = requestAnimationFrame(jetLoop);
-  jetUpdate();
-  jetDraw();
-}
-
-function jetUpdate() {
-  if (jetKeys['ArrowLeft']||jetKeys['a']) jetPlayer.x -= jetPlayer.speed;
-  if (jetKeys['ArrowRight']||jetKeys['d']) jetPlayer.x += jetPlayer.speed;
-  jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW-jetPlayer.w/2, jetPlayer.x));
-  jetBullets.forEach(function(b){ b.y -= 10; });
-  jetBullets = jetBullets.filter(function(b){ return b.y > 0; });
-  jetBalls.forEach(function(b){
-    b.x += b.vx; b.y += b.vy;
-    if (b.x<b.r||b.x>jetW-b.r) b.vx=-b.vx;
-    if (b.y<b.r) b.vy=-b.vy;
-    if (b.y>jetH-b.r) { jetLives--; b.y=b.r; b.vy=-Math.abs(b.vy); if(jetLives<=0){jetGameOver();return;} }
-  });
-  // Collisions balles/bullets
-  jetBullets = jetBullets.filter(function(bul){
-    var hit = false;
-    jetBalls = jetBalls.filter(function(ball){
-      if (Math.hypot(bul.x-ball.x, bul.y-ball.y) < ball.r+6) { hit=true; jetScore+=10; return false; }
-      return true;
-    });
-    return !hit;
-  });
-  if (!jetBalls.length) { jetLevel++; jetSpawnBalls(); }
-  document.getElementById('gameScore').textContent = jetScore;
-  document.getElementById('gameLives').textContent = '❤️'.repeat(Math.max(0,jetLives));
-  document.getElementById('gameHigh').textContent = Math.max(jetHigh, jetScore);
-}
-
-function jetDraw() {
-  jetCtx.fillStyle='#000814'; jetCtx.fillRect(0,0,jetW,jetH);
-  // Grille
-  jetCtx.strokeStyle='rgba(0,245,255,.04)'; jetCtx.lineWidth=1;
-  for(var x=0;x<jetW;x+=30){jetCtx.beginPath();jetCtx.moveTo(x,0);jetCtx.lineTo(x,jetH);jetCtx.stroke();}
-  for(var y=0;y<jetH;y+=30){jetCtx.beginPath();jetCtx.moveTo(0,y);jetCtx.lineTo(jetW,y);jetCtx.stroke();}
-  // Balles
-  jetBalls.forEach(function(b){
-    jetCtx.beginPath(); jetCtx.arc(b.x,b.y,b.r,0,Math.PI*2);
-    jetCtx.fillStyle='#ffd60a'; jetCtx.shadowColor='#ffd60a'; jetCtx.shadowBlur=12;
-    jetCtx.fill(); jetCtx.shadowBlur=0;
-  });
-  // Bullets
-  jetBullets.forEach(function(b){
-    jetCtx.fillStyle='#00f5ff'; jetCtx.shadowColor='#00f5ff'; jetCtx.shadowBlur=8;
-    jetCtx.fillRect(b.x-3,b.y-8,6,16); jetCtx.shadowBlur=0;
-  });
-  // Joueur
-  var grd = jetCtx.createLinearGradient(jetPlayer.x-jetPlayer.w/2,0,jetPlayer.x+jetPlayer.w/2,0);
-  grd.addColorStop(0,'#1a3a5c'); grd.addColorStop(0.5,'#2a6a9c'); grd.addColorStop(1,'#1a3a5c');
-  jetCtx.fillStyle=grd;
-  jetCtx.beginPath(); jetCtx.roundRect(jetPlayer.x-jetPlayer.w/2,jetPlayer.y-jetPlayer.h/2,jetPlayer.w,jetPlayer.h,8); jetCtx.fill();
-  // Tuyau
-  jetCtx.fillStyle='#00f5ff'; jetCtx.shadowColor='#00f5ff'; jetCtx.shadowBlur=6;
-  jetCtx.fillRect(jetPlayer.x-4, jetPlayer.y-jetPlayer.h/2-14, 8, 15); jetCtx.shadowBlur=0;
-  // Filigrane X-GAMES
-  jetCtx.save(); jetCtx.globalAlpha=0.04;
-  jetCtx.font='bold '+Math.floor(jetW/6)+'px Orbitron,monospace';
-  jetCtx.fillStyle='#00f5ff'; jetCtx.textAlign='center'; jetCtx.textBaseline='middle';
-  jetCtx.fillText('X-GAMES',jetW/2,jetH/2); jetCtx.restore();
-}
-
-var _jetAC = null;
-function jetBeep(freq, dur) {
-  try {
-    if (!_jetAC) _jetAC = new (window.AudioContext||window.webkitAudioContext)();
-    if (_jetAC.state==='suspended') _jetAC.resume();
-    var o=_jetAC.createOscillator(), g=_jetAC.createGain();
-    o.connect(g); g.connect(_jetAC.destination);
-    o.frequency.value=freq; o.type='sine';
-    g.gain.setValueAtTime(0.1,_jetAC.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,_jetAC.currentTime+dur);
-    o.start(); o.stop(_jetAC.currentTime+dur);
-  } catch(e){}
-}
-
-function jetShoot() {
-  if (!jetRunning) return;
-  jetBullets.push({x:jetPlayer.x, y:jetPlayer.y-jetPlayer.h/2});
-  jetBeep(440, 0.06);
-}
-
-function jetGameOver() {
-  jetRunning = false; cancelAnimationFrame(jetAnimId);
-  jetBeep(150, 0.5);
-  if (jetScore>jetHigh) {
-    jetHigh=jetScore;
-    if (window._db && window._clientId) {
-      try{ window._updateDoc(window._doc(window._db,'clients',window._clientId),{'scores.jet':jetHigh}); }catch(e){}
-    }
-  }
-  var ov = document.getElementById('gameOverlay');
-  ov.style.display='flex';
-  ov.innerHTML='<div style="font-size:2rem">💥</div>'
-    +'<div style="font-family:Orbitron,monospace;font-size:.9rem;color:#ff006e;font-weight:900">GAME OVER</div>'
-    +'<div style="font-family:Orbitron,monospace;font-size:.8rem;color:#00f5ff">Score : '+jetScore+'</div>'
-    +(jetScore>=jetHigh&&jetScore>0?'<div style="font-size:.7rem;color:#ffd60a">🏅 Nouveau record !</div>':'')
-    +'<button onclick="startJetGame()" style="background:linear-gradient(135deg,#00f5ff,#4361ee);border:none;border-radius:20px;color:#000;font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;padding:12px 28px;cursor:pointer;margin-top:6px">REJOUER</button>';
-}
-
-// Contrôles jet d'eau
-document.addEventListener('keydown', function(e){ jetKeys[e.key]=true; if(e.key===' ')jetShoot(); });
-document.addEventListener('keyup',   function(e){ jetKeys[e.key]=false; });
-
-// Touch jet d'eau — doigt = position du jet, tap = tirer
-var _jtActive = false, _jtStartX = 0, _jtStartTime = 0;
-document.addEventListener('touchstart', function(e){
-  if(!jetRunning) return;
-  var cv = document.getElementById('gameCanvas');
-  if(!cv) return;
-  var rect = cv.getBoundingClientRect();
-  var tx = e.touches[0].clientX, ty = e.touches[0].clientY;
-  if(tx >= rect.left && tx <= rect.right && ty >= rect.top && ty <= rect.bottom){
-    _jtActive = true;
-    _jtStartX = tx;
-    _jtStartTime = Date.now();
-    // Déplace immédiatement le jet à la position du doigt
-    var relX = (tx - rect.left) * (jetW / rect.width);
-    if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW - jetPlayer.w/2, relX));
-    e.preventDefault();
-  }
-},{passive:false});
-
-document.addEventListener('touchmove', function(e){
-  if(!jetRunning || !_jtActive) return;
-  var cv = document.getElementById('gameCanvas');
-  if(!cv) return;
-  var rect = cv.getBoundingClientRect();
-  var tx = e.touches[0].clientX;
-  // Suit le doigt en temps réel
-  var relX = (tx - rect.left) * (jetW / rect.width);
-  if(jetPlayer) jetPlayer.x = Math.max(jetPlayer.w/2, Math.min(jetW - jetPlayer.w/2, relX));
-  e.preventDefault();
-},{passive:false});
-
-document.addEventListener('touchend', function(e){
-  if(!_jtActive) return;
-  _jtActive = false;
-  // Tap court (< 200ms et < 10px de déplacement) = tir
-  var dt = Date.now() - _jtStartTime;
-  var dx = Math.abs(e.changedTouches[0].clientX - _jtStartX);
-  if(dt < 200 && dx < 10 && jetRunning) jetShoot();
-},{passive:true});
-
-// Swipe tactile serpent
-var _tx=0, _ty=0;
-document.addEventListener('touchstart', function(e){_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;},{passive:true});
-document.addEventListener('touchend', function(e){
-  if(!sRunning) return;
-  var dx=e.changedTouches[0].clientX-_tx, dy=e.changedTouches[0].clientY-_ty;
-  if(Math.abs(dx)>Math.abs(dy)) snakeDir(dx>0?'RIGHT':'LEFT');
-  else snakeDir(dy>0?'DOWN':'UP');
-},{passive:true});
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1270,6 +793,14 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const params   = new URLSearchParams(window.location.search);
 const clientId = params.get('id');
+
+// Échappe le texte fourni par d'autres clients (pseudo, avis...) avant de
+// l'insérer dans du HTML, pour empêcher l'injection de code (XSS).
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
 
 // Expose pour les scripts sync
 window._db = db;
@@ -1362,6 +893,49 @@ function mkPts() {
   }
 }
 
+// ── JET BALL ARENA — mini-jeu (XP connecté à Firestore) ──
+function jbaTodayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function jbaPartiesLeft(data) {
+  if (!data) return 3;
+  const played = (data.jbaGamesDate === jbaTodayStr()) ? (data.jbaGamesToday || 0) : 0;
+  return Math.max(0, 3 - played);
+}
+function openJetBallArena() {
+  const left = jbaPartiesLeft(clientData);
+  if (left <= 0) {
+    document.getElementById('jbaLimitMsg').style.display = 'block';
+    return;
+  }
+  const frame = document.getElementById('jbaFrame');
+  frame.src = 'xgames-jeu-visuel.html?uid=' + encodeURIComponent(clientId) + '&t=' + Date.now();
+  document.getElementById('jbaOverlay').style.display = 'block';
+}
+function closeJetBallArena() {
+  document.getElementById('jbaOverlay').style.display = 'none';
+  document.getElementById('jbaFrame').src = '';
+}
+function renderJetBallArena(data) {
+  const left = jbaPartiesLeft(data);
+  const elLeft = document.getElementById('jbaPartiesLeft');
+  const elXP = document.getElementById('jbaTotalXP');
+  const btn = document.getElementById('jbaPlayBtn');
+  const msg = document.getElementById('jbaLimitMsg');
+  if (elLeft) elLeft.textContent = left;
+  if (elXP) elXP.textContent = data.xp || 0;
+  if (btn) {
+    btn.style.opacity = left > 0 ? '' : '.4';
+    btn.textContent = left > 0 ? '▶ JOUER' : '🚫 REVIENS DEMAIN';
+  }
+  if (msg) msg.style.display = left > 0 ? 'none' : 'block';
+}
+window.addEventListener('message', function (e) {
+  if (e.data && e.data.type === 'jba:close') closeJetBallArena();
+});
+window.openJetBallArena = openJetBallArena;
+
 // ── FIREBASE LISTENERS ──
 if (clientId) {
   // Timeout 8s
@@ -1414,15 +988,7 @@ if (clientId) {
     const data = snap.data();
     clientData = data;
     checkDailySpin(data);
-    if (data.scores) {
-      if (data.scores.jet > 0) {
-        document.getElementById('gameHigh').textContent = data.scores.jet;
-      }
-      if (data.scores.snake > 0) {
-        snakeHigh = data.scores.snake;
-        document.getElementById('snakeHigh').textContent = snakeHigh;
-      }
-    }
+    renderJetBallArena(data);
     // #main déjà visible
     if (prevXP !== null && data.xp > prevXP) {
       const t = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp);
@@ -1636,15 +1202,16 @@ function renderLeaderboard(list) {
       <!-- Info -->
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <div style="font-size:${isTop?'.88rem':'.8rem'};font-weight:${isTop?800:600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--txt)'}">${p.pseudo||'—'}${p.tombolaWinner?' 🏆':''}</div>
+          <div style="font-size:${isTop?'.88rem':'.8rem'};font-weight:${isTop?800:600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--txt)'}">${escapeHtml(p.pseudo||'—')}${p.tombolaWinner?' 🏆':''}</div>
           ${isMe?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.3);border-radius:10px;padding:1px 6px;color:var(--cyan)">MOI</span>':''}
         </div>
-        <!-- XP + mini barre -->
+        <!-- XP + mini barre (le chiffre exact n'est visible que pour soi-même,
+             pour éviter que les autres calculent facilement l'écart à combler) -->
         <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
           <div style="flex:1;height:4px;background:rgba(0,0,0,.5);border-radius:2px;overflow:hidden">
             <div style="height:100%;width:${barPct}%;background:${barColor};border-radius:2px"></div>
           </div>
-          <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--dim);white-space:nowrap">⚡${xp} XP</span>
+          <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--dim);white-space:nowrap">${isMe ? `⚡${xp} XP` : ''}</span>
         </div>
       </div>
       <!-- Badge niveau -->
@@ -2141,7 +1708,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
         resList.innerHTML = winners.map(w =>
           `<div style="padding:6px 0;border-bottom:1px solid rgba(255,214,10,.15);font-size:.75rem">
             <span style="font-size:.9rem">${w.avatar}</span>
-            <b style="color:var(--txt)"> ${w.pseudo}</b>
+            <b style="color:var(--txt)"> ${escapeHtml(w.pseudo)}</b>
             <span style="color:var(--gold)"> 🏆 ${w.prize}</span>
             <span style="font-size:.65rem;color:var(--dim)"> · N°${w.ticket}</span>
           </div>`
@@ -2155,7 +1722,7 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
       if (content) content.innerHTML = `
         <div style="font-size:1.4rem">🏆</div>
         <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;margin:6px 0;letter-spacing:.1em">TIRAGE TERMINÉ !</div>
-        ${winners.map(w=>`<div style="font-size:.75rem;margin:4px 0;padding:4px 8px;background:rgba(255,214,10,.1);border-radius:8px">${w.avatar} <b>${w.pseudo}</b> <span style="color:var(--gold)">🏆 ${w.prize}</span></div>`).join('')}
+        ${winners.map(w=>`<div style="font-size:.75rem;margin:4px 0;padding:4px 8px;background:rgba(255,214,10,.1);border-radius:8px">${w.avatar} <b>${escapeHtml(w.pseudo)}</b> <span style="color:var(--gold)">🏆 ${escapeHtml(w.prize)}</span></div>`).join('')}
       `;
     }
     updateHallOfFame(winners);
@@ -2268,7 +1835,7 @@ function updateHallOfFame(winners) {
     <div style="display:flex;align-items:center;gap:10px;padding:10px;background:linear-gradient(135deg,rgba(255,214,10,.08),rgba(255,159,28,.05));border:1px solid rgba(255,214,10,.2);border-radius:12px;margin-bottom:6px">
       <div style="font-size:1.3rem">${w.avatar}</div>
       <div style="flex:1">
-        <div style="font-size:.82rem;font-weight:700">${w.pseudo} <span style="color:var(--gold)">🏆</span></div>
+        <div style="font-size:.82rem;font-weight:700">${escapeHtml(w.pseudo)} <span style="color:var(--gold)">🏆</span></div>
         <div style="font-size:.65rem;color:var(--gold);margin-top:2px">${w.prize} · N°${w.ticket}</div>
       </div>
     </div>`).join('');
@@ -2287,7 +1854,7 @@ function showTombolaNotif(winners) {
     <div style="text-align:center">
       <div style="font-size:1.4rem">${isMeWinner ? '🎉🏆🎉' : '🎟️'}</div>
       <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);font-weight:900;margin:4px 0">${isMeWinner ? 'TU AS GAGNÉ !' : 'RÉSULTATS DE LA TOMBOLA'}</div>
-      ${winners.map(w => `<div style="font-size:.75rem;margin:3px 0">${w.avatar} <b>${w.pseudo}</b> 🏆 — N°${w.ticket}</div>`).join('')}
+      ${winners.map(w => `<div style="font-size:.75rem;margin:3px 0">${w.avatar} <b>${escapeHtml(w.pseudo)}</b> 🏆 — N°${w.ticket}</div>`).join('')}
     </div>
     <button onclick="document.getElementById('tombolaNotif').style.display='none'" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:var(--dim);font-size:1rem;cursor:pointer">✕</button>
   `;
@@ -2327,12 +1894,9 @@ initCoinCanvas();
 
 // ── EXPOSITION WINDOW — toutes les fonctions appelées en onclick ──
 window.switchTab       = switchTab;
-window.selectGame      = selectGame;
 window.setStars        = setStars;
 window.submitAvis      = submitAvis;
-window.startSnakeGame  = startSnakeGame;
-window.startJetGame    = startJetGame;
-window.snakeDir        = snakeDir;
+window.closeJetBallArena = closeJetBallArena;
 window.pullLever       = pullLever;
 window.closeWin        = closeWin;
 window.closeInstallBar = closeInstallBar;

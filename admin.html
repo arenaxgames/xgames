@@ -272,6 +272,14 @@ const ADMIN_HASH = "e6051bb480bf66cb904dbcc39562ef2a248e4549158fcd9f8641988e8bbe
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Échappe le texte fourni par les clients (pseudo, avis...) avant de
+// l'insérer dans du HTML, pour empêcher l'injection de code (XSS).
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
 let allClients = [];
 let config = { tiers: [], jackpot: { winRate: 20, prizes: ['Partie gratuite','Peluche','Bonbon géant'] }, sumupLink: '', slotPrice: '2€', cashEnabled: false };
 let curTab = 'clients';
@@ -590,7 +598,7 @@ function displayClients(list) {
       <div class="cl-top">
         <div class="cl-av">${cl.avatar||'🎮'}</div>
         <div style="flex:1;min-width:0">
-          <div class="cl-name">${cl.pseudo||'—'}${cl.tombolaWinner?'<span style="color:var(--gold);font-size:.85rem"> 🏆</span>':''}</div>
+          <div class="cl-name">${escapeHtml(cl.pseudo||'—')}${cl.tombolaWinner?'<span style="color:var(--gold);font-size:.85rem"> 🏆</span>':''}</div>
           <div class="cl-id">Niv.${cl.level||0} · 💰 ${euros}€ dépensé</div>
         </div>
         <div class="cl-xp">${pts} XP</div>
@@ -605,6 +613,7 @@ function displayClients(list) {
   });
 }
 
+let detHistoryUnsub = null;
 function renderDetail(id) {
   const box = document.getElementById('detBox');
   if (!box) return;
@@ -618,7 +627,7 @@ function renderDetail(id) {
     <div class="det-hdr">
       <div class="det-av">${cl.avatar||'🎮'}</div>
       <div class="det-info">
-        <div class="det-name">${cl.pseudo}</div>
+        <div class="det-name">${escapeHtml(cl.pseudo)}</div>
         <div class="det-id">Niv.${cl.level||0} · ${nextT?`Prochain : ${nextT.name} (${nextT.xp} XP)`:'MAX LEVEL'}</div>
         <div style="font-size:.65rem;color:var(--gold);margin-top:3px">💰 ${(cl.totalEuros||0).toFixed(0)}€ dépensé au total</div>
       </div>
@@ -646,7 +655,7 @@ function renderDetail(id) {
       <div style="display:flex;align-items:center;gap:8px">
         <div style="font-size:.7rem;color:var(--dim);flex:1">Nombre de lancers :</div>
         <input id="multiSpinInp" type="number" min="1" max="20" value="1" style="width:54px;background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.3);border-radius:6px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.85rem;text-align:center;padding:6px">
-        <button class="btn btn-gold" onclick="const n=parseInt(document.getElementById('multiSpinInp').value)||1;if(n<1||n>20){showDetFb('Entre un nombre entre 1 et 20','err');return;}multiUnlockSlot('${id}','${cl.pseudo}',n)" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
+        <button class="btn btn-gold" onclick="const n=parseInt(document.getElementById('multiSpinInp').value)||1;if(n<1||n>20){showDetFb('Entre un nombre entre 1 et 20','err');return;}multiUnlockSlot('${id}',n)" style="padding:8px 16px;font-size:.72rem">🎰 DÉBLOQUER</button>
       </div>
     </div>
     <button class="btn btn-red btn-sm" onclick="deleteClient('${id}')" style="width:100%;margin-top:8px">🗑 Supprimer ce client</button>
@@ -683,7 +692,45 @@ function renderDetail(id) {
           </div>
           <button onclick="deleteCoupon('${id}',${i})" style="background:var(--red);border:none;border-radius:6px;color:#fff;font-size:.65rem;padding:4px 8px;cursor:pointer">🗑</button>
         </div>`).join('')}
-    </div>` : ''}`;
+    </div>` : ''}
+
+    <!-- HISTORIQUE (XP manuel + mini-jeu) -->
+    <div style="margin-top:14px">
+      <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--cyan);font-weight:700;margin-bottom:8px">📜 HISTORIQUE</div>
+      <div id="detHistory"><div style="font-size:.7rem;color:var(--dim);text-align:center;padding:10px">Chargement…</div></div>
+    </div>`;
+
+  if (detHistoryUnsub) { detHistoryUnsub(); detHistoryUnsub = null; }
+  detHistoryUnsub = onSnapshot(
+    query(collection(db, 'clients', id, 'history'), orderBy('timestamp', 'desc'), limit(30)),
+    hSnap => {
+      const histBox = document.getElementById('detHistory');
+      if (!histBox) return; // panneau fermé / autre client affiché entre-temps
+      const entries = hSnap.docs.map(d => d.data());
+      if (!entries.length) {
+        histBox.innerHTML = '<div style="font-size:.7rem;color:var(--dim);text-align:center;padding:10px">Aucun évènement pour l\'instant</div>';
+        return;
+      }
+      histBox.innerHTML = entries.map(h => {
+        const dt = h.timestamp?.toDate ? h.timestamp.toDate() : null;
+        const when = dt ? dt.toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : 'à l\'instant';
+        const isGame = h.type === 'minijeu';
+        const icon = isGame ? '🎮' : ((h.xp||0) < 0 ? '➖' : '➕');
+        return `
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06);border-radius:9px;margin-bottom:5px">
+          <div style="font-size:1rem">${icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.72rem;font-weight:600;color:var(--txt)">${escapeHtml(h.label || (isGame ? 'Partie de mini-jeu' : 'Ajustement XP'))}</div>
+            <div style="font-size:.6rem;color:var(--dim);margin-top:1px">${when}</div>
+          </div>
+        </div>`;
+      }).join('');
+    },
+    () => {
+      const histBox = document.getElementById('detHistory');
+      if (histBox) histBox.innerHTML = '<div style="font-size:.7rem;color:var(--red);text-align:center;padding:10px">Erreur de chargement</div>';
+    }
+  );
 
   // Preset click
   box.querySelectorAll('.preset').forEach(p => {
@@ -894,8 +941,9 @@ async function unlockSlot(id) {
   toast(`Partie débloquée pour ${cl?.pseudo}`);
 }
 
-window.multiUnlockSlot = async function(id, pseudo, count) {
+window.multiUnlockSlot = async function(id, count) {
   const cl = allClients.find(x => x._id === id);
+  const pseudo = cl?.pseudo || '—';
   await setDoc(doc(db, 'slots', id), {
     status: 'ready', clientId: id,
     clientPseudo: cl?.pseudo||'—',
@@ -929,7 +977,7 @@ function renderSlots(c) {
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
           <div style="font-size:2rem">🎰</div>
           <div style="flex:1">
-            <div style="font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;color:var(--gold)">${s.clientPseudo||'—'}</div>
+            <div style="font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;color:var(--gold)">${escapeHtml(s.clientPseudo||'—')}</div>
             <div style="font-size:.65rem;color:var(--dim);margin-top:2px">⏱ Demande à ${time}</div>
           </div>
         </div>
@@ -1027,7 +1075,7 @@ function renderCoupons(c) {
         <div style="display:flex;align-items:center;gap:10px">
           <div style="font-size:1.2rem">${cp.clientAvatar}</div>
           <div style="flex:1">
-            <div style="font-size:.82rem;font-weight:700">${cp.clientPseudo}${isTombolaWin?' 🏆':''}</div>
+            <div style="font-size:.82rem;font-weight:700">${escapeHtml(cp.clientPseudo)}${isTombolaWin?' 🏆':''}</div>
             <div style="font-size:.7rem;font-weight:600;color:${isTombolaWin?'var(--gold)':'var(--txt)'}">
               ${cp.icon||'🎁'} ${cp.name}${cp.tombola?' · N°'+cp.tombola:''}
             </div>
@@ -1189,20 +1237,23 @@ function renderCoupons(c) {
       <div style="background:rgba(255,214,10,.04);border:1px solid rgba(255,214,10,.18);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
         <div style="font-size:1.6rem">${v.couponIcon||'🎁'}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:.84rem;font-weight:700">${v.pseudo}</div>
-          <div style="font-size:.7rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.couponName}</div>
+          <div style="font-size:.84rem;font-weight:700">${escapeHtml(v.pseudo)}</div>
+          <div style="font-size:.7rem;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.couponName)}</div>
           <div style="font-size:.6rem;color:var(--dim);margin-top:2px">${Math.max(0,Math.round((v.expiresAt-Date.now())/1000))}s restantes</div>
         </div>
-        <button class="btn btn-green btn-sm" onclick="validatePending('${v._id}','${v.pseudo}','${v.couponName}','${v.clientId}')">✓ Valider</button>
+        <button class="btn btn-green btn-sm" onclick="validatePending('${v._id}')">✓ Valider</button>
       </div>`).join('');
   });
 
-  window.validatePending = async function(tok, pseudo, cpName, clId) {
+  window.validatePending = async function(tok) {
     try {
       const vSnap = await getDoc(doc(db, 'validations', tok));
       if (!vSnap.exists()) { toast('Coupon introuvable'); return; }
       if (vSnap.data().validated) { toast('Déjà validé'); return; }
       const vData = vSnap.data();
+      const pseudo = vData.pseudo || '—';
+      const cpName = vData.couponName || '—';
+      const clId = vData.clientId;
 
       // Valide dans validations
       await setDoc(doc(db, 'validations', tok), { ...vData, validated: true, validatedAt: serverTimestamp() });
@@ -1241,7 +1292,7 @@ function renderCoupons(c) {
             <div style="font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cp.name}</div>
             <div style="font-size:.62rem;color:var(--dim)">Gagné le ${cp.earnedAt||'—'}</div>
           </div>
-          <button class="btn btn-green btn-sm" data-cpid="${cp.id}" data-clid="${cl._id}" data-clname="${cl.pseudo}">✓</button>
+          <button class="btn btn-green btn-sm" data-cpid="${cp.id}" data-clid="${cl._id}">✓</button>
         </div>`).join('') + `</div>`;
 
     res.querySelectorAll('[data-cpid]').forEach(b => {
@@ -1254,7 +1305,7 @@ function renderCoupons(c) {
           cp.id === fresh.dataset.cpid ? { ...cp, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : cp
         );
         await updateDoc(doc(db, 'clients', fresh.dataset.clid), { coupons: updated });
-        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:fresh.dataset.clid, clientName:fresh.dataset.clname, timestamp:serverTimestamp() });
+        await addDoc(collection(db, 'logs'), { type:'coupon_used', clientId:fresh.dataset.clid, clientName:clData.pseudo||'—', timestamp:serverTimestamp() });
         toast('✓ Coupon validé');
         cpSearchFresh.click();
       });
@@ -1598,7 +1649,7 @@ function renderStats(c) {
 
     ${top ? `<div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.18);border-radius:13px;padding:13px;text-align:center;margin-bottom:14px">
       <div style="font-size:.6rem;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">🏆 Meilleur joueur</div>
-      <div style="font-family:'Orbitron',monospace;font-size:.95rem;color:var(--gold)">${top.pseudo}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.95rem;color:var(--gold)">${escapeHtml(top.pseudo)}</div>
       <div style="font-size:.72rem;color:var(--dim);margin-top:3px">Niv.${top.level||0} · ${top.xp||0} XP · ${(top.totalEuros||0).toFixed(0)}€</div>
     </div>` : ''}
 
@@ -1607,7 +1658,7 @@ function renderStats(c) {
       <div style="display:flex;align-items:center;gap:10px;background:rgba(10,15,30,.7);border:1px solid rgba(0,245,255,.08);border-radius:9px;padding:8px 12px;margin-bottom:5px">
         <div style="font-size:1.1rem">${cl.avatar||'🎮'}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:.82rem;font-weight:700">${cl.pseudo}</div>
+          <div style="font-size:.82rem;font-weight:700">${escapeHtml(cl.pseudo)}</div>
           <div style="font-size:.6rem;color:var(--dim)">Niv.${cl.level||0} · ${cl.xp||0} XP · ${(cl.totalEuros||0).toFixed(0)}€</div>
         </div>
         <button class="btn btn-sm" style="background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.15);color:var(--cyan);font-size:.58rem" onclick="selClientId='${cl._id}';document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));document.querySelector('[data-t=clients]').classList.add('on');curTab='clients';renderTab('clients')">Voir</button>
@@ -1619,7 +1670,7 @@ function renderStats(c) {
         <div style="font-family:'Orbitron',monospace;font-size:.68rem;color:var(--dim);width:18px">#${i+1}</div>
         <div style="font-size:1.1rem">${cl.avatar||'🎮'}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:.82rem;font-weight:700">${cl.pseudo}</div>
+          <div style="font-size:.82rem;font-weight:700">${escapeHtml(cl.pseudo)}</div>
           <div style="font-size:.6rem;color:var(--dim)">Niv.${cl.level||0} · ${(cl.totalEuros||0).toFixed(0)}€ dépensé</div>
         </div>
         <div style="text-align:right">
@@ -1641,10 +1692,10 @@ function renderAvis(c) {
       <div style="background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.2);border-radius:12px;padding:12px;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="font-size:1.1rem">${a.avatar||'🎮'}</div>
-          <div style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700">${a.pseudo||'—'}</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700">${escapeHtml(a.pseudo||'—')}</div>
           <div style="margin-left:auto">${'⭐'.repeat(a.stars||0)}</div>
         </div>
-        ${a.message ? `<div style="font-size:.76rem;color:var(--dim);margin-bottom:8px">"${a.message}"</div>` : ''}
+        ${a.message ? `<div style="font-size:.76rem;color:var(--dim);margin-bottom:8px">"${escapeHtml(a.message)}"</div>` : ''}
         <div style="display:flex;gap:8px">
           <button class="btn btn-green btn-sm" style="flex:1" onclick="approveAvis('${a._id}')">✅ Publier</button>
           <button class="btn btn-red btn-sm" onclick="deleteAvis('${a._id}')">🗑 Supprimer</button>
@@ -1655,8 +1706,8 @@ function renderAvis(c) {
       <div style="background:rgba(10,15,30,.7);border:1px solid rgba(0,245,255,.08);border-radius:10px;padding:10px;margin-bottom:6px;display:flex;align-items:center;gap:8px">
         <div style="font-size:1rem">${a.avatar||'🎮'}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:.75rem;font-weight:700">${a.pseudo||'—'} — ${'⭐'.repeat(a.stars||0)}</div>
-          ${a.message ? `<div style="font-size:.65rem;color:var(--dim)">"${a.message}"</div>` : ''}
+          <div style="font-size:.75rem;font-weight:700">${escapeHtml(a.pseudo||'—')} — ${'⭐'.repeat(a.stars||0)}</div>
+          ${a.message ? `<div style="font-size:.65rem;color:var(--dim)">"${escapeHtml(a.message)}"</div>` : ''}
         </div>
         <button class="btn btn-red btn-sm" onclick="deleteAvis('${a._id}')">🗑</button>
       </div>`).join('')}`;
@@ -1720,7 +1771,7 @@ function renderTombola(c) {
         <div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(0,0,0,.3);border-radius:10px;margin-bottom:6px">
           <div style="font-size:1.1rem">${w.avatar}</div>
           <div style="flex:1">
-            <div style="font-size:.82rem;font-weight:700">${w.pseudo} 🏆</div>
+            <div style="font-size:.82rem;font-weight:700">${escapeHtml(w.pseudo)} 🏆</div>
             <div style="font-size:.65rem;color:var(--gold)">N°${w.ticket} · ${w.prize}</div>
           </div>
           <button onclick="removeWinner(${i})" style="background:var(--red);border:none;border-radius:6px;color:#fff;font-size:.6rem;padding:4px 8px;cursor:pointer">✕</button>
@@ -1772,19 +1823,27 @@ function renderTombola(c) {
       <div style="background:${t.isWinner?'rgba(255,214,10,.12)':'rgba(10,15,30,.8)'};border:1px solid ${t.isWinner?'var(--gold)':'rgba(255,255,255,.08)'};border-radius:12px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
         <div style="font-size:1.2rem">${t.clientAvatar}</div>
         <div style="flex:1">
-          <div style="font-size:.82rem;font-weight:700">${t.clientPseudo}${t.isWinner?' 🏆':''}</div>
-          <div style="font-size:.68rem;color:var(--dim)">${t.name} · N°${t.tombola}</div>
+          <div style="font-size:.82rem;font-weight:700">${escapeHtml(t.clientPseudo)}${t.isWinner?' 🏆':''}</div>
+          <div style="font-size:.68rem;color:var(--dim)">${escapeHtml(t.name)} · N°${t.tombola}</div>
         </div>
         ${!t.isWinner ? `
           <select id="lot-${t.tombola}" style="background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.2);border-radius:6px;color:var(--txt);font-size:.62rem;padding:4px;max-width:110px">
             <option value="">— Lot —</option>
-            ${lots.filter(l=>l.trim()).map(l=>`<option value="${l}">${l}</option>`).join('')}
+            ${lots.filter(l=>l.trim()).map(l=>`<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('')}
             <option value="__custom__">Personnalisé…</option>
           </select>
-          <button onclick="addWinnerManual('${t.clientId}','${t.clientPseudo}','${t.clientAvatar}',${t.tombola},'lot-${t.tombola}')" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;padding:6px 10px;cursor:pointer">🏆</button>
+          <button class="btn-designate-winner" data-clid="${t.clientId}" data-ticket="${t.tombola}" data-selectid="lot-${t.tombola}" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;padding:6px 10px;cursor:pointer">🏆</button>
         ` : '<span style="font-size:.7rem;color:var(--gold);font-weight:700">🏆 GAGNANT</span>'}
       </div>`).join('') : '<div class="empty-s"><div class="empty-si">🎟️</div>Aucun ticket en jeu</div>'}
   `;
+
+  // Câblage des boutons "désigner gagnant" — id/ticket depuis data-attributes
+  // (jamais depuis un onclick avec pseudo interpolé, pour éviter toute injection)
+  c.querySelectorAll('.btn-designate-winner').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addWinnerManual(btn.dataset.clid, parseInt(btn.dataset.ticket, 10), btn.dataset.selectid);
+    });
+  });
 
   // Sync nombre gagnants avec lots
   document.getElementById('nbWinnersInp')?.addEventListener('input', syncLotsToWinners);
@@ -1880,7 +1939,10 @@ window.saveDrawDate = async function() {
   toast('Date du tirage mise à jour');
 };
 
-window.addWinnerManual = async function(clientId, pseudo, avatar, ticket, selectId) {
+window.addWinnerManual = async function(clientId, ticket, selectId) {
+  const cl = allClients.find(x => x._id === clientId);
+  const pseudo = cl?.pseudo || '—';
+  const avatar = cl?.avatar || '🎮';
   const sel = document.getElementById(selectId);
   let prize = sel ? sel.value : '';
   if (!prize || prize === '__custom__') {
