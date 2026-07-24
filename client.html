@@ -912,10 +912,18 @@ function openJetBallArena() {
   const frame = document.getElementById('jbaFrame');
   frame.src = 'xgames-jeu-visuel.html?uid=' + encodeURIComponent(clientId) + '&t=' + Date.now();
   document.getElementById('jbaOverlay').style.display = 'block';
+  // Masque la nav du bas (et bloque le scroll) pour que rien ne passe
+  // devant les commandes du jeu, quel que soit le téléphone/navigateur.
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.style.display = 'none';
+  document.body.style.overflow = 'hidden';
 }
 function closeJetBallArena() {
   document.getElementById('jbaOverlay').style.display = 'none';
   document.getElementById('jbaFrame').src = '';
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.style.display = '';
+  document.body.style.overflow = '';
 }
 function renderJetBallArena(data) {
   const left = jbaPartiesLeft(data);

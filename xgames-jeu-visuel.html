@@ -491,7 +491,17 @@ function addXPToPlayer(xpGain){
 document.getElementById('pav').addEventListener('click',()=>{PD.avt=(PD.avt+1)%AVTS.length;saveP();refreshCard();});
 document.getElementById('pname').addEventListener('click',()=>{const n=prompt('Pseudo :',PD.name);if(n&&n.trim()){PD.name=n.trim().slice(0,16);saveP();refreshCard();}});
 function initPlayer(){
-  if(!localStorage.getItem('xg_p')){const n=prompt('Ton pseudo, joueur ?','Joueur');if(n&&n.trim())PD.name=n.trim().slice(0,16);PD.avt=Math.floor(Math.random()*AVTS.length);saveP();}
+  const hasClientId = !!(new URLSearchParams(window.location.search).get('uid') || new URLSearchParams(window.location.search).get('id'));
+  if(!localStorage.getItem('xg_p')){
+    if(!hasClientId){
+      // Mode standalone (test hors de l'appli) uniquement : on demande un pseudo local
+      const n=prompt('Ton pseudo, joueur ?','Joueur');
+      if(n&&n.trim())PD.name=n.trim().slice(0,16);
+    }
+    // Sinon : pas de prompt — le vrai pseudo/XP arrive de Firestore dans initFirebase()
+    PD.avt=Math.floor(Math.random()*AVTS.length);
+    saveP();
+  }
   refreshCard();
 }
 
