@@ -360,7 +360,15 @@ body::after{content:'';position:fixed;inset:0;
 body{padding-bottom:0}
 
 .empty-c{text-align:center;padding:28px 16px;color:var(--dim);font-size:.78rem}
-.empty-i{font-size:2rem;margin-bottom:8px}
+.empty-i{font-size:2rem;margin-bottom:8px}@keyframes jbaPulseGlow{0%,100%{box-shadow:0 0 18px 2px rgba(0,245,255,.18),inset 0 0 30px rgba(0,245,255,.05)}50%{box-shadow:0 0 34px 8px rgba(0,245,255,.32),inset 0 0 40px rgba(0,245,255,.1)}}
+@keyframes jbaFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+@keyframes jbaShine{0%{transform:translateX(-120%) skewX(-20deg)}100%{transform:translateX(220%) skewX(-20deg)}}
+@keyframes jbaBadgePop{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.jba-hero{position:relative;overflow:hidden;border-radius:20px;animation:jbaPulseGlow 3.2s ease-in-out infinite;border:1px solid rgba(0,245,255,.25);background:radial-gradient(ellipse at 50% 0%,rgba(0,245,255,.1),transparent 70%),linear-gradient(160deg,rgba(10,16,32,.9),rgba(6,10,22,.95))}
+.jba-icon{display:inline-block;animation:jbaFloat 2.6s ease-in-out infinite}
+.jba-badge{animation:jbaBadgePop 1.8s ease-in-out infinite}
+.jba-playbtn{position:relative;overflow:hidden}
+.jba-playbtn::after{content:'';position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(255,255,255,.55),transparent);animation:jbaShine 2.6s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -703,26 +711,35 @@ body{padding-bottom:0}
 
   <!-- ONGLET : MINI-JEU -->
   <div id="tab-jeu" class="tab-content">
-    <div style="text-align:center;padding:6px 0 4px">
-      <div style="font-size:2.6rem;line-height:1">💧</div>
-      <div style="font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:900;color:var(--cyan);letter-spacing:.06em;margin-top:8px">JET BALL ARENA</div>
+    <div class="jba-hero" style="padding:20px 16px 18px;text-align:center">
+      <div style="display:inline-block;background:linear-gradient(135deg,var(--gold),var(--orange));color:#000;font-family:'Orbitron',monospace;font-size:.55rem;font-weight:900;letter-spacing:.1em;padding:4px 10px;border-radius:20px;margin-bottom:10px" class="jba-badge">⚡ EXCLUSIF X-GAMES</div>
+      <div class="jba-icon" style="font-size:2.8rem;line-height:1">💧</div>
+      <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:#fff;letter-spacing:.06em;margin-top:8px;text-shadow:0 0 16px rgba(0,245,255,.6)">JET BALL ARENA</div>
       <div style="font-size:.74rem;color:var(--dim);margin-top:8px;max-width:280px;margin-left:auto;margin-right:auto;line-height:1.55">Vise et tire sur les balles qui flottent sur le jet d'eau. Chaque groupe de <strong style="color:#fff">5 balles touchées</strong> te rapporte <strong style="color:var(--gold)">+1 point fidélité</strong>, sans plafond !</div>
+
+      <div style="display:flex;justify-content:space-around;text-align:center;margin:16px 0 4px;padding-top:14px;border-top:1px solid rgba(0,245,255,.12)">
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--gold)" id="jbaPartiesLeft">3</div>
+          <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">PARTIES / JOUR</div>
+        </div>
+        <div style="width:1px;background:rgba(0,245,255,.15)"></div>
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--cyan)" id="jbaTotalXP">0</div>
+          <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">XP FIDÉLITÉ</div>
+        </div>
+      </div>
     </div>
 
-    <div style="background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.15);border-radius:14px;padding:14px;margin:16px 0;display:flex;justify-content:space-around;text-align:center">
-      <div>
-        <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--gold)" id="jbaPartiesLeft">3</div>
-        <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">PARTIES / JOUR</div>
-      </div>
-      <div style="width:1px;background:rgba(0,245,255,.15)"></div>
-      <div>
-        <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--cyan)" id="jbaTotalXP">0</div>
-        <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">XP FIDÉLITÉ</div>
-      </div>
-    </div>
-
-    <button id="jbaPlayBtn" onclick="openJetBallArena()" style="width:100%;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:16px;color:#000;font-family:'Orbitron',monospace;font-size:.92rem;font-weight:900;padding:16px;cursor:pointer;letter-spacing:.04em">▶ JOUER</button>
+    <button id="jbaPlayBtn" class="jba-playbtn" onclick="openJetBallArena()" style="width:100%;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:16px;color:#000;font-family:'Orbitron',monospace;font-size:.92rem;font-weight:900;padding:16px;cursor:pointer;letter-spacing:.04em;margin-top:14px">▶ JOUER</button>
     <div id="jbaLimitMsg" style="display:none;text-align:center;margin-top:10px;font-size:.72rem;color:var(--dim)">🎮 Parties du jour épuisées — reviens demain !</div>
+
+    <!-- Aperçu du classement des meilleurs scores (pas l'XP) -->
+    <div style="margin-top:18px">
+      <div style="font-family:'Orbitron',monospace;font-size:.68rem;color:var(--gold);font-weight:700;letter-spacing:.06em;margin-bottom:8px">🏆 TOP SCORES DU MOMENT</div>
+      <div id="jbaTopPreview">
+        <div style="text-align:center;padding:16px;font-size:.7rem;color:var(--dim)">Chargement…</div>
+      </div>
+    </div>
 
     <!-- Plein écran : le jeu -->
     <div id="jbaOverlay" style="display:none;position:fixed;inset:0;z-index:9500;background:#050810">
@@ -771,6 +788,7 @@ function switchTab(name) {
   const btn = document.getElementById('nav-' + name);
   if (btn) btn.classList.add('active');
   window.scrollTo(0, 0);
+  if (name === 'jeu' && window.loadJbaTopPreview) window.loadJbaTopPreview();
 }
 
 </script>
@@ -778,7 +796,7 @@ function switchTab(name) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, query, orderBy, where, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, getDocs, query, orderBy, where, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
@@ -942,7 +960,31 @@ function renderJetBallArena(data) {
 window.addEventListener('message', function (e) {
   if (e.data && e.data.type === 'jba:close') closeJetBallArena();
 });
+async function loadJbaTopPreview() {
+  const box = document.getElementById('jbaTopPreview');
+  if (!box || box.dataset.loaded === '1') return; // évite de re-requêter à chaque changement d'onglet
+  try {
+    const snap = await getDocs(query(collection(db, 'clients'), orderBy('jbaBestScore', 'desc'), limit(3)));
+    const rows = [];
+    snap.forEach(d => { const v = d.data(); if ((v.jbaBestScore || 0) > 0) rows.push(v); });
+    if (!rows.length) {
+      box.innerHTML = '<div style="text-align:center;padding:16px;font-size:.7rem;color:var(--dim)">Aucun score enregistré pour l\'instant — sois le premier !</div>';
+    } else {
+      const medals = ['🥇','🥈','🥉'];
+      box.innerHTML = rows.map((v, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;background:${i===0?'rgba(255,214,10,.08)':'rgba(255,255,255,.03)'};border:1px solid ${i===0?'rgba(255,214,10,.25)':'rgba(255,255,255,.07)'};border-radius:10px">
+          <div style="font-size:.9rem;width:22px;text-align:center">${medals[i]}</div>
+          <div style="flex:1;min-width:0;font-size:.74rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.pseudo||'Joueur')}</div>
+          <div style="font-family:'Orbitron',monospace;font-weight:900;font-size:.76rem;color:var(--cyan)">${(v.jbaBestScore||0).toLocaleString('fr-FR')}</div>
+        </div>`).join('');
+    }
+    box.dataset.loaded = '1';
+  } catch (e) {
+    box.innerHTML = '<div style="text-align:center;padding:16px;font-size:.7rem;color:var(--dim)">Classement indisponible</div>';
+  }
+}
 window.openJetBallArena = openJetBallArena;
+window.loadJbaTopPreview = loadJbaTopPreview;
 
 // ── FIREBASE LISTENERS ──
 if (clientId) {
