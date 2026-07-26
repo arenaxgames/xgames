@@ -1939,6 +1939,58 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
   if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
 }
+// ── AJOUT À L'ÉCRAN D'ACCUEIL — aide à l'installation (Android + iOS) ──
+function closeInstallBar() {
+  const bar = document.getElementById('installBar');
+  if (bar) bar.style.display = 'none';
+  try { localStorage.setItem('xg_install_dismissed', String(Date.now())); } catch (e) {}
+}
+(function () {
+  const bar = document.getElementById('installBar');
+  const txt = document.getElementById('installBarTxt');
+  const btn = document.getElementById('installBarBtn');
+  if (!bar || !txt || !btn) return;
+
+  // Déjà installée (mode standalone, iOS ou Android) → ne rien montrer
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) return;
+
+  // Ne pas re-harceler moins de 7 jours après un "Plus tard"
+  let dismissedAt = 0;
+  try { dismissedAt = parseInt(localStorage.getItem('xg_install_dismissed') || '0', 10); } catch (e) {}
+  if (Date.now() - dismissedAt < 7 * 24 * 3600 * 1000) return;
+
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+  if (isIOS) {
+    // Pas d'installation native possible sur iOS (limitation Apple) :
+    // guide illustré simple, pas de bouton "Installer" puisqu'il n'existe pas.
+    txt.innerHTML = '1️⃣ Appuie sur <b style="color:#fff">Partager</b> <span style="display:inline-block;width:14px;height:14px;vertical-align:-2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 16V4M12 4l-4 4M12 4l4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></span> tout en bas de l\'écran, puis choisis <b style="color:#fff">"Sur l\'écran d\'accueil"</b>.';
+    btn.style.display = 'none';
+    setTimeout(() => { bar.style.display = 'flex'; }, 1800);
+  } else {
+    // Android/Chrome/Edge : vraie installation native en 1 tap
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      txt.textContent = "Installe la carte fidélité comme une vraie appli, en 1 tap.";
+      btn.style.display = '';
+      bar.style.display = 'flex';
+    });
+    btn.onclick = async () => {
+      if (!deferredPrompt) return;
+      bar.style.display = 'none';
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) {}
+      deferredPrompt = null;
+    };
+    // Si le navigateur a déjà installé l'appli entre-temps, cacher la barre
+    window.addEventListener('appinstalled', () => { bar.style.display = 'none'; });
+  }
+})();
+
 mkPts();
 initCoinCanvas();
 
