@@ -901,7 +901,7 @@ function jbaTodayStr() {
 function jbaPartiesLeft(data) {
   if (!data) return 3;
   const played = (data.jbaGamesDate === jbaTodayStr()) ? (data.jbaGamesToday || 0) : 0;
-  return Math.max(0, 3 - played);
+  return Math.max(0, 3 - played) + (data.jbaBonusGames || 0);
 }
 function openJetBallArena() {
   const left = jbaPartiesLeft(clientData);

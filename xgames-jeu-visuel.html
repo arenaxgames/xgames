@@ -436,7 +436,7 @@ let PD=JSON.parse(localStorage.getItem('xg_p')||'null')||{name:'Joueur',totalXP:
 function saveP(){localStorage.setItem('xg_p',JSON.stringify(PD));}
 function todayStr(){const d=new Date();return`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;}
 function checkReset(){if(PD.lastDate!==todayStr()){PD.todayGames=0;PD.lastDate=todayStr();saveP();}}
-function partiesLeft(){return Math.max(0,3-PD.todayGames);}
+function partiesLeft(){return Math.max(0,3-PD.todayGames)+(PD.bonusGames||0);}
 function getTierIdx(xp){for(let i=TIERS.length-1;i>=0;i--)if(xp>=TIERS[i].minXP)return i;return 0;}
 function calcXP(h){return Math.floor(h/5);}  // 5 balles = 1 XP
 
@@ -633,6 +633,52 @@ let projA1=0,projA2=Math.PI*.55;
 const bgBk=Array.from({length:18},()=>({x:Math.random(),y:Math.random(),r:3+Math.random()*16,a:Math.random()*.13,sp:.18+Math.random()*.55,ph:Math.random()*Math.PI*2}));
 const bgAmb=Array.from({length:36},()=>({x:Math.random(),y:Math.random(),r:.4+Math.random()*.92,a:Math.random()*.24,sp:.2+Math.random()*.55,ph:Math.random()*Math.PI*2}));
 const bgStars=Array.from({length:150},()=>({x:Math.random(),y:Math.random(),r:.2+Math.random()*.85,bright:Math.random()>.88,sp:.2+Math.random()*.7,ph:Math.random()*Math.PI*2}));
+
+// ── Évènements de fond périodiques (toutes les ~4s, un truc se passe) ──
+let bgEvents=[],bgEventNext=1200;
+function spawnBgEvent(now){
+  const kind=['shootingstar','drone','splash'][Math.floor(Math.random()*3)];
+  if(kind==='shootingstar'){
+    const y0=H*(.08+Math.random()*.22),dir=Math.random()>.5?1:-1;
+    bgEvents.push({kind,born:now,dur:1300,dir,y0,slope:.16+Math.random()*.14,hue:180+Math.random()*140});
+  } else if(kind==='drone'){
+    const y0=H*(.12+Math.random()*.18),dir=Math.random()>.5?1:-1;
+    bgEvents.push({kind,born:now,dur:3000,dir,y0});
+  } else {
+    bgEvents.push({kind,born:now,dur:1500,x:W*(.12+Math.random()*.76),y:H*(.8+Math.random()*.08),hue:190+Math.random()*40});
+  }
+}
+function drawBgEvents(now){
+  bgEvents=bgEvents.filter(ev=>now-ev.born<ev.dur);
+  bgEvents.forEach(ev=>{
+    const t=(now-ev.born)/ev.dur;
+    if(ev.kind==='shootingstar'){
+      const x0=ev.dir>0?-W*.1:W*1.1,x1=ev.dir>0?W*1.1:-W*.1;
+      const x=x0+(x1-x0)*t,y=ev.y0+W*ev.slope*(ev.dir>0?t:-t)*ev.dir;
+      const al=Math.sin(t*Math.PI);
+      const g=ctx.createLinearGradient(x-ev.dir*110,y-ev.slope*110*ev.dir,x,y);
+      g.addColorStop(0,'transparent');g.addColorStop(1,`hsla(${ev.hue},95%,75%,${al})`);
+      ctx.save();ctx.strokeStyle=g;ctx.lineWidth=3.4;ctx.shadowColor=`hsla(${ev.hue},95%,72%,${al})`;ctx.shadowBlur=18;
+      ctx.beginPath();ctx.moveTo(x-ev.dir*110,y-ev.slope*110*ev.dir);ctx.lineTo(x,y);ctx.stroke();
+      ctx.shadowBlur=0;ctx.fillStyle=`hsla(${ev.hue},100%,90%,${al})`;ctx.beginPath();ctx.arc(x,y,4.2,0,Math.PI*2);ctx.fill();ctx.restore();
+    } else if(ev.kind==='drone'){
+      const x0=ev.dir>0?-W*.08:W*1.08,x1=ev.dir>0?W*1.08:-W*.08;
+      const x=x0+(x1-x0)*t,y=ev.y0+Math.sin(t*Math.PI*3)*5;
+      const al=Math.min(1,Math.min(t*6,(1-t)*6))*.9;
+      ctx.save();ctx.globalAlpha=al;ctx.shadowColor='rgba(0,210,255,.8)';ctx.shadowBlur=12;
+      ctx.fillStyle='rgba(210,235,255,.95)';
+      ctx.beginPath();ctx.ellipse(x,y,14,4.6,0,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;ctx.strokeStyle='rgba(0,210,255,.95)';ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.moveTo(x-16*(ev.dir||1),y);ctx.lineTo(x-5*(ev.dir||1),y-7);ctx.moveTo(x-16*(ev.dir||1),y);ctx.lineTo(x-5*(ev.dir||1),y+7);ctx.stroke();
+      ctx.restore();
+    } else { // splash (ripple d'eau)
+      const al=(1-t)*.85,rad=6+t*54;
+      ctx.save();ctx.globalAlpha=al;ctx.strokeStyle=`hsla(${ev.hue},90%,72%,1)`;ctx.lineWidth=2.4;ctx.shadowColor=`hsla(${ev.hue},90%,72%,.8)`;ctx.shadowBlur=10;
+      ctx.beginPath();ctx.ellipse(ev.x,ev.y,rad,rad*.32,0,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+    }
+  });
+}
 function drawBg(now,dt){
   const P=phaseObj,t=now*.001,jxPx=W*jet.x,ph=P.panelHue,phSpd=P.jetSpeed;
   ctx.fillStyle=P.bgBase;ctx.fillRect(0,0,W,H);
@@ -662,6 +708,8 @@ function drawBg(now,dt){
   bgStars.forEach(s2=>{const bl=Math.sin(t*s2.sp+s2.ph)*.5+.5,al=s2.bright?.38+bl*.5:.05+bl*.1;const sx=s2.x*W,sy=s2.y*H;ctx.beginPath();ctx.arc(sx,sy,s2.r*(s2.bright?1+bl*.14:1),0,Math.PI*2);ctx.fillStyle=s2.bright?`rgba(200,228,255,${al})`:`rgba(155,195,228,${al})`;ctx.fill();if(s2.bright&&bl>.78){ctx.strokeStyle=`rgba(200,225,255,${(bl-.78)*.24})`;ctx.lineWidth=.36;ctx.beginPath();ctx.moveTo(sx-s2.r*2.8,sy);ctx.lineTo(sx+s2.r*2.8,sy);ctx.stroke();ctx.beginPath();ctx.moveTo(sx,sy-s2.r*2.8);ctx.lineTo(sx,sy+s2.r*2.8);ctx.stroke();}});
   const sg=ctx.createLinearGradient(0,H*.84,0,H);sg.addColorStop(0,`hsla(${ph},80%,30%,${.05+phSpd*.04})`);sg.addColorStop(1,'transparent');ctx.fillStyle=sg;ctx.fillRect(0,H*.84,W,H*.16);
   ctx.beginPath();ctx.moveTo(0,H*.858);ctx.lineTo(W,H*.858);ctx.strokeStyle=`hsla(${ph},80%,55%,.055)`;ctx.lineWidth=1;ctx.stroke();
+  if(now>bgEventNext){spawnBgEvent(now);bgEventNext=now+3000+Math.random()*2000;}
+  drawBgEvents(now);
 }
 
 // ── Jet visuel ───────────────────────────────────────
@@ -735,12 +783,12 @@ function drawAim(){
 
 // ── Joystick ──────────────────────────────────────────
 const jsZ=document.getElementById('jsZ'),jsK=document.getElementById('jsK');
-let jsAct=false,jsTId=null,jsOrig={x:0,y:0},jsDelta={x:0,y:0};
+let jsAct=false,jsTId=null,jsOrig={x:0,y:0},jsDelta={x:0,y:0},jsEff={x:0,y:0};
 jsZ.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];jsTId=t.identifier;const r=jsZ.getBoundingClientRect();jsOrig={x:r.left+r.width/2,y:r.top+r.height/2};jsAct=true;},{passive:false});
-jsZ.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier!==jsTId)continue;const dx=t.clientX-jsOrig.x,dy=t.clientY-jsOrig.y,d=Math.sqrt(dx*dx+dy*dy),cl=Math.min(d,32),a=Math.atan2(dy,dx);jsDelta={x:Math.cos(a)*cl,y:Math.sin(a)*cl};jsK.style.transform=`translate(${jsDelta.x*.74}px,${jsDelta.y*.74}px)`;}},{passive:false});
-jsZ.addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===jsTId){jsAct=false;jsTId=null;jsDelta={x:0,y:0};jsK.style.transform='translate(0,0)';}}}); 
+jsZ.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier!==jsTId)continue;const dx=t.clientX-jsOrig.x,dy=t.clientY-jsOrig.y,d=Math.sqrt(dx*dx+dy*dy),cl=Math.min(d,32),a=Math.atan2(dy,dx),n=cl/32;jsDelta={x:Math.cos(a)*cl,y:Math.sin(a)*cl};jsEff={x:Math.cos(a)*n*n*32,y:Math.sin(a)*n*n*32};jsK.style.transform=`translate(${jsDelta.x*.74}px,${jsDelta.y*.74}px)`;}},{passive:false});
+jsZ.addEventListener('touchend',e=>{for(const t of e.changedTouches){if(t.identifier===jsTId){jsAct=false;jsTId=null;jsDelta={x:0,y:0};jsEff={x:0,y:0};jsK.style.transform='translate(0,0)';}}}); 
 jsZ.addEventListener('mousedown',e=>{jsAct=true;jsOrig={x:e.clientX,y:e.clientY};});
-window.addEventListener('mousemove',e=>{if(!jsAct)return;const dx=e.clientX-jsOrig.x,dy=e.clientY-jsOrig.y,d=Math.sqrt(dx*dx+dy*dy),cl=Math.min(d,32),a=Math.atan2(dy,dx);jsDelta={x:Math.cos(a)*cl,y:Math.sin(a)*cl};jsK.style.transform=`translate(${jsDelta.x*.74}px,${jsDelta.y*.74}px)`;});
+window.addEventListener('mousemove',e=>{if(!jsAct)return;const dx=e.clientX-jsOrig.x,dy=e.clientY-jsOrig.y,d=Math.sqrt(dx*dx+dy*dy),cl=Math.min(d,32),a=Math.atan2(dy,dx),n=cl/32;jsDelta={x:Math.cos(a)*cl,y:Math.sin(a)*cl};jsEff={x:Math.cos(a)*n*n*32,y:Math.sin(a)*n*n*32};jsK.style.transform=`translate(${jsDelta.x*.74}px,${jsDelta.y*.74}px)`;});
 window.addEventListener('mouseup',()=>{jsAct=false;jsDelta={x:0,y:0};jsK.style.transform='translate(0,0)';});
 
 // ── Tir ───────────────────────────────────────────────
@@ -865,7 +913,7 @@ function loop(now){
   if(!running)return;
   const dt=Math.min((now-last)/16.666,2.5);last=now;
   if(!paused&&now>freezeUntil){
-    if(jsAct){aim.x=Math.max(.04,Math.min(.96,aim.x+jsDelta.x*.00068*dt));aim.y=Math.max(.08,Math.min(.78,aim.y+jsDelta.y*.00068*dt));}
+    if(jsAct){aim.x=Math.max(.04,Math.min(.96,aim.x+jsEff.x*.00022*dt));aim.y=Math.max(.08,Math.min(.78,aim.y+jsEff.y*.00022*dt));}
     updateAimV();updateJet(dt);updateBall(dt);updatePool(dt);updateCam(dt);
     for(let i=pjets.length-1;i>=0;i--){if(!pjets[i].upd())pjets.splice(i,1);}
     checkHit();
@@ -983,6 +1031,7 @@ async function initFirebase(){
     const today = todayStr();
     PD.lastDate  = today;
     PD.todayGames = (fbClientData.jbaGamesDate === today) ? (fbClientData.jbaGamesToday || 0) : 0;
+    PD.bonusGames = fbClientData.jbaBonusGames || 0;
     saveP();
     refreshCard();
 
@@ -995,18 +1044,24 @@ async function initFirebase(){
         const cl = fbClientData;
         const newXP = (cl.xp||0) + Math.max(0, xpGained);
         const today = todayStr();
-        const gamesToday = (cl.jbaGamesDate === today) ? (cl.jbaGamesToday||0) + 1 : 1;
+        const gamesBefore = (cl.jbaGamesDate === today) ? (cl.jbaGamesToday||0) : 0;
+        const gamesToday = gamesBefore + 1;
+        const bonusBefore = cl.jbaBonusGames||0;
+        const bonusAfter = gamesBefore >= 3 ? Math.max(0, bonusBefore - 1) : bonusBefore;
 
-        // 1. Mettre à jour l'XP + le compteur de parties du jour du client
+        // 1. Mettre à jour l'XP + le compteur de parties du jour (+ bonus consommé) du client
         await updateDoc(doc(fbDb,'clients',fbClientId),{
           xp: newXP,
           jbaGamesToday: gamesToday,
           jbaGamesDate: today,
+          jbaBonusGames: bonusAfter,
           jbaLastGameAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
         cl.jbaGamesToday = gamesToday;
         cl.jbaGamesDate = today;
+        cl.jbaBonusGames = bonusAfter;
+        PD.bonusGames = bonusAfter;
 
         // 2. Ajouter à l'historique du client
         await addDoc(collection(fbDb,'clients',fbClientId,'history'),{
