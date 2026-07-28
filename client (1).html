@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="X-Games">
+<meta name="theme-color" content="#000814">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>X-Games · Ma Carte</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#00040f;--cyan:#00f5ff;--blue:#4361ee;--violet:#7209b7;--pink:#f72585;--gold:#ffd60a;--green:#06d6a0;--red:#ff006e;--orange:#ff8c00;--txt:#e0e7ff;--dim:#4a5568}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Rajdhani',Arial,sans-serif;overflow-x:hidden}
+
+/* Grille néon orange */
+body::before{content:'';position:fixed;inset:0;
+  background:
+    linear-gradient(rgba(255,140,0,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,140,0,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0}
+
+/* Halos de couleur — plus vivants avec orange */
+body::after{content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 15% 10%,rgba(255,140,0,.15) 0%,transparent 45%),
+    radial-gradient(ellipse at 85% 85%,rgba(114,9,183,.22) 0%,transparent 50%),
+    radial-gradient(ellipse at 50% 50%,rgba(67,97,238,.12) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 5%,rgba(247,37,133,.15) 0%,transparent 40%);
+  pointer-events:none;z-index:0;animation:halo-shift 8s ease-in-out infinite alternate}
+@keyframes halo-shift{0%{opacity:.6}100%{opacity:1}}
+
+/* Particules */
+#pts{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.pt{position:absolute;width:2px;height:2px;border-radius:50%;animation:fl linear infinite}
+@keyframes fl{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh) translateX(var(--dx));opacity:0}}
+
+#loadOv{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.ll{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--cyan);text-shadow:0 0 30px var(--cyan);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.lb{width:200px;height:3px;background:rgba(0,245,255,.15);border-radius:2px;overflow:hidden}
+.lf{height:100%;background:var(--cyan);animation:lfill 1.4s ease-out forwards}
+@keyframes lfill{0%{width:0}100%{width:100%}}
+#errScreen{position:fixed;inset:0;z-index:9998;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.err-t{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--red)}
+#main{position:relative;z-index:2;min-height:100vh;padding:16px 14px 50px;max-width:430px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+.hdr-logo{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--cyan);text-shadow:0 0 15px var(--cyan),0 0 30px rgba(0,245,255,.4);letter-spacing:.08em}
+.hdr-back{background:transparent;border:1px solid rgba(0,245,255,.2);border-radius:8px;color:var(--cyan);font-size:.7rem;padding:5px 11px;cursor:pointer;font-family:'Orbitron',monospace}
+
+/* Carte profil — holographique */
+.profile-card{
+  background:linear-gradient(135deg,rgba(5,10,25,.97),rgba(10,18,45,.97));
+  border:1px solid transparent;
+  border-radius:20px;padding:18px;position:relative;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,245,255,.08),0 8px 32px rgba(0,0,0,.6);
+}
+.profile-card::before{content:'';position:absolute;inset:0;border-radius:20px;padding:1px;
+  background:linear-gradient(135deg,rgba(0,245,255,.4),rgba(114,9,183,.3),rgba(247,37,133,.2),rgba(0,245,255,.4));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+/* Balayage holographique */
+.profile-card::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(0,245,255,.04) 50%,transparent 60%);
+  animation:holo-card 4s ease-in-out infinite;pointer-events:none}
+@keyframes holo-card{0%,100%{transform:translateX(-100%)}50%{transform:translateX(200%)}}
+
+.ptop{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+.pavatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid rgba(0,245,255,.5);flex-shrink:0;box-shadow:0 0 20px rgba(0,245,255,.2)}
+.pinfo{flex:1;min-width:0}
+.pname{font-family:'Orbitron',monospace;font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 10px rgba(224,231,255,.3)}
+.plevel{font-size:.7rem;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-top:3px}
+.pbadge{display:inline-block;padding:2px 9px;border-radius:20px;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;color:#000;margin-top:4px}
+.xp-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
+.xp-lbl{font-size:.62rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase}
+.xp-cnt{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;color:var(--cyan);text-shadow:0 0 10px var(--cyan)}
+.xp-wrap{position:relative;height:24px;background:rgba(0,0,0,.6);border-radius:12px;border:1px solid rgba(0,245,255,.15);overflow:hidden;margin-bottom:6px;box-shadow:inset 0 0 10px rgba(0,0,0,.5)}
+.xp-fill{position:absolute;left:0;top:0;bottom:0;border-radius:12px;background:linear-gradient(90deg,var(--violet),var(--blue),var(--cyan));transition:width 1.2s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 15px rgba(0,245,255,.4)}
+.xp-milestones{display:flex;gap:3px;margin-top:4px}
+.xm{flex:1;text-align:center;font-size:.5rem;color:rgba(0,245,255,.3);font-family:'Orbitron',monospace}
+.xm.done{color:var(--cyan)}
+.next-rwd{background:rgba(0,0,0,.4);border:1px solid rgba(255,214,10,.2);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px;margin-top:10px;box-shadow:0 0 15px rgba(255,214,10,.05)}
+.nr-icon{font-size:1.3rem}
+.nr-info{flex:1}
+.nr-lbl{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
+.nr-name{font-size:.82rem;color:var(--gold);font-weight:700;margin-top:1px;text-shadow:0 0 10px rgba(255,214,10,.3)}
+.nr-pts{font-size:.65rem;color:rgba(255,214,10,.55);margin-top:1px}
+.sec-t{font-family:'Orbitron',monospace;font-size:.63rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(0,245,255,.6);margin-bottom:10px;display:flex;align-items:center;gap:8px;text-shadow:0 0 8px rgba(0,245,255,.4)}
+.sec-t::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,.3),transparent)}
+/* ── MACHINE À SOUS ── */
+.slot-machine-wrap{position:relative;margin:0 auto;max-width:360px}
+/* Pieds de la machine */
+.slot-machine-wrap::after{content:'';display:block;height:14px;background:linear-gradient(180deg,rgba(80,50,10,.9),rgba(40,20,5,.95));border-radius:0 0 18px 18px;margin:0 30px;box-shadow:0 6px 20px rgba(0,0,0,.8)}
+/* Levier */
+.slot-lever{position:absolute;right:-24px;top:30px;width:16px;height:90px;z-index:10;cursor:pointer}
+.slot-lever-stick{width:6px;height:72px;background:linear-gradient(180deg,#c0a060,#8b6914,#c0a060);border-radius:3px;margin:0 auto;box-shadow:2px 0 6px rgba(0,0,0,.5)}
+.slot-lever-ball{width:16px;height:16px;background:radial-gradient(circle at 35% 35%,#ff4444,#cc0000);border-radius:50%;box-shadow:0 0 12px rgba(255,0,0,.6),inset 0 2px 4px rgba(255,255,255,.3);margin-top:2px;transition:transform .3s}
+.slot-lever.pulled .slot-lever-ball{transform:translateY(55px)}
+.slot-lever.pulled .slot-lever-stick{background:linear-gradient(180deg,#8b6914,#c0a060,#8b6914)}
+
+.slot-card{background:linear-gradient(165deg,rgba(15,8,2,.98),rgba(30,15,3,.98));border:3px solid rgba(180,120,20,.7);border-radius:22px;padding:16px;position:relative;overflow:visible;box-shadow:0 0 60px rgba(255,159,28,.2),0 20px 60px rgba(0,0,0,.9),inset 0 0 40px rgba(0,0,0,.8),inset 0 2px 0 rgba(255,200,50,.15);margin:0 20px}
+.slot-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,rgba(255,214,10,.8),rgba(255,159,28,.6),rgba(255,214,10,.8),transparent);border-radius:22px 22px 0 0}
+.slot-card::after{content:'';position:absolute;bottom:0;left:20px;right:20px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,159,28,.4),transparent)}
+/* Panneau rouleaux */
+.slot-panel{background:linear-gradient(180deg,rgba(0,0,0,.95),rgba(5,3,0,.98));border:3px inset rgba(100,60,10,.6);border-radius:14px;padding:12px 10px;position:relative;box-shadow:inset 0 0 30px rgba(0,0,0,.9),inset 0 2px 8px rgba(0,0,0,.8)}
+/* Ligne de visée */
+.slot-panel::before{content:'';position:absolute;left:6px;right:6px;top:50%;transform:translateY(-50%);height:92px;border:2px solid rgba(255,214,10,.5);border-radius:8px;pointer-events:none;z-index:2;box-shadow:0 0 20px rgba(255,214,10,.3),inset 0 0 20px rgba(255,214,10,.05)}
+/* Flèches */
+.slot-arrow{position:absolute;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.4rem;filter:drop-shadow(0 0 8px var(--gold));line-height:1;z-index:3}
+.slot-arrow.left{left:-22px}
+.slot-arrow.right{right:-22px}
+.slot-title{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.2em;margin-bottom:12px;text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.5);animation:title-pulse 2s ease-in-out infinite}
+@keyframes title-pulse{0%,100%{text-shadow:0 0 15px var(--gold)}50%{text-shadow:0 0 30px var(--gold),0 0 60px rgba(255,214,10,.6)}}
+.reels{display:flex;justify-content:center;align-items:stretch;gap:0;position:relative}
+.reel{width:80px;height:90px;background:linear-gradient(180deg,rgba(0,0,0,.95) 0%,rgba(8,5,0,.98) 50%,rgba(0,0,0,.95) 100%);border:none;border-right:2px solid rgba(180,120,20,.4);display:flex;align-items:center;justify-content:center;font-size:2.8rem;overflow:hidden;position:relative;flex-shrink:0}
+.reel:first-child{border-radius:8px 0 0 8px;border-left:none}
+.reel:last-child{border-radius:0 8px 8px 0;border-right:none}
+.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);pointer-events:none}
+.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(0deg,rgba(0,0,0,.6),transparent);pointer-events:none}
+.reel.spin{animation:reelspin .06s steps(1) infinite}
+@keyframes reelspin{0%{transform:translateY(0) scale(1)}33%{transform:translateY(-10px) scale(.9)}66%{transform:translateY(5px) scale(.95)}}
+.reel.win{box-shadow:0 0 40px var(--gold),0 0 80px rgba(255,214,10,.5),inset 0 0 30px rgba(255,214,10,.15);animation:reel-win .25s ease-in-out infinite alternate}
+@keyframes reel-win{from{box-shadow:0 0 20px var(--gold)}to{box-shadow:0 0 60px var(--gold),0 0 100px rgba(255,214,10,.7)}}
+.slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;color:var(--dim);letter-spacing:.1em;margin:10px 0 8px;min-height:20px}
+.slot-btns{display:flex;gap:8px}
+.btn-slot-pay{flex:1;background:linear-gradient(135deg,rgba(114,9,183,.4),rgba(67,97,238,.4));border:1px solid rgba(114,9,183,.5);border-radius:12px;color:var(--txt);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.btn-slot-pay:disabled{opacity:.35;cursor:not-allowed}
+.btn-slot-pay .bs-icon{font-size:1.2rem}
+.btn-slot-cash{flex:1;background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.25);border-radius:12px;color:var(--gold);font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.slot-price{font-size:.6rem;color:var(--dim);margin-top:6px;text-align:center}
+.cp-tabs{display:flex;gap:6px;margin-bottom:12px}
+.cp-tab{flex:1;padding:8px 6px;border:1px solid rgba(0,245,255,.1);border-radius:9px;background:transparent;color:var(--dim);font-size:.68rem;font-weight:600;cursor:pointer;font-family:'Orbitron',monospace;letter-spacing:.06em;text-align:center}
+.cp-tab.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.07)}
+.cp-tab-count{display:inline-block;background:rgba(0,245,255,.15);border-radius:10px;padding:1px 7px;font-size:.6rem;margin-left:4px}
+.coupon-list{display:flex;flex-direction:column;gap:9px}
+.coupon{background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden}
+.coupon.slot{border-color:rgba(255,214,10,.2)}
+.coupon.xp{border-color:rgba(0,245,255,.18)}
+.coupon.used{opacity:.35}
+.cp-top{display:flex;align-items:center;gap:12px;padding:13px 14px 10px}
+.cp-icon{font-size:1.8rem;flex-shrink:0}
+.cp-info{flex:1;min-width:0}
+.cp-name{font-size:.84rem;font-weight:700;color:var(--txt)}
+.cp-type{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
+.coupon.slot .cp-type{color:var(--gold)}
+.coupon.xp .cp-type{color:var(--cyan)}
+.cp-date{font-size:.6rem;color:var(--dim);margin-top:2px}
+.coupon-used-label{background:var(--dim);color:rgba(0,0,0,.5);font-family:'Orbitron',monospace;font-size:.58rem;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.cp-use-btn{width:100%;background:linear-gradient(90deg,rgba(0,245,255,.12),rgba(67,97,238,.12));border:none;border-top:1px solid rgba(0,245,255,.1);color:var(--cyan);font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;padding:9px;cursor:pointer;letter-spacing:.1em}
+.coupon.slot .cp-use-btn{background:linear-gradient(90deg,rgba(255,214,10,.1),rgba(255,159,28,.1));border-top-color:rgba(255,214,10,.15);color:var(--gold)}
+.lb-list{display:flex;flex-direction:column;gap:6px}
+.lb-item{background:rgba(10,15,30,.7);border:1px solid rgba(0,0,0,.3);border-radius:10px;padding:9px 13px;display:flex;align-items:center;gap:10px}
+.lb-item.me{border-color:rgba(0,245,255,.25);background:rgba(0,245,255,.04)}
+.lb-rank{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;width:24px;text-align:center;flex-shrink:0}
+.lb-rank.r1{color:var(--gold)}.lb-rank.r2{color:#c0c0c0}.lb-rank.r3{color:#cd7f32}
+.lb-av{font-size:1.1rem;flex-shrink:0}
+.lb-name{flex:1;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-xp{font-family:'Orbitron',monospace;font-size:.75rem;color:var(--cyan);font-weight:700;flex-shrink:0}
+.lb-you{font-size:.58rem;color:var(--cyan);background:rgba(0,245,255,.1);padding:1px 6px;border-radius:8px;margin-left:4px}
+/* Enhanced leaderboard */
+.lb-list{display:flex;flex-direction:column;gap:8px}
+.lb-item{background:rgba(10,15,30,.7);border:1px solid rgba(0,0,0,.3);border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px;transition:all .3s}
+.lb-item.me{border-color:rgba(0,245,255,.3)!important;background:rgba(0,245,255,.05)!important}
+.lb-rank{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;width:28px;text-align:center;flex-shrink:0}
+.lb-rank.r1{color:var(--gold)}.lb-rank.r2{color:#c0c0c0}.lb-rank.r3{color:#cd7f32}
+
+/* Slot lights decoration */
+.slot-lights-top{display:flex;justify-content:center;gap:5px;margin-bottom:14px}
+.slot-light{width:9px;height:9px;border-radius:50%;animation:light-blink .8s ease-in-out infinite}
+.slot-light:nth-child(odd){background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.slot-light:nth-child(even){background:var(--pink);box-shadow:0 0 8px var(--pink);animation-delay:.4s}
+.slot-light:nth-child(3n){background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation-delay:.2s}
+@keyframes light-blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.6)}}
+
+/* ENSEIGNE VEGAS */
+.vegas-sign{text-align:center;margin-bottom:14px;padding:14px;background:linear-gradient(135deg,rgba(20,0,40,.95),rgba(10,0,30,.98));border:2px solid rgba(255,214,10,.3);border-radius:18px;position:relative;overflow:hidden}
+.vegas-sign::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,214,10,.02) 10px,rgba(255,214,10,.02) 20px)}
+.vegas-marquee{display:flex;justify-content:center;gap:4px;margin-bottom:6px}
+.vegas-letter{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;display:inline-block;animation:vegas-letter-blink 1.2s ease-in-out infinite}
+.vegas-letter:nth-child(1){color:#ff006e;text-shadow:0 0 20px #ff006e,0 0 40px #ff006e;animation-delay:0s}
+.vegas-letter:nth-child(2){color:#ffd60a;text-shadow:0 0 20px #ffd60a,0 0 40px #ffd60a;animation-delay:.1s}
+.vegas-letter:nth-child(3){color:#00f5ff;text-shadow:0 0 20px #00f5ff,0 0 40px #00f5ff;animation-delay:.2s}
+.vegas-letter:nth-child(4){color:#f72585;text-shadow:0 0 20px #f72585,0 0 40px #f72585;animation-delay:.3s}
+.vegas-letter:nth-child(5){color:#ffd60a;text-shadow:0 0 20px #ffd60a,0 0 40px #ffd60a;animation-delay:.4s}
+.vegas-letter:nth-child(6){color:#00f5ff;text-shadow:0 0 20px #00f5ff,0 0 40px #00f5ff;animation-delay:.5s}
+.vegas-letter:nth-child(7){color:#ff006e;text-shadow:0 0 20px #ff006e,0 0 40px #ff006e;animation-delay:.6s}
+@keyframes vegas-letter-blink{0%,100%{opacity:1;transform:scale(1)}40%{opacity:.3;transform:scale(.9)}}
+.vegas-sub{font-family:'Orbitron',monospace;font-size:.58rem;color:var(--gold);letter-spacing:.25em;margin-bottom:4px;animation:glow-pulse 2s ease-in-out infinite}
+.vegas-tagline{font-family:'Rajdhani',sans-serif;font-size:.82rem;color:var(--txt);opacity:.8}
+@keyframes glow-pulse{0%,100%{text-shadow:0 0 10px var(--gold)}50%{text-shadow:0 0 25px var(--gold),0 0 50px rgba(255,214,10,.5)}}
+
+.overlay{position:fixed;inset:0;z-index:7000;background:rgba(0,0,0,.88);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.overlay.show{display:flex}
+#lvlUp .ring{width:150px;height:150px;border-radius:50%;border:3px solid var(--cyan);box-shadow:0 0 40px var(--cyan);display:flex;align-items:center;justify-content:center;animation:spin 3s linear infinite}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+#lvlUp .inner{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(67,97,238,.3),var(--bg));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;animation:spin 3s linear reverse infinite}
+#lvlUp .lu-t{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;color:var(--cyan)}
+#lvlUp .lu-e{font-size:2rem}
+.lu-rwd{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:var(--gold);max-width:260px;line-height:1.3}
+.ov-sub{font-size:.78rem;color:var(--dim);max-width:260px;line-height:1.5}
+.ov-btn{background:transparent;border:1px solid rgba(0,245,255,.3);border-radius:20px;color:var(--cyan);font-size:.76rem;padding:9px 28px;cursor:pointer;font-family:'Orbitron',monospace;letter-spacing:.1em}
+#winOv{position:fixed;inset:0;z-index:7500;background:rgba(0,0,0,.93);display:none;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow:hidden}
+#winOv.show{display:flex}
+#coinCanvas{position:absolute;inset:0;pointer-events:none;z-index:1}
+.win-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px}
+.win-rays{position:absolute;inset:0;z-index:0;pointer-events:none;animation:rays-spin 8s linear infinite}
+@keyframes rays-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.win-rays::before{content:'';position:absolute;inset:-50%;background:conic-gradient(transparent 0deg,rgba(255,214,10,.06) 10deg,transparent 20deg,transparent 40deg,rgba(255,214,10,.04) 50deg,transparent 60deg)}
+.win-gagne{font-family:'Orbitron',monospace;font-size:2.6rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#fff7a0,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:win-zoom .6s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes win-zoom{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
+.win-prize-icon{font-size:4rem;animation:prize-bounce .4s ease-out .5s both}
+@keyframes prize-bounce{0%{transform:scale(0);opacity:0}70%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+.win-prize-name{font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:#fff;max-width:280px;line-height:1.3}
+.win-note{font-size:.78rem;color:rgba(255,214,10,.6)}
+.win-btn{background:linear-gradient(135deg,var(--gold),#ff9f1c);border:none;border-radius:25px;color:#000;font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;padding:13px 36px;cursor:pointer}
+#waitOv .wait-icon{font-size:3rem;animation:wspin 2s linear infinite}
+@keyframes wspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.wait-t{font-family:'Orbitron',monospace;font-size:1rem;color:var(--cyan)}
+@keyframes ticker-scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+@keyframes holographic-sweep{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+@keyframes notif-slide-in{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes winner-pulse{from{box-shadow:0 0 20px rgba(255,214,10,.3)}to{box-shadow:0 0 50px rgba(255,214,10,.6),0 0 80px rgba(255,214,10,.3)}}
+#validateOv{position:fixed;inset:0;z-index:8000;
+  background:linear-gradient(135deg,rgba(0,4,15,.98),rgba(5,0,20,.98));
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+#validateOv.show{display:flex}
+.vld-cp-badge{display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(0,245,255,.2);
+  border-radius:14px;padding:10px 16px;max-width:320px;width:100%}
+.vld-cp-icon{font-size:2.2rem;flex-shrink:0}
+.vld-cp-info{flex:1;text-align:left;min-width:0}
+.vld-cp-name{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;color:#fff}
+.vld-cp-sub{font-size:.62rem;color:var(--dim);margin-top:2px}
+
+/* QR CODE — Énorme, jaune néon, impossible à louper */
+.vld-qr-frame{
+  background:#fff;
+  border-radius:24px;
+  padding:20px;
+  position:relative;
+  box-shadow:
+    0 0 0 4px rgba(255,214,10,.9),
+    0 0 40px rgba(255,214,10,.8),
+    0 0 80px rgba(255,214,10,.5),
+    0 0 140px rgba(255,214,10,.25);
+  animation:qr-pulse 1.3s ease-in-out infinite alternate
+}
+@keyframes qr-pulse{
+  from{box-shadow:0 0 0 4px rgba(255,214,10,.7),0 0 30px rgba(255,214,10,.6),0 0 60px rgba(255,214,10,.3)}
+  to{box-shadow:0 0 0 6px rgba(255,214,10,1),0 0 60px rgba(255,214,10,1),0 0 120px rgba(255,214,10,.6),0 0 200px rgba(255,214,10,.3)}
+}
+.vld-qr-frame canvas{display:block;border-radius:10px}
+
+.vld-instruction{font-size:.8rem;color:var(--txt);max-width:260px;line-height:1.6;
+  background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.15);
+  border-radius:10px;padding:8px 14px}
+.vld-instruction b{color:var(--cyan);text-shadow:0 0 8px var(--cyan)}
+.vld-timer-wrap{width:100%;max-width:300px;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.vld-timer-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:3px;transition:width 1s linear;box-shadow:0 0 8px var(--cyan)}
+.vld-timer-bar.warn{background:linear-gradient(90deg,var(--red),var(--orange));box-shadow:0 0 8px var(--red)}
+.vld-timer-txt{font-family:'Orbitron',monospace;font-size:.65rem;color:var(--cyan)}
+.vld-cancel{background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:20px;color:var(--dim);font-size:.68rem;padding:8px 24px;cursor:pointer;font-family:'Orbitron',monospace}
+.vld-confirmed{display:none;flex-direction:column;align-items:center;gap:12px}
+.vld-confirmed.show{display:flex}
+.vld-check{font-size:5rem;animation:check-pop .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes check-pop{0%{transform:scale(0)}100%{transform:scale(1)}}
+.vld-ok-text{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--green);text-shadow:0 0 20px var(--green)}
+.vld-ok-sub{font-size:.78rem;color:var(--dim)}
+
+@keyframes arrowBounce{from{transform:translateX(0)}to{transform:translateX(5px)}}
+@keyframes arrowTextBlink{from{opacity:.6;text-shadow:0 0 6px rgba(255,140,0,.4)}to{opacity:1;text-shadow:0 0 15px rgba(255,140,0,.8)}}
+
+/* Bouton MON QR CODE — surbrillance jaune néon */
+.my-qr-btn{
+  width:100%;
+  background:linear-gradient(135deg,rgba(255,214,10,.18),rgba(255,159,28,.14));
+  border:2px solid rgba(255,214,10,.8);
+  border-radius:14px;
+  color:var(--gold);
+  font-family:'Orbitron',monospace;
+  font-size:.7rem;font-weight:900;
+  padding:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 0 20px rgba(255,214,10,.4),0 0 40px rgba(255,214,10,.15);
+  animation:my-qr-glow 1.5s ease-in-out infinite alternate;
+  text-shadow:0 0 10px rgba(255,214,10,.6);
+}
+@keyframes my-qr-glow{
+  from{box-shadow:0 0 15px rgba(255,214,10,.3),0 0 30px rgba(255,214,10,.1);border-color:rgba(255,214,10,.6)}
+  to{box-shadow:0 0 30px rgba(255,214,10,.7),0 0 60px rgba(255,214,10,.35),0 0 90px rgba(255,214,10,.15);border-color:rgba(255,214,10,1)}
+}
+/* ── NAVIGATION BAS D'ÉCRAN ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:1000;
+  background:rgba(4,6,18,.97);
+  border-top:none;
+  display:flex;align-items:center;
+  padding:6px 8px max(10px,env(safe-area-inset-bottom));
+  backdrop-filter:blur(20px);
+  box-shadow:0 -8px 40px rgba(0,0,0,.9);
+}
+/* Trait néon orange en haut de la nav */
+.bottom-nav::before{
+  content:'';position:absolute;top:0;left:8%;right:8%;height:1.5px;
+  background:linear-gradient(90deg,transparent,rgba(255,140,0,.9),rgba(255,214,10,.7),rgba(255,140,0,.9),transparent);
+  box-shadow:0 0 12px rgba(255,140,0,.6);
+  animation:navTopGlow 2s ease-in-out infinite alternate;
+}
+@keyframes navTopGlow{from{opacity:.6;box-shadow:0 0 8px rgba(255,140,0,.4)}to{opacity:1;box-shadow:0 0 20px rgba(255,140,0,.8)}}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:transparent;border:none;cursor:pointer;
+  padding:8px 3px 5px;position:relative;border-radius:14px;
+  transition:all .25s;
+}
+/* Contour néon orange sur l'onglet actif */
+.nav-btn.active{
+  background:rgba(255,140,0,.07);
+}
+.nav-btn.active::before{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  border:1.5px solid rgba(255,140,0,.8);
+  box-shadow:0 0 14px rgba(255,140,0,.35),inset 0 0 8px rgba(255,140,0,.05);
+  animation:navBtnGlow 1.5s ease-in-out infinite alternate;
+}
+@keyframes navBtnGlow{
+  from{border-color:rgba(255,140,0,.5);box-shadow:0 0 8px rgba(255,140,0,.2)}
+  to{border-color:rgba(255,214,10,.9);box-shadow:0 0 20px rgba(255,140,0,.5)}
+}
+.nav-icon{font-size:1.6rem;transition:transform .2s}
+.nav-label{font-family:'Orbitron',monospace;font-size:.5rem;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;transition:color .2s}
+.nav-btn.active .nav-icon{transform:scale(1.2);filter:drop-shadow(0 0 6px rgba(255,140,0,.7))}
+.nav-btn.active .nav-label{color:var(--orange);text-shadow:0 0 8px rgba(255,140,0,.6)}
+.nav-badge{
+  position:absolute;top:3px;right:20%;
+  background:var(--red);color:#fff;
+  font-family:'Orbitron',monospace;font-size:.42rem;font-weight:700;
+  min-width:16px;height:16px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 3px;box-shadow:0 0 8px var(--red)
+}
+
+/* ── ONGLETS CONTENU ── */
+.tab-content{display:none;flex-direction:column;gap:14px}
+.tab-content.active{display:flex}
+
+/* Padding bas pour la nav fixe */
+#main{padding-bottom:90px !important}
+body{padding-bottom:0}
+
+.empty-c{text-align:center;padding:28px 16px;color:var(--dim);font-size:.78rem}
+.empty-i{font-size:2rem;margin-bottom:8px}@keyframes jbaPulseGlow{0%,100%{box-shadow:0 0 18px 2px rgba(0,245,255,.18),inset 0 0 30px rgba(0,245,255,.05)}50%{box-shadow:0 0 34px 8px rgba(0,245,255,.32),inset 0 0 40px rgba(0,245,255,.1)}}
+@keyframes jbaFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
+@keyframes jbaShine{0%{transform:translateX(-120%) skewX(-20deg)}100%{transform:translateX(220%) skewX(-20deg)}}
+@keyframes jbaBadgePop{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.jba-hero{position:relative;overflow:hidden;border-radius:20px;animation:jbaPulseGlow 3.2s ease-in-out infinite;border:1px solid rgba(0,245,255,.25);background:radial-gradient(ellipse at 50% 0%,rgba(0,245,255,.1),transparent 70%),linear-gradient(160deg,rgba(10,16,32,.9),rgba(6,10,22,.95))}
+.jba-icon{display:inline-block;animation:jbaFloat 2.6s ease-in-out infinite}
+.jba-badge{animation:jbaBadgePop 1.8s ease-in-out infinite}
+.jba-playbtn{position:relative;overflow:hidden}
+.jba-playbtn::after{content:'';position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(255,255,255,.55),transparent);animation:jbaShine 2.6s ease-in-out infinite}
+</style>
+</head>
+<body>
+<div id="pts"></div>
+
+<div id="loadOv">
+  <div class="ll">X-GAMES</div>
+  <div class="lb"><div class="lf"></div></div>
+  <div style="font-size:.68rem;color:var(--dim);letter-spacing:.18em">CHARGEMENT...</div>
+</div>
+
+<div id="errScreen">
+  <div style="font-size:3rem">⚠️</div>
+  <div class="err-t">ERREUR</div>
+  <div style="font-size:.8rem;color:var(--dim);max-width:280px;line-height:1.5" id="errMsg"></div>
+  <a href="register.html" style="margin-top:10px;color:var(--cyan);font-size:.78rem;display:block">→ Retour à l'accueil</a>
+</div>
+
+<!-- LEVEL UP -->
+<div class="overlay" id="lvlUp">
+  <div class="ring"><div class="inner"><div class="lu-t">LEVEL UP!</div><div class="lu-e" id="luE">⚡</div></div></div>
+  <div class="lu-rwd" id="luRwd">Récompense débloquée !</div>
+  <div class="ov-sub">Un coupon a été ajouté à ta carte.</div>
+  <button class="ov-btn" onclick="document.getElementById('lvlUp').classList.remove('show')">CONTINUER</button>
+</div>
+
+<!-- WIN JACKPOT -->
+<div id="winOv">
+  <canvas id="coinCanvas"></canvas>
+  <div class="win-rays"></div>
+  <div class="win-content">
+    <div class="win-gagne">GAGNÉ !</div>
+    <div class="win-prize-icon" id="winIcon">🎰</div>
+    <div class="win-prize-name" id="winPrizeName">—</div>
+    <div class="win-note">🎫 Montre le coupon au stand</div>
+    <button class="win-btn" onclick="closeWin()">🏆 RÉCUPÉRER MON LOT</button>
+  </div>
+</div>
+
+<!-- WAIT PAYMENT -->
+<div class="overlay" id="waitOv">
+  <div style="font-size:3rem">💵</div>
+  <div class="wait-t">EN ATTENTE DE L'ADMIN…</div>
+  <div class="ov-sub">
+    Rends-toi au stand et paie <b style="color:var(--gold)">${config?.slotPrice || '2€'}</b> à l'opérateur.<br><br>
+    <span style="font-size:.75rem;color:var(--dim)">L'opérateur validera ta partie et la machine se lancera automatiquement.</span>
+  </div>
+  <div style="margin-top:12px;font-size:1.4rem;animation:wspin 2s linear infinite">⏳</div>
+  <button class="ov-btn" style="margin-top:20px;font-size:.68rem;opacity:.5" onclick="document.getElementById('waitOv').classList.remove('show')">Annuler</button>
+</div>
+
+<!-- QR VALIDATION -->
+<div id="validateOv">
+  <div id="vldMain" style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%">
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:rgba(0,245,255,.5);letter-spacing:.2em">Utiliser le coupon</div>
+    <div class="vld-cp-badge">
+      <div class="vld-cp-icon" id="vldIcon">🎁</div>
+      <div class="vld-cp-info">
+        <div class="vld-cp-name" id="vldPrize">—</div>
+        <div class="vld-cp-sub" id="vldType">Récompense</div>
+      </div>
+    </div>
+    <div class="vld-qr-frame" id="vldQrFrame"></div>
+    <div class="vld-instruction">Montre ce QR à <b>l'opérateur du stand</b></div>
+    <div class="vld-timer-wrap"><div class="vld-timer-bar" id="vldTimerBar"></div></div>
+    <div class="vld-timer-txt">Expire dans <span id="vldCountdown">120</span>s</div>
+    <button class="vld-cancel" onclick="window.closeValidate()">Annuler</button>
+  </div>
+  <div class="vld-confirmed" id="vldConfirmed">
+    <div class="vld-check">✅</div>
+    <div class="vld-ok-text">VALIDÉ !</div>
+    <div class="vld-ok-sub">Profite de ta récompense 🎉</div>
+    <button class="vld-cancel" onclick="window.closeValidate()" style="margin-top:8px">FERMER</button>
+  </div>
+</div>
+
+<!-- QR IDENTITÉ -->
+<div id="myQrOv" style="position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px">
+  <div style="font-family:'Orbitron',monospace;font-size:.9rem;color:var(--cyan);font-weight:900">📱 MON QR CODE</div>
+  <div style="font-size:.72rem;color:var(--dim);text-align:center">Montre ce QR à l'opérateur pour qu'il accède à ton profil</div>
+  <div id="myQrFrame" class="vld-qr-frame" style="margin:4px 0"></div>
+  <div id="myQrPseudo" style="font-family:'Orbitron',monospace;font-size:.8rem;color:var(--txt)"></div>
+  <button onclick="document.getElementById('myQrOv').style.display='none'" style="background:transparent;border:1px solid rgba(0,245,255,.3);border-radius:20px;color:var(--cyan);font-family:'Orbitron',monospace;font-size:.72rem;padding:10px 28px;cursor:pointer">FERMER</button>
+</div>
+
+<!-- POPUP INSTALLATION — non bloquant, en bas -->
+<div id="installBar" style="display:none;position:fixed;bottom:70px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:420px;z-index:2000;background:linear-gradient(135deg,rgba(10,15,30,.98),rgba(13,21,48,.98));border:1px solid rgba(0,245,255,.35);border-radius:16px;padding:12px 16px;box-shadow:0 0 30px rgba(0,245,255,.2);display:none;align-items:center;gap:10px">
+  <div style="font-size:1.8rem;flex-shrink:0">📲</div>
+  <div style="flex:1">
+    <div style="font-family:'Orbitron',monospace;font-size:.68rem;font-weight:900;color:var(--cyan)">INSTALLER X-GAMES</div>
+    <div id="installBarTxt" style="font-size:.65rem;color:var(--dim);margin-top:3px;line-height:1.5"></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+    <button id="installBarBtn" style="background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:8px;color:#000;font-family:'Orbitron',monospace;font-size:.6rem;font-weight:900;padding:7px 12px;cursor:pointer;white-space:nowrap">INSTALLER</button>
+    <button onclick="closeInstallBar()" style="background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;color:var(--dim);font-size:.6rem;padding:5px 12px;cursor:pointer">Plus tard</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="hdr">
+    <div class="hdr-logo">X-GAMES</div>
+    <button class="hdr-back" onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pin_ok');window.location.href='register.html'">⬅ Changer</button>
+  </div>
+  <!-- ONGLET : CARTE (défaut) -->
+  <div id="tab-carte" class="tab-content active">
+    <!-- BANDEAU DÉFILANT -->
+    <div id="clientTicker" style="overflow:hidden;height:36px;display:flex;align-items:center;border-radius:10px;margin-bottom:8px;background:linear-gradient(135deg,rgba(0,245,255,.08),rgba(67,97,238,.12),rgba(247,37,133,.08));border:1px solid rgba(0,245,255,.25);box-shadow:0 0 20px rgba(0,245,255,.1),inset 0 0 20px rgba(0,0,0,.3);position:relative">
+      <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(0,245,255,.05) 50%,transparent 100%);animation:holographic-sweep 3s ease-in-out infinite"></div>
+      <div id="clientTickerTxt" style="display:inline-block;animation:ticker-scroll 35s linear infinite;font-family:'Orbitron',monospace;font-size:.78rem;font-weight:900;letter-spacing:.12em;padding-right:80px;white-space:nowrap;background:linear-gradient(90deg,#00f5ff,#fff,#f72585,#ffd60a,#00f5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;filter:drop-shadow(0 0 8px rgba(0,245,255,.6))">
+        🎯 X-Games — Jeu d'adresse • Gros lots à gagner • Tentez votre chance !
+      </div>
+    </div>
+    <!-- TOMBOLA ACCUEIL — compteur ou résultats -->
+    <div id="tombolaHomeBox" style="display:none;margin-bottom:12px;background:linear-gradient(135deg,rgba(20,0,50,.98),rgba(10,0,30,.98));border:2px solid rgba(255,214,10,.4);border-radius:18px;padding:16px;text-align:center;position:relative;overflow:hidden;box-shadow:0 0 30px rgba(255,214,10,.15)">
+      <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,214,10,.02) 10px,rgba(255,214,10,.02) 20px)"></div>
+      <div id="tombHomeContent" style="position:relative;z-index:1"></div>
+    </div>
+
+    <div class="profile-card">
+      <div class="ptop">
+        <div class="pavatar" id="pavatar">🎮</div>
+        <div class="pinfo">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="pname" id="pname" style="opacity:.5">—</div>
+            <div id="pxpInline" style="display:none;background:linear-gradient(135deg,rgba(255,140,0,.2),rgba(255,214,10,.15));border:1px solid rgba(255,140,0,.5);border-radius:20px;padding:2px 10px;font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;color:var(--orange);text-shadow:0 0 8px rgba(255,140,0,.5);white-space:nowrap"></div>
+          </div>
+          <div class="plevel" id="plevel" style="opacity:.5">Connexion…</div>
+          <div class="pbadge" id="pbadge" style="background:linear-gradient(90deg,var(--gold),var(--orange));opacity:.5">—</div>
+        </div>
+      </div>
+      <div class="xp-hdr">
+        <div class="xp-lbl">Barre XP <span style="font-size:.55rem;opacity:.5;font-family:'Rajdhani',sans-serif;font-weight:400;letter-spacing:.05em">· 1€ = 1 XP</span></div>
+        <div class="xp-cnt"><span id="xpCur">0</span> XP</div>
+      </div>
+      <div class="xp-wrap"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+      <div class="xp-milestones" id="xpMilestones"></div>
+      <div class="next-rwd" id="nextRwd" style="display:none">
+        <div class="nr-icon" id="nrIcon">🎁</div>
+        <div class="nr-info">
+          <div class="nr-lbl">Prochaine récompense</div>
+          <div class="nr-name" id="nrName">—</div>
+          <div class="nr-pts" id="nrPts">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLÈCHE QR CLIGNOTANTE -->
+    <div style="display:flex;align-items:center;gap:6px;animation:arrowBounce .8s ease-in-out infinite alternate;padding:0 4px">
+      <span style="font-size:1.1rem;filter:drop-shadow(0 0 6px rgba(255,140,0,.8))">👇</span>
+      <span style="font-family:'Orbitron',monospace;font-size:.62rem;font-weight:700;color:var(--orange);text-shadow:0 0 10px rgba(255,140,0,.7);letter-spacing:.06em;animation:arrowTextBlink .8s ease-in-out infinite alternate">VOTRE QR CODE — MONTREZ-LE AU STAND !</span>
+    </div>
+
+    <!-- BOUTON QR IDENTITÉ -->
+    <button onclick="showMyQR()" class="my-qr-btn">
+      <span style="font-size:1.2rem">📱</span> MON QR CODE — À SCANNER AU STAND
+    </button>
+
+    <div>
+      <!-- ENSEIGNE VEGAS -->
+      <div class="vegas-sign">
+        <div class="vegas-marquee">
+          <span class="vegas-letter">J</span><span class="vegas-letter">A</span><span class="vegas-letter">C</span><span class="vegas-letter">K</span><span class="vegas-letter">P</span><span class="vegas-letter">O</span><span class="vegas-letter">T</span>
+        </div>
+        <div class="vegas-sub">✦ TENTEZ VOTRE CHANCE ✦</div>
+        <div class="vegas-tagline">🏆 Gagnez des SUPER LOTS ! 🏆</div>
+      </div>
+
+      <!-- MACHINE À SOUS -->
+      <div class="slot-machine-wrap">
+        <!-- Levier -->
+        <div class="slot-lever" id="slotLever" onclick="pullLever()">
+          <div class="slot-lever-stick"></div>
+          <div class="slot-lever-ball"></div>
+        </div>
+
+      <div class="slot-card">
+        <div class="slot-lights-top">
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+        </div>
+
+        <!-- TITRE MACHINE -->
+        <div class="slot-title">🎰 JACKPOT MACHINE 🎰</div>
+
+        <!-- PANNEAU ROULEAUX -->
+        <div class="slot-panel" style="position:relative">
+          <div class="slot-arrow left">▶</div>
+          <div class="slot-arrow right">◀</div>
+          <div class="reels">
+            <div class="reel" id="r0">🎯</div>
+            <div class="reel" id="r1">⚡</div>
+            <div class="reel" id="r2">🎮</div>
+          </div>
+        </div>
+
+        <div class="slot-status" id="slotStatus">Tente ta chance !</div>
+
+        <!-- LANCER QUOTIDIEN GRATUIT -->
+        <div id="dailySpinBanner" style="display:none;background:linear-gradient(135deg,rgba(6,214,160,.15),rgba(0,245,255,.1));border:1px solid rgba(6,214,160,.4);border-radius:12px;padding:10px;text-align:center;margin-bottom:10px">
+          <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--green);font-weight:700">🎁 LANCER GRATUIT DU JOUR !</div>
+          <div style="font-size:.68rem;color:var(--dim);margin-top:3px">Reviens demain pour un nouveau lancer offert</div>
+          <button onclick="useDailySpin()" style="margin-top:8px;width:100%;background:linear-gradient(135deg,var(--green),var(--cyan));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:900;padding:10px;cursor:pointer">🎰 UTILISER MON LANCER GRATUIT</button>
+        </div>
+
+        <!-- Lancers admin disponibles -->
+        <div id="spinsAvailable" style="display:none;text-align:center;margin:8px 0">
+          <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);margin-bottom:6px">🎰 Lancers disponibles : <span id="spinsCount" style="font-size:1rem;font-weight:900">0</span></div>
+          <button onclick="lancerJackpot()" style="width:100%;background:linear-gradient(135deg,#ffd60a,#ff9f1c);border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:14px;cursor:pointer;letter-spacing:.05em">🎰 LANCER !</button>
+        </div>
+
+        <div class="slot-btns" id="slotBtns" style="display:none"></div>
+        <div style="font-size:.68rem;color:var(--dim);text-align:center;margin-top:8px;line-height:1.6">
+          🎁 Lancer gratuit chaque jour<br>
+          ⭐ Lancers gagnés via XP et jackpot
+        </div>
+        <div class="slot-lights-top" style="margin-top:12px;margin-bottom:0">
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+          <div class="slot-light"></div><div class="slot-light"></div><div class="slot-light"></div>
+        </div>
+      </div>
+      </div><!-- fin slot-machine-wrap -->
+
+      <!-- PARRAINAGE -->
+      <div class="profile-card" style="margin-top:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--cyan);font-weight:700;margin-bottom:8px">🤝 PARRAINAGE — +1 XP PAR PARTAGE</div>
+        <div style="font-size:.72rem;color:var(--dim);margin-bottom:10px;line-height:1.5">Partage ton lien et gagne 1 XP à chaque ami qui s'inscrit !</div>
+        <button onclick="shareReferral()" style="width:100%;background:linear-gradient(135deg,var(--blue),var(--violet));border:none;border-radius:12px;color:#fff;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;padding:12px;cursor:pointer">📤 PARTAGER MON LIEN</button>
+        <div id="referralFb" style="font-size:.7rem;text-align:center;margin-top:8px;min-height:16px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ONGLET : COUPONS -->
+  <div id="tab-coupons" class="tab-content">
+    <div class="sec-t" style="margin-bottom:14px">🎫 Mes coupons</div>
+
+    <!-- COMPTEUR TOMBOLA -->
+    <div id="tombolaCountdown" style="display:none;background:linear-gradient(135deg,rgba(255,214,10,.1),rgba(255,159,28,.08));border:1px solid rgba(255,214,10,.3);border-radius:14px;padding:12px;text-align:center;margin-bottom:12px">
+      <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);font-weight:700;margin-bottom:6px">🎟️ PROCHAIN TIRAGE DE LA TOMBOLA</div>
+      <div id="tombolaDrawDate" style="font-size:.72rem;color:var(--dim);margin-bottom:8px"></div>
+      <div style="display:flex;justify-content:center;gap:10px">
+        <div style="text-align:center"><div id="cdDays" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--gold)">--</div><div style="font-size:.55rem;color:var(--dim)">JOURS</div></div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--dim)">:</div>
+        <div style="text-align:center"><div id="cdHours" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--cyan)">--</div><div style="font-size:.55rem;color:var(--dim)">HEURES</div></div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--dim)">:</div>
+        <div style="text-align:center"><div id="cdMins" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--pink)">--</div><div style="font-size:.55rem;color:var(--dim)">MIN</div></div>
+        <div style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--dim)">:</div>
+        <div style="text-align:center"><div id="cdSecs" style="font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;color:var(--txt)">--</div><div style="font-size:.55rem;color:var(--dim)">SEC</div></div>
+      </div>
+    </div>
+
+    <!-- RÉSULTATS TOMBOLA — affiché quand tirage terminé -->
+    <div id="tombolaResults" style="display:none;background:linear-gradient(135deg,rgba(255,214,10,.15),rgba(255,159,28,.1));border:2px solid var(--gold);border-radius:14px;padding:14px;text-align:center;margin-bottom:12px">
+      <div style="font-size:1.5rem">🏆</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);font-weight:900;margin:6px 0">TIRAGE TERMINÉ !</div>
+      <div id="tombolaResultsList" style="margin-top:8px"></div>
+    </div>
+
+    <div class="cp-tabs">
+      <button class="cp-tab on" id="cpTabActive">🎫 Actifs <span class="cp-tab-count" id="cpCountActive">0</span></button>
+      <button class="cp-tab" id="cpTabUsed">✓ Utilisés <span class="cp-tab-count" id="cpCountUsed">0</span></button>
+    </div>
+    <div class="coupon-list" id="couponList"></div>
+  </div>
+
+  <!-- ONGLET : AVIS -->
+  <div id="tab-avis" class="tab-content">
+    <div class="sec-t" style="margin-bottom:14px">⭐ Laisser un avis</div>
+
+    <!-- Bannière récompense -->
+    <div style="background:linear-gradient(135deg,rgba(255,214,10,.12),rgba(255,159,28,.08));border:1px solid rgba(255,214,10,.3);border-radius:12px;padding:12px;text-align:center;margin-bottom:12px">
+      <div style="font-size:1.3rem">🎁</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);font-weight:900;margin:4px 0">+5 XP OFFERTS</div>
+      <div style="font-size:.72rem;color:var(--dim);line-height:1.5">Laisse un avis et gagne 5 XP<br>après validation par l'admin !</div>
+    </div>
+
+    <div class="profile-card">
+      <div style="font-size:.75rem;color:var(--dim);margin-bottom:12px;text-align:center">1 avis par joueur · Publié après validation</div>
+      <!-- Étoiles -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:14px" id="starRow">
+        <span class="star-btn" data-v="1" onclick="setStars(1)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="2" onclick="setStars(2)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="3" onclick="setStars(3)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="4" onclick="setStars(4)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+        <span class="star-btn" data-v="5" onclick="setStars(5)" style="font-size:2rem;cursor:pointer;opacity:.3">⭐</span>
+      </div>
+      <textarea id="avisMsg" placeholder="Ton commentaire (optionnel)…" style="width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.15);border-radius:10px;color:var(--txt);font-size:.85rem;padding:12px;font-family:'Rajdhani',sans-serif;resize:none;outline:none;margin-bottom:10px" rows="3"></textarea>
+      <button onclick="submitAvis()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:12px;color:#000;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:900;padding:12px;cursor:pointer">⭐ PUBLIER MON AVIS</button>
+      <div id="avisFb" style="font-size:.75rem;text-align:center;margin-top:10px;min-height:20px"></div>
+    </div>
+    <div class="sec-t" style="margin-top:14px;margin-bottom:10px">📢 Avis publiés</div>
+    <div id="avisList"></div>
+  </div>
+
+  <!-- ONGLET : PRÉSENTATION -->
+  <div id="tab-promo" class="tab-content">
+    <div class="sec-t" style="margin-bottom:12px">🎬 Le Stand X-Games</div>
+
+    <!-- Vidéo -->
+    <div style="position:relative;width:100%;max-width:400px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid rgba(0,245,255,.2);background:#000">
+      <video id="promoVideo" controls playsinline style="width:100%;display:block;max-height:260px;object-fit:cover">
+        <source src="./promo.mp4" type="video/mp4">
+        <div style="padding:30px;text-align:center;color:var(--dim);font-size:.8rem">Vidéo bientôt disponible 🎬</div>
+      </video>
+    </div>
+
+    <!-- Description depuis Firebase -->
+    <div id="promoDesc" style="margin-top:14px;background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(0,245,255,.1);border-radius:14px;padding:16px">
+      <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--cyan);font-weight:700;margin-bottom:10px">🎯 À PROPOS DU JEU</div>
+      <div id="promoText" style="font-size:.82rem;color:var(--txt);line-height:1.7">
+        Chargement…
+      </div>
+    </div>
+
+    <!-- Partage -->
+    <button onclick="shareReferral()" style="width:100%;margin-top:12px;background:linear-gradient(135deg,var(--blue),var(--violet));border:none;border-radius:12px;color:#fff;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;padding:12px;cursor:pointer">
+      📤 PARTAGER AVEC MES AMIS
+    </button>
+  </div>
+
+  <!-- ONGLET : CLASSEMENT -->
+  <div id="tab-scores" class="tab-content">
+    <div class="sec-t" style="margin-bottom:14px">🏆 Top 10 des tireurs</div>
+    <div class="lb-list" id="lbList"></div>
+
+    <!-- HALL OF FAME TOMBOLA -->
+    <div id="tombolaHallOfFame" style="display:none;margin-top:18px">
+      <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--gold);letter-spacing:.15em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        🎟️ GAGNANTS TOMBOLA
+        <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(255,214,10,.4),transparent)"></div>
+      </div>
+      <div id="tombolaHallList"></div>
+    </div>
+  </div>
+
+  <!-- ONGLET : MINI-JEU -->
+  <div id="tab-jeu" class="tab-content">
+    <div class="jba-hero" style="padding:20px 16px 18px;text-align:center">
+      <div style="display:inline-block;background:linear-gradient(135deg,var(--gold),var(--orange));color:#000;font-family:'Orbitron',monospace;font-size:.55rem;font-weight:900;letter-spacing:.1em;padding:4px 10px;border-radius:20px;margin-bottom:10px" class="jba-badge">⚡ EXCLUSIF X-GAMES</div>
+      <div class="jba-icon" style="font-size:2.8rem;line-height:1">💧</div>
+      <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:#fff;letter-spacing:.06em;margin-top:8px;text-shadow:0 0 16px rgba(0,245,255,.6)">JET BALL ARENA</div>
+      <div style="font-size:.74rem;color:var(--dim);margin-top:8px;max-width:280px;margin-left:auto;margin-right:auto;line-height:1.55">Vise et tire sur les balles qui flottent sur le jet d'eau. Chaque groupe de <strong style="color:#fff">5 balles touchées</strong> te rapporte <strong style="color:var(--gold)">+1 point fidélité</strong>, sans plafond !</div>
+
+      <div style="display:flex;justify-content:space-around;text-align:center;margin:16px 0 4px;padding-top:14px;border-top:1px solid rgba(0,245,255,.12)">
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--gold)" id="jbaPartiesLeft">3</div>
+          <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">PARTIES / JOUR</div>
+        </div>
+        <div style="width:1px;background:rgba(0,245,255,.15)"></div>
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:1.15rem;font-weight:900;color:var(--cyan)" id="jbaTotalXP">0</div>
+          <div style="font-size:.58rem;color:var(--dim);letter-spacing:.08em;margin-top:2px">XP FIDÉLITÉ</div>
+        </div>
+      </div>
+    </div>
+
+    <button id="jbaPlayBtn" class="jba-playbtn" onclick="openJetBallArena()" style="width:100%;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:16px;color:#000;font-family:'Orbitron',monospace;font-size:.92rem;font-weight:900;padding:16px;cursor:pointer;letter-spacing:.04em;margin-top:14px">▶ JOUER</button>
+    <div id="jbaLimitMsg" style="display:none;text-align:center;margin-top:10px;font-size:.72rem;color:var(--dim)">🎮 Parties du jour épuisées — reviens demain !</div>
+
+    <!-- Aperçu du classement des meilleurs scores (pas l'XP) -->
+    <div style="margin-top:18px">
+      <div style="font-family:'Orbitron',monospace;font-size:.68rem;color:var(--gold);font-weight:700;letter-spacing:.06em;margin-bottom:8px">🏆 TOP SCORES DU MOMENT</div>
+      <div id="jbaTopPreview">
+        <div style="text-align:center;padding:16px;font-size:.7rem;color:var(--dim)">Chargement…</div>
+      </div>
+    </div>
+
+    <!-- Plein écran : le jeu -->
+    <div id="jbaOverlay" style="display:none;position:fixed;inset:0;z-index:9500;background:#050810">
+      <iframe id="jbaFrame" title="Jet Ball Arena" src="" style="width:100%;height:100%;border:0;display:block"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION BAS D'ÉCRAN -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-carte" onclick="switchTab('carte')">
+    <div class="nav-icon">🎮</div>
+    <div class="nav-label">Ma Carte</div>
+  </button>
+  <button class="nav-btn" id="nav-coupons" onclick="switchTab('coupons')">
+    <div class="nav-icon">🎫</div>
+    <div class="nav-label">Coupons</div>
+    <div class="nav-badge" id="navBadge" style="display:none">0</div>
+  </button>
+  <button class="nav-btn" id="nav-jeu" onclick="switchTab('jeu')">
+    <div class="nav-icon">🕹️</div>
+    <div class="nav-label">Mini-Jeu</div>
+  </button>
+  <button class="nav-btn" id="nav-avis" onclick="switchTab('avis')">
+    <div class="nav-icon">⭐</div>
+    <div class="nav-label">Avis</div>
+  </button>
+  <button class="nav-btn" id="nav-scores" onclick="switchTab('scores')">
+    <div class="nav-icon">🏆</div>
+    <div class="nav-label">Classement</div>
+  </button>
+  <button class="nav-btn" id="nav-promo" onclick="switchTab('promo')">
+    <div class="nav-icon">🎬</div>
+    <div class="nav-label">Vidéo</div>
+  </button>
+</nav>
+
+<script>
+// ══ TOUT EN SYNCHRONE — disponible immédiatement ══
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const content = document.getElementById('tab-' + name);
+  if (content) content.classList.add('active');
+  const btn = document.getElementById('nav-' + name);
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'jeu' && window.loadJbaTopPreview) window.loadJbaTopPreview();
+}
+
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, getDocs, query, orderBy, where, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
+  authDomain: "xgames-loyalty.firebaseapp.com",
+  projectId: "xgames-loyalty",
+  storageBucket: "xgames-loyalty.firebasestorage.app",
+  messagingSenderId: "1082099112233",
+  appId: "1:1082099112233:web:bf52d043621ba76061bf38"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+const params   = new URLSearchParams(window.location.search);
+const clientId = params.get('id');
+
+// Identité invisible de l'appareil (même mécanisme que register.html) —
+// nécessaire pour que les actions du client (avis, coupons, lancer du jour)
+// soient acceptées par les règles Firestore.
+let myUid = null;
+const authReady = new Promise((resolve) => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) { myUid = user.uid; resolve(user.uid); }
+    else { signInAnonymously(auth).catch(() => resolve(null)); }
+  });
+});
+
+// Échappe le texte fourni par d'autres clients (pseudo, avis...) avant de
+// l'insérer dans du HTML, pour empêcher l'injection de code (XSS).
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
+// Expose pour les scripts sync
+window._db = db;
+window._clientId = clientId;
+window._doc = doc;
+window._updateDoc = updateDoc;
+
+// ── AVIS — défini immédiatement pour être disponible dès le chargement ──
+window._submitAvisModule = async function() {
+  const n = window._selectedStars || 0;
+  const fb = document.getElementById('avisFb');
+  if (n === 0) { fb.innerHTML = '<span style="color:#ff006e">⭐ Sélectionne une note d\'abord !</span>'; return; }
+  if (!clientData) { fb.innerHTML = '<span style="color:#ff006e">Connexion Firebase en cours, réessaie.</span>'; return; }
+  fb.innerHTML = '<span style="color:#ffd60a">⏳ Envoi…</span>';
+  try {
+    // Anti-fraude : vérifie via le champ client (pas besoin d'index)
+    if (clientData.avisSubmitted) {
+      fb.innerHTML = '<span style="color:#ff006e">⚠️ Tu as déjà soumis un avis. Merci !</span>';
+      return;
+    }
+    await addDoc(collection(db, 'avis'), {
+      clientId, pseudo: clientData.pseudo, avatar: clientData.avatar || '🎮',
+      stars: n, message: document.getElementById('avisMsg').value.trim(),
+      approved: false, xpRewarded: false, createdAt: serverTimestamp()
+    });
+    // Marque que ce client a soumis un avis
+    await authReady;
+    await updateDoc(doc(db, 'clients', clientId), { avisSubmitted: true, updatedAt: serverTimestamp() });
+    fb.innerHTML = '<span style="color:#06d6a0">✅ Merci ! +5 XP offerts après validation par l\'admin.</span>';
+    document.getElementById('avisMsg').value = '';
+    if (window.setStars) window.setStars(0);
+    window._selectedStars = 0;
+  } catch(e) {
+    fb.innerHTML = '<span style="color:#ff006e">Erreur : ' + e.message + '</span>';
+  }
+};
+
+// Affiche pseudo + avatar immédiatement depuis localStorage
+const savedPseudo = localStorage.getItem('xgames_pseudo');
+if (savedPseudo) {
+  document.getElementById('pname').textContent   = savedPseudo;
+  document.getElementById('pname').style.opacity = '1';
+  document.getElementById('plevel').textContent  = '☆ Tireur — Niv. 0';
+  document.getElementById('plevel').style.opacity = '0.6';
+  document.getElementById('pbadge').textContent  = '☆ TIREUR';
+  document.getElementById('pbadge').style.opacity = '0.6';
+}
+
+// Redirect if no ID
+if (!clientId) {
+  const savedId = localStorage.getItem('xgames_client_id');
+  if (savedId) {
+    window.location.href = `client.html?id=${savedId}`;
+  } else {
+    window.location.href = 'register.html';
+  }
+} else {
+  localStorage.setItem('xgames_client_id', clientId);
+}
+
+// Global state
+let clientData  = null;
+let availableSpins = 0, isSpinning = false;
+let _pinVerified = false; // PIN vérifié une fois par session
+let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratuite',icon:'🎯'}] }, sumupLink:'', slotPrice:'2€', cashEnabled:false };
+let prevXP      = null;
+let lastSpinTime = 0;
+const SPIN_COOLDOWN = 90000;
+
+// Coupon state
+let cpShowUsed       = false;
+let currentCoupons   = [];
+let validateTimer    = null;
+let validateUnsub    = null;
+let currentValidateCpId = null;
+const VALID_DURATION = 120;
+
+// Slot symbols
+const SYMBOLS = ['🎯','⚡','🎮','💎','👑','🔥','🌟','🎪'];
+
+// Coin explosion
+let coinCanvas, coinCtx, coins = [], coinAnim = null;
+
+// ── PARTICLES ──
+function mkPts() {
+  const c = ['#00f5ff','#4361ee','#f72585','#7209b7','#ffd60a'];
+  for (let i = 0; i < 22; i++) {
+    const p = document.createElement('div');
+    p.className = 'pt';
+    p.style.cssText = `left:${Math.random()*100}%;background:${c[i%c.length]};--dx:${(Math.random()-.5)*180}px;animation-duration:${5+Math.random()*9}s;animation-delay:${Math.random()*6}s;box-shadow:0 0 4px currentColor`;
+    document.getElementById('pts').appendChild(p);
+  }
+}
+
+// ── JET BALL ARENA — mini-jeu (XP connecté à Firestore) ──
+function jbaTodayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function jbaPartiesLeft(data) {
+  if (!data) return 3;
+  const played = (data.jbaGamesDate === jbaTodayStr()) ? (data.jbaGamesToday || 0) : 0;
+  return Math.max(0, 3 - played) + (data.jbaBonusGames || 0);
+}
+function openJetBallArena() {
+  const left = jbaPartiesLeft(clientData);
+  if (left <= 0) {
+    document.getElementById('jbaLimitMsg').style.display = 'block';
+    return;
+  }
+  const frame = document.getElementById('jbaFrame');
+  frame.src = 'xgames-jeu-visuel.html?uid=' + encodeURIComponent(clientId) + '&t=' + Date.now();
+  document.getElementById('jbaOverlay').style.display = 'block';
+  // Masque la nav du bas (et bloque le scroll) pour que rien ne passe
+  // devant les commandes du jeu, quel que soit le téléphone/navigateur.
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.style.display = 'none';
+  document.body.style.overflow = 'hidden';
+}
+function closeJetBallArena() {
+  document.getElementById('jbaOverlay').style.display = 'none';
+  document.getElementById('jbaFrame').src = '';
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) nav.style.display = '';
+  document.body.style.overflow = '';
+}
+function renderJetBallArena(data) {
+  const left = jbaPartiesLeft(data);
+  const elLeft = document.getElementById('jbaPartiesLeft');
+  const elXP = document.getElementById('jbaTotalXP');
+  const btn = document.getElementById('jbaPlayBtn');
+  const msg = document.getElementById('jbaLimitMsg');
+  if (elLeft) elLeft.textContent = left;
+  if (elXP) elXP.textContent = data.xp || 0;
+  if (btn) {
+    btn.style.opacity = left > 0 ? '' : '.4';
+    btn.textContent = left > 0 ? '▶ JOUER' : '🚫 REVIENS DEMAIN';
+  }
+  if (msg) msg.style.display = left > 0 ? 'none' : 'block';
+}
+window.addEventListener('message', function (e) {
+  if (e.data && e.data.type === 'jba:close') closeJetBallArena();
+});
+async function loadJbaTopPreview() {
+  const box = document.getElementById('jbaTopPreview');
+  if (!box || box.dataset.loaded === '1') return; // évite de re-requêter à chaque changement d'onglet
+  try {
+    const snap = await getDocs(query(collection(db, 'clients'), orderBy('jbaBestScore', 'desc'), limit(3)));
+    const rows = [];
+    snap.forEach(d => { const v = d.data(); if ((v.jbaBestScore || 0) > 0) rows.push(v); });
+    if (!rows.length) {
+      box.innerHTML = '<div style="text-align:center;padding:16px;font-size:.7rem;color:var(--dim)">Aucun score enregistré pour l\'instant — sois le premier !</div>';
+    } else {
+      const medals = ['🥇','🥈','🥉'];
+      box.innerHTML = rows.map((v, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;background:${i===0?'rgba(255,214,10,.08)':'rgba(255,255,255,.03)'};border:1px solid ${i===0?'rgba(255,214,10,.25)':'rgba(255,255,255,.07)'};border-radius:10px">
+          <div style="font-size:.9rem;width:22px;text-align:center">${medals[i]}</div>
+          <div style="flex:1;min-width:0;font-size:.74rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(v.pseudo||'Joueur')}</div>
+          <div style="font-family:'Orbitron',monospace;font-weight:900;font-size:.76rem;color:var(--cyan)">${(v.jbaBestScore||0).toLocaleString('fr-FR')}</div>
+        </div>`).join('');
+    }
+    box.dataset.loaded = '1';
+  } catch (e) {
+    box.innerHTML = '<div style="text-align:center;padding:16px;font-size:.7rem;color:var(--dim)">Classement indisponible</div>';
+  }
+}
+window.openJetBallArena = openJetBallArena;
+window.loadJbaTopPreview = loadJbaTopPreview;
+
+// ── FIREBASE LISTENERS ──
+if (clientId) {
+  // Timeout 8s
+  const loadTimeout = setTimeout(() => {
+    document.getElementById('loadOv').style.display = 'none';
+    document.getElementById('errScreen').style.display = 'flex';
+    document.getElementById('errMsg').textContent = 'Connexion Firebase impossible. Vérifie internet et réessaie.';
+  }, 8000);
+
+  // Config listener
+  onSnapshot(doc(db, 'config', 'main'), snap => {
+    if (snap.exists()) {
+      const d = snap.data();
+      if (d.tiers)  config.tiers  = d.tiers;
+      if (d.jackpot) config.jackpot = { ...config.jackpot, ...d.jackpot };
+      if (d.sumupLink) config.sumupLink = d.sumupLink;
+      if (d.slotPrice) config.slotPrice = d.slotPrice;
+      if (typeof d.cashEnabled !== 'undefined') config.cashEnabled = d.cashEnabled;
+      if (d.bandeau) {
+        const t = document.getElementById('clientTickerTxt');
+        if (t) t.textContent = d.bandeau;
+      }
+      // Personnalisation couleurs et nom
+      if (d.primaryColor) document.documentElement.style.setProperty('--cyan', d.primaryColor);
+      if (d.secondColor)  document.documentElement.style.setProperty('--pink', d.secondColor);
+      if (d.standName) {
+        const logo = document.querySelector('.hdr-logo');
+        if (logo) logo.textContent = d.standName;
+      }
+      if (d.promoDesc) {
+        const el = document.getElementById('promoText');
+        if (el) el.textContent = d.promoDesc;
+      }
+    }
+    if (clientData) renderXP(clientData);
+    updateSlotUI();
+  });
+
+  // Client listener
+  onSnapshot(doc(db, 'clients', clientId), snap => {
+    clearTimeout(loadTimeout);
+    document.getElementById('loadOv').style.display = 'none';
+    if (!snap.exists()) {
+      document.getElementById('errScreen').style.display = 'flex';
+      document.getElementById('errMsg').textContent = 'Ce compte n\'existe plus. Tu peux créer un nouveau compte sur la page d\'accueil.';
+      localStorage.removeItem('xgames_client_id');
+      localStorage.removeItem('xgames_pseudo');
+      return;
+    }
+    const data = snap.data();
+    clientData = data;
+    const needsLegacyClaim = !data.authUid && myUid;
+    checkDailySpin(data);
+    renderJetBallArena(data);
+    // #main déjà visible
+
+    // Décision de palier + mise à jour de prevXP faites ICI, de façon
+    // strictement synchrone (aucun await avant cette ligne) : si Firestore
+    // délivre deux mises à jour très rapprochées, la seconde verra toujours
+    // le prevXP déjà à jour de la première, ce qui empêche tout double-octroi
+    // de coupon (le bug qui causait des coupons en double / qui réapparaissent).
+    let tierAward = null;
+    if (prevXP !== null && data.xp > prevXP) {
+      tierAward = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp) || null;
+      const bar = document.getElementById('xpFill');
+      bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
+    }
+    prevXP = data.xp;
+
+    // Partie asynchrone (a besoin de l'identité invisible) — déclenchée après
+    // coup, ne bloque jamais la détection de palier ci-dessus.
+    (async () => {
+      await authReady;
+      if (needsLegacyClaim) {
+        // Compte créé avant l'ajout de l'identité invisible : régularisation
+        // silencieuse, une seule fois, sur l'appareil qui l'ouvre en premier.
+        // On attend que ce soit bien pris en compte avant toute autre écriture
+        // (sinon une écriture juste après pourrait arriver avant et être refusée).
+        await updateDoc(doc(db, 'clients', clientId), { authUid: myUid }).catch(() => {});
+      }
+      if (tierAward) {
+        showLevelUp(tierAward);
+        // Détecte JACKPOT dans le nom du palier → lancers automatiques
+        const tierName = (tierAward.name||'').toUpperCase();
+        const jackpotMatch = tierName.match(/(\d+)\s*JACKPOT/);
+        if (jackpotMatch) {
+          const extraSpins = parseInt(jackpotMatch[1]) || 1;
+          availableSpins += extraSpins;
+          setDoc(doc(db, 'slots', clientId), {
+            status: 'armed', clientId, multiCount: availableSpins,
+            autoGranted: true, unlockedAt: serverTimestamp()
+          }).catch(()=>{});
+          updateSpinsUI();
+        } else {
+          // Lot physique → coupon normal
+          const coupon = { id:'cp-'+Date.now(), type:'xp', name: tierAward.name, icon: tierAward.icon||'🎁', used:false, earnedAt: new Date().toLocaleDateString('fr-FR') };
+          updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() }).catch(()=>{});
+        }
+      }
+    })();
+
+    renderProfile(data);
+    renderXP(data);
+    renderCoupons(data.coupons || []);
+  }, err => {
+    clearTimeout(loadTimeout);
+    document.getElementById('loadOv').style.display = 'none';
+    document.getElementById('errScreen').style.display = 'flex';
+    document.getElementById('errMsg').textContent = 'Erreur : ' + err.message;
+  });
+
+  // Leaderboard — tri Firestore (level puis xp), vrai top 10
+  onSnapshot(query(collection(db, 'clients'), orderBy('level', 'desc'), orderBy('xp', 'desc'), limit(10)), snap => {
+    const sorted = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
+    renderLeaderboard(sorted);
+  }, err => {
+    // Fallback si l'index composite n'existe pas encore — tri manuel sur plus de clients
+    onSnapshot(query(collection(db, 'clients'), limit(200)), snap => {
+      const sorted = snap.docs
+        .map(d => ({ ...d.data(), _id: d.id }))
+        .sort((a,b) => {
+          const lvlDiff = (b.level||0) - (a.level||0);
+          return lvlDiff !== 0 ? lvlDiff : (b.xp||0) - (a.xp||0);
+        })
+        .slice(0, 10);
+      renderLeaderboard(sorted);
+    });
+  });
+
+  // Slot listener — le client appuie sur LANCER lui-même
+  onSnapshot(doc(db, 'slots', clientId), snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+
+    if (d.status === 'ready') {
+      // Nouveau lancer débloqué par admin — additionne aux lancers existants
+      const newSpins = d.multiCount || 1;
+      availableSpins += newSpins;
+      setDoc(doc(db, 'slots', clientId), { ...d, status:'armed', multiCount: availableSpins }).catch(()=>{});
+      document.getElementById('waitOv').classList.remove('show');
+      updateSpinsUI();
+    }
+    // Sur 'armed' : relit depuis Firebase si on a moins de lancers qu'en Firebase
+    if (d.status === 'armed') {
+      const firebaseSpins = d.multiCount || 0;
+      if (firebaseSpins > availableSpins) {
+        availableSpins = firebaseSpins;
+        updateSpinsUI();
+      }
+    }
+    if (d.status === 'idle' || d.status === 'used') {
+      availableSpins = 0;
+      updateSpinsUI();
+    }
+  });
+}
+
+window.lancerJackpot = function() {
+  if (availableSpins <= 0 || isSpinning) return;
+  availableSpins--;
+  // Sauvegarde le nb restant dans Firebase
+  const newStatus = availableSpins > 0 ? 'armed' : 'used';
+  setDoc(doc(db, 'slots', clientId), { status: newStatus, clientId, multiCount: availableSpins }).catch(()=>{});
+  updateSpinsUI();
+  spinReels(false);
+};
+
+
+// ── NIVEAU SYSTEM ──
+const LEVELS = [
+  { name: 'Tireur',   star: '☆',   color: '#9ca3af', minLevel: 0 },
+  { name: 'Sniper',   star: '⭐',   color: '#60a5fa', minLevel: 1 },
+  { name: 'Elite',    star: '⭐⭐',  color: '#34d399', minLevel: 3 },
+  { name: 'Champion', star: '⭐⭐⭐', color: '#fbbf24', minLevel: 6 },
+  { name: 'Maître',   star: '🌟',   color: '#f87171', minLevel: 10 },
+  { name: 'Légende',  star: '💎',   color: '#a78bfa', minLevel: 15 },
+];
+
+function getLevelInfo(level) {
+  let info = LEVELS[0];
+  for (const l of LEVELS) { if (level >= l.minLevel) info = l; }
+  return info;
+}
+
+function renderProfile(data) {
+  const level   = data.level || 0;
+  const lvlInfo = getLevelInfo(level);
+  const pname   = document.getElementById('pname');
+  const plevel  = document.getElementById('plevel');
+  const pbadge  = document.getElementById('pbadge');
+  document.getElementById('pavatar').textContent = data.avatar || '🎮';
+  const isTombolaWinner = data.tombolaWinner === true;
+  pname.textContent   = (data.pseudo || '—') + (isTombolaWinner ? ' 🏆' : '');
+  pname.style.opacity = '1';
+  pname.style.color   = isTombolaWinner ? 'var(--gold)' : '';
+  plevel.textContent  = `${lvlInfo.star} ${lvlInfo.name} — Niv. ${level}`;
+  plevel.style.opacity = '1';
+  pbadge.style.background = `linear-gradient(90deg, ${lvlInfo.color}, ${lvlInfo.color}aa)`;
+  pbadge.textContent  = `${lvlInfo.star} ${lvlInfo.name.toUpperCase()}`;
+  pbadge.style.opacity = '1';
+  // XP inline à côté du nom
+  const xpInline = document.getElementById('pxpInline');
+  if (xpInline) {
+    xpInline.textContent = `⚡ ${data.xp || 0} XP`;
+    xpInline.style.display = 'block';
+  }
+}
+
+function renderXP(data) {
+  const xp      = data.xp || 0;
+  const level   = data.level || 0;
+  const tiers   = [...(config.tiers||[])].sort((a,b) => a.xp - b.xp);
+  const maxXP   = tiers.length ? tiers[tiers.length-1].xp : 100;
+  const pct     = Math.min((xp / maxXP) * 100, 100);
+  const lvlInfo = getLevelInfo(level);
+
+  document.getElementById('xpCur').textContent  = xp;
+  document.getElementById('xpFill').style.width = pct + '%';
+  document.getElementById('xpFill').style.background = `linear-gradient(90deg, ${lvlInfo.color}88, ${lvlInfo.color}, #fff)`;
+
+  // Milestones
+  const ms = document.getElementById('xpMilestones');
+  ms.innerHTML = tiers.map(t => `<div class="xm${xp >= t.xp ? ' done' : ''}">${t.xp}</div>`).join('');
+
+  // Prochaine récompense
+  const next = tiers.find(t => t.xp > xp);
+  if (next) {
+    document.getElementById('nextRwd').style.display = 'flex';
+    document.getElementById('nrIcon').textContent = next.icon || '🎁';
+    document.getElementById('nrName').textContent = next.name;
+    document.getElementById('nrPts').textContent  = `Encore ${next.xp - xp} XP`;
+  } else {
+    document.getElementById('nextRwd').style.display = 'none';
+  }
+}
+
+function renderLeaderboard(list) {
+  const el = document.getElementById('lbList');
+
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-c"><div class="empty-i">🏆</div>Sois le premier sur le classement !</div>';
+    return;
+  }
+
+  const maxXP = Math.max(...list.map(p => (p.xp||0) + (p.level||0)*180), 1);
+
+  const medals = ['🥇','🥈','🥉'];
+  const rankColors = ['rgba(255,214,10,.5)','rgba(192,192,192,.4)','rgba(205,127,50,.4)'];
+  const rankBg = [
+    'linear-gradient(135deg,rgba(255,214,10,.12),rgba(255,159,28,.07))',
+    'linear-gradient(135deg,rgba(192,192,192,.1),rgba(148,163,184,.06))',
+    'linear-gradient(135deg,rgba(205,127,50,.1),rgba(160,90,30,.06))'
+  ];
+
+  let html = `<div style="text-align:center;margin-bottom:12px;padding:9px;background:linear-gradient(135deg,rgba(255,140,0,.08),rgba(67,97,238,.08));border:1px solid rgba(255,140,0,.2);border-radius:12px">
+    <div style="font-family:'Orbitron',monospace;font-size:.65rem;color:var(--orange);letter-spacing:.1em;text-shadow:0 0 10px rgba(255,140,0,.4)">🏆 TOP JOUEURS X-GAMES</div>
+    <div style="font-size:.7rem;color:var(--dim);margin-top:3px">Classement par niveau puis XP</div>
+  </div>`;
+
+  html += list.map((p, i) => {
+    const isMe    = p._id === clientId;
+    const level   = p.level || 0;
+    const xp      = p.xp || 0;
+    const lvlInfo = getLevelInfo(level);
+    const isTop   = i < 3;
+    // Barre XP proportionnelle au meilleur
+    const totalScore = xp + level * 180;
+    const barPct = Math.min(100, Math.round(totalScore / maxXP * 100));
+
+    const borderColor = isMe ? 'rgba(0,245,255,.4)' : isTop ? rankColors[i] : 'rgba(255,255,255,.06)';
+    const bgStyle = isMe
+      ? 'linear-gradient(135deg,rgba(0,245,255,.06),rgba(67,97,238,.06))'
+      : isTop ? rankBg[i] : 'rgba(5,10,25,.7)';
+    const barColor = isTop
+      ? (i===0 ? 'linear-gradient(90deg,var(--gold),var(--orange))' : i===1 ? 'linear-gradient(90deg,#c0c0c0,#a0a0c0)' : 'linear-gradient(90deg,#cd7f32,#b06020)')
+      : isMe ? 'linear-gradient(90deg,var(--cyan),var(--blue))' : 'linear-gradient(90deg,var(--violet),var(--orange))';
+    const medalColor = isTop ? rankColors[i] : isMe ? 'rgba(0,245,255,.5)' : 'rgba(255,255,255,.08)';
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;margin-bottom:7px;background:${bgStyle};border:1px solid ${borderColor};box-shadow:${isTop?`0 0 15px ${rankColors[i].replace('.4','.12')}`:'none'};position:relative;overflow:hidden">
+      <!-- Barre de couleur à gauche -->
+      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${medalColor};border-radius:14px 0 0 14px;box-shadow:0 0 6px ${medalColor}"></div>
+      <!-- Rang -->
+      <div style="font-family:'Orbitron',monospace;font-size:${isTop?'1.3rem':'.85rem'};font-weight:900;min-width:30px;text-align:center;color:${isTop?rankColors[i]:isMe?'var(--cyan)':'var(--dim)'}">${isTop?medals[i]:String(i+1).padStart(2,'0')}</div>
+      <!-- Avatar -->
+      <div style="font-size:${isTop?'1.5rem':'1.2rem'};flex-shrink:0">${p.avatar||'🎮'}</div>
+      <!-- Info -->
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div style="font-size:${isTop?'.88rem':'.8rem'};font-weight:${isTop?800:600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--txt)'}">${escapeHtml(p.pseudo||'—')}${p.tombolaWinner?' 🏆':''}</div>
+          ${isMe?'<span style="font-family:\'Orbitron\',monospace;font-size:.45rem;background:rgba(0,245,255,.15);border:1px solid rgba(0,245,255,.3);border-radius:10px;padding:1px 6px;color:var(--cyan)">MOI</span>':''}
+        </div>
+        <!-- XP + mini barre (le chiffre exact n'est visible que pour soi-même,
+             pour éviter que les autres calculent facilement l'écart à combler) -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <div style="flex:1;height:4px;background:rgba(0,0,0,.5);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${barPct}%;background:${barColor};border-radius:2px"></div>
+          </div>
+          <span style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--dim);white-space:nowrap">${isMe ? `⚡${xp} XP` : ''}</span>
+        </div>
+      </div>
+      <!-- Badge niveau -->
+      <div style="font-family:'Orbitron',monospace;font-size:.6rem;font-weight:900;background:${isTop?`linear-gradient(135deg,${rankColors[i].replace('.4','.2')},${rankColors[i].replace('.4','.1')})`:'rgba(255,255,255,.05)'};border:1px solid ${isTop?rankColors[i]:'rgba(255,255,255,.1)'};border-radius:8px;padding:3px 8px;color:${isTop?'#fff':isMe?'var(--cyan)':'var(--dim)'};white-space:nowrap">NV.${level}</div>
+    </div>`;
+  }).join('');
+
+  const meInList = list.find(p => p._id === clientId);
+  if (!meInList) {
+    html += `<div style="text-align:center;margin-top:8px;padding:10px;border:1px dashed rgba(255,140,0,.2);border-radius:10px;font-size:.72rem;color:var(--dim)">🎯 Continue à jouer pour apparaître dans le top 10 !</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+
+function renderCoupons(coupons) {
+  // Filtre les coupons JACKPOT — ils vont directement dans les lancers, pas ici
+  const nonJackpot = coupons.filter(c => !((c.name||'').toUpperCase().match(/(\d+)\s*JACKPOT/)));
+  currentCoupons = nonJackpot;
+  const active = nonJackpot.filter(c => !c.used);
+  const used   = nonJackpot.filter(c =>  c.used);
+  document.getElementById('cpCountActive').textContent = active.length;
+  document.getElementById('cpCountUsed').textContent   = used.length;
+  updateCouponBadge(active.length); // Badge sur la nav
+  const list   = document.getElementById('couponList');
+  const toShow = cpShowUsed ? used : active;
+  if (!toShow.length) {
+    list.innerHTML = cpShowUsed
+      ? '<div class="empty-c"><div class="empty-i">✅</div>Aucun coupon utilisé.</div>'
+      : '<div class="empty-c"><div class="empty-i">🎫</div>Aucun coupon actif.<br><span style="font-size:.72rem">Joue et progresse !</span></div>';
+    return;
+  }
+  list.innerHTML = [...toShow].reverse().map(c => {
+    const type   = c.type || 'xp';
+    const isUsed = c.used || false;
+    return `<div class="coupon ${type} ${isUsed?'used':''}">
+      <div class="cp-top">
+        <div class="cp-icon">${c.icon || (type==='slot'?'🎰':'🎁')}</div>
+        <div class="cp-info">
+          <div class="cp-name">${c.name || '—'}</div>
+          <div class="cp-type">${type==='slot'?'🎰 Jackpot':'⭐ Palier XP'}</div>
+          <div class="cp-date">${isUsed ? '✓ Utilisé le '+c.usedDate : 'Gagné le '+(c.earnedAt||'')}${c.tombola ? ' · <span style="font-family:Orbitron,monospace;color:var(--gold);font-weight:700">N°'+c.tombola+'</span>' : ''}</div>
+        </div>
+        ${isUsed ? '<div class="coupon-used-label">UTILISÉ</div>' : ''}
+      </div>
+      ${!isUsed ? `<button class="cp-use-btn" data-cpid="${c.id}">🎁 UTILISER CE COUPON</button>` : ''}
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.cp-use-btn').forEach(btn => {
+    btn.addEventListener('click', () => openValidate(btn.dataset.cpid));
+  });
+}
+
+function updateSlotUI() {
+  const el = document.getElementById('slotPriceLabel');
+  if (el) el.textContent = `Partie : ${config.slotPrice}`;
+}
+
+function showLevelUp(tier) {
+  document.getElementById('luE').textContent   = tier.icon || '⚡';
+  document.getElementById('luRwd').textContent = (tier.name||'Récompense') + ' débloqué !';
+  document.getElementById('lvlUp').classList.add('show');
+}
+
+
+// ── NAVIGATION PAR ONGLETS ──
+function showTab(name) { switchTab(name); }
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.id.replace('nav-','')));
+});
+
+// Met à jour le badge coupons actifs
+function updateCouponBadge(count) {
+  const badge = document.getElementById('navBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── COUPON TABS ──
+document.getElementById('cpTabActive').addEventListener('click', () => {
+  cpShowUsed = false;
+  document.getElementById('cpTabActive').classList.add('on');
+  document.getElementById('cpTabUsed').classList.remove('on');
+  renderCoupons(currentCoupons);
+});
+document.getElementById('cpTabUsed').addEventListener('click', () => {
+  cpShowUsed = true;
+  document.getElementById('cpTabUsed').classList.add('on');
+  document.getElementById('cpTabActive').classList.remove('on');
+  renderCoupons(currentCoupons);
+});
+
+// ── QR VALIDATION ──
+function genToken() {
+  return 'TKN-' + Date.now() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+function genTombolaNum() {
+  // Numéro aléatoire entre 1000 et 9999, vérifié unique via timestamp + random
+  const base = Math.floor(1000 + Math.random() * 9000);
+  const salt = Date.now() % 100; // Évite les doublons même en rafale
+  let num = base + salt;
+  if (num > 9999) num = num - 9000;
+  return num;
+}
+
+function drawValidationQR(url) {
+  // Nettoie l'ancien QR
+  const frame = document.querySelector('.vld-qr-frame');
+  frame.innerHTML = '';
+
+  // Crée un div pour QRCode.js
+  const qrDiv = document.createElement('div');
+  frame.appendChild(qrDiv);
+
+  new QRCode(qrDiv, {
+    text: url,
+    width: 300,
+    height: 300,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // Style le QR
+  qrDiv.style.borderRadius = '10px';
+  qrDiv.style.overflow = 'hidden';
+  qrDiv.style.display = 'block';
+}
+
+async function openValidate(couponId, couponOverride) {
+  const coupon = couponOverride || currentCoupons.find(c => c.id === couponId);
+  if (!coupon) return;
+  if (validateUnsub) { validateUnsub(); validateUnsub = null; }
+  clearInterval(validateTimer);
+  currentValidateCpId = couponId;
+  const token     = genToken();
+  const expiresAt = Date.now() + VALID_DURATION * 1000;
+  const baseUrl   = window.location.origin + window.location.pathname.replace('client.html','admin.html');
+  const scanUrl   = `${baseUrl}?scan=1&token=${token}&client=${clientId}&coupon=${encodeURIComponent(coupon.name)}&icon=${encodeURIComponent(coupon.icon||'🎁')}`;
+  await setDoc(doc(db, 'validations', token), {
+    token, clientId, couponId,
+    pseudo: clientData?.pseudo || '—',
+    couponName: coupon.name, couponIcon: coupon.icon || '🎁',
+    couponType: coupon.type || 'xp',
+    expiresAt, validated: false, createdAt: serverTimestamp()
+  });
+  document.getElementById('vldIcon').textContent  = coupon.icon || '🎁';
+  document.getElementById('vldPrize').textContent = coupon.name;
+  document.getElementById('vldType').textContent  = coupon.type === 'slot' ? '🎰 Jackpot' : '⭐ Palier XP';
+  document.getElementById('vldMain').style.display = 'flex';
+  document.getElementById('vldConfirmed').classList.remove('show');
+  document.getElementById('validateOv').classList.add('show');
+  drawValidationQR(scanUrl);
+  let remaining = VALID_DURATION;
+  const bar = document.getElementById('vldTimerBar');
+  bar.style.width = '100%'; bar.className = 'vld-timer-bar';
+  document.getElementById('vldCountdown').textContent = remaining;
+  validateTimer = setInterval(() => {
+    remaining--;
+    document.getElementById('vldCountdown').textContent = remaining;
+    const pct = (remaining / VALID_DURATION) * 100;
+    bar.style.width = pct + '%';
+    if (pct < 30) bar.classList.add('warn');
+    if (remaining <= 0) { clearInterval(validateTimer); window.closeValidate(); }
+  }, 1000);
+  validateUnsub = onSnapshot(doc(db, 'validations', token), async snap => {
+    if (!snap.exists() || snap.data().validated !== true) return;
+    if (validateUnsub) { validateUnsub(); validateUnsub = null; }
+    clearInterval(validateTimer);
+    await authReady;
+    // Relit les coupons à jour au moment de valider — jamais depuis une copie
+    // locale qui pourrait être obsolète (ex: un nouveau coupon gagné entre-temps).
+    const freshSnap = await getDoc(doc(db, 'clients', clientId));
+    const freshCoupons = freshSnap.exists() ? (freshSnap.data().coupons || []) : currentCoupons;
+    const updated = freshCoupons.map(c => c.id === couponId ? { ...c, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : c);
+    await updateDoc(doc(db, 'clients', clientId), { coupons: updated });
+    await addDoc(collection(db, 'clients', clientId, 'history'), { type: 'coupon_used', label: `✅ ${coupon.name}`, timestamp: serverTimestamp() });
+    document.getElementById('vldMain').style.display = 'none';
+    document.getElementById('vldConfirmed').classList.add('show');
+    setTimeout(() => window.closeValidate(), 3500);
+  });
+}
+
+window.closeValidate = async () => {
+  document.getElementById('validateOv').classList.remove('show');
+  clearInterval(validateTimer);
+  if (validateUnsub) { validateUnsub(); validateUnsub = null; }
+  currentValidateCpId = null;
+};
+
+// ── SLOT MACHINE ──
+let paymentConfirmed = false; // Token anti-triche
+
+document.getElementById('btnPay')?.addEventListener('click', () => {
+  const now = Date.now();
+  if (now - lastSpinTime < SPIN_COOLDOWN) {
+    document.getElementById('slotStatus').textContent = `⏳ Attends encore ${Math.ceil((SPIN_COOLDOWN-(now-lastSpinTime))/1000)}s…`;
+    return;
+  }
+  const pseudo = clientData?.pseudo || 'Joueur';
+  setDoc(doc(db, 'slots', clientId), {
+    status: 'pending', clientId,
+    clientPseudo: pseudo,
+    requestedAt: serverTimestamp(), forced: false
+  }).catch(()=>{});
+  document.getElementById('waitOv').classList.add('show');
+});
+
+function spinReels(autoWin = false) {
+  if (isSpinning) return;
+  isSpinning = true;
+  const spinsDiv = document.getElementById('spinsAvailable');
+  const slotBtns = document.getElementById('slotBtns');
+  if (spinsDiv) spinsDiv.style.display = 'none';
+  if (slotBtns) slotBtns.style.display = 'none';
+  const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
+  const won = autoWin || (Math.random() * 100 < winRate);
+  document.getElementById('slotStatus').textContent = 'Lancement…';
+  const reels = [document.getElementById('r0'), document.getElementById('r1'), document.getElementById('r2')];
+  reels.forEach(r => { r.classList.remove('win'); r.classList.add('spin'); });
+  // Tourne pendant 2s (26 ticks × 75ms = ~2s)
+  let elapsed = 0;
+  const interval = setInterval(() => {
+    reels.forEach(r => r.textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]);
+    elapsed++;
+    if (elapsed > 26) {
+      clearInterval(interval);
+      reels.forEach(r => r.classList.remove('spin'));
+      if (won) {
+        const sym = SYMBOLS[Math.floor(Math.random()*4)];
+        reels.forEach(r => { r.textContent = sym; r.classList.add('win'); });
+        handleWin();
+      } else {
+        // En cas de perte : 3 symboles forcément différents
+        let s0 = Math.floor(Math.random()*SYMBOLS.length);
+        let s1 = Math.floor(Math.random()*SYMBOLS.length);
+        while (s1 === s0) s1 = Math.floor(Math.random()*SYMBOLS.length);
+        let s2 = Math.floor(Math.random()*SYMBOLS.length);
+        while (s2 === s0 || s2 === s1) s2 = Math.floor(Math.random()*SYMBOLS.length);
+        reels[0].textContent = SYMBOLS[s0];
+        reels[1].textContent = SYMBOLS[s1];
+        reels[2].textContent = SYMBOLS[s2];
+        document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
+        isSpinning = false;
+        updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
+      }
+    }
+  }, 75);
+}
+
+async function handleWin() {
+  await authReady;
+  const prizes   = config.jackpot?.prizes || [{ name:'Surprise', icon:'🎁' }];
+  const prizeRaw = prizes[Math.floor(Math.random()*prizes.length)];
+  const prize    = typeof prizeRaw === 'string' ? { name:prizeRaw, icon:'🎰' } : prizeRaw;
+  document.getElementById('slotStatus').textContent = '🏆 JACKPOT !';
+
+  const prizeName = prize.name.toUpperCase();
+  const jackpotMatch = prizeName.match(/(\d+)\s*JACKPOT/);
+
+  if (jackpotMatch) {
+    // Lot JACKPOT → lancers directs, pas de coupon
+    const extraSpins = parseInt(jackpotMatch[1]) || 1;
+    availableSpins += extraSpins;
+    await setDoc(doc(db, 'slots', clientId), {
+      status: 'armed', clientId, multiCount: availableSpins,
+      autoGranted: true, unlockedAt: serverTimestamp()
+    });
+  } else {
+    // Lot physique (plombs, ticket, etc.) → coupon à récupérer
+    const coupon = { id:'cp-'+Date.now(), type:'slot', name:prize.name, icon:prize.icon||'🎰', used:false, earnedAt:new Date().toLocaleDateString('fr-FR') };
+    await updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() });
+  }
+
+  await addDoc(collection(db, 'clients', clientId, 'history'), { type:'jackpot', label:`🎰 JACKPOT : ${prize.name}`, pseudo:clientData?.pseudo, timestamp:serverTimestamp() });
+
+  document.getElementById('winIcon').textContent      = prize.icon || '🎰';
+  document.getElementById('winPrizeName').textContent = prize.name
+    + (jackpotMatch ? `\n🎰 +${jackpotMatch[1]} lancer(s) ajouté(s) !` : '');
+  isSpinning = false;
+  setTimeout(() => {
+    document.getElementById('winOv').classList.add('show');
+    startCoinExplosion();
+    updateSpinsUI();
+  }, 2000);
+}
+
+// ── COIN EXPLOSION ──
+function initCoinCanvas() {
+  coinCanvas = document.getElementById('coinCanvas');
+  coinCtx    = coinCanvas.getContext('2d');
+  function resize() { coinCanvas.width = window.innerWidth; coinCanvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+}
+
+function spawnCoins(count = 80) {
+  const cx = coinCanvas.width / 2, cy = coinCanvas.height / 2;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 4 + Math.random() * 14;
+    coins.push({ x:cx, y:cy, vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed-(3+Math.random()*6), gravity:0.35+Math.random()*.2, size:8+Math.random()*16, color:['#ffd60a','#ffec6e','#ff9f1c','#fff7a0','#f72585'][Math.floor(Math.random()*5)], rotation:Math.random()*Math.PI*2, rotSpeed:(Math.random()-.5)*.3, alpha:1, scaleY:1, scaleDir:1 });
+  }
+}
+
+function drawCoin(c) {
+  coinCtx.save();
+  coinCtx.globalAlpha = c.alpha;
+  coinCtx.translate(c.x, c.y);
+  coinCtx.rotate(c.rotation);
+  coinCtx.scale(1, c.scaleY);
+  coinCtx.beginPath();
+  coinCtx.ellipse(0, 0, c.size, c.size*.6, 0, 0, Math.PI*2);
+  coinCtx.fillStyle = c.color; coinCtx.fill();
+  coinCtx.fillStyle = 'rgba(0,0,0,.35)';
+  coinCtx.font = `bold ${Math.max(8,c.size*.7)}px Arial`;
+  coinCtx.textAlign = 'center'; coinCtx.textBaseline = 'middle';
+  coinCtx.fillText('€', 0, 0);
+  coinCtx.restore();
+}
+
+function animateCoins() {
+  coinCtx.clearRect(0, 0, coinCanvas.width, coinCanvas.height);
+  coins = coins.filter(c => c.alpha > 0.02);
+  coins.forEach(c => {
+    c.x += c.vx; c.y += c.vy; c.vy += c.gravity; c.vx *= .99;
+    c.rotation += c.rotSpeed;
+    c.scaleY += c.scaleDir * .05;
+    if (c.scaleY > 1) { c.scaleY = 1; c.scaleDir = -1; }
+    if (c.scaleY < .1) { c.scaleY = .1; c.scaleDir = 1; }
+    if (c.y > coinCanvas.height * .8) c.alpha -= .025;
+    drawCoin(c);
+  });
+  if (coins.length > 0) coinAnim = requestAnimationFrame(animateCoins);
+  else coinCtx.clearRect(0, 0, coinCanvas.width, coinCanvas.height);
+}
+
+function startCoinExplosion() {
+  if (coinAnim) cancelAnimationFrame(coinAnim);
+  coins = [];
+  spawnCoins(90);
+  animateCoins();
+  setTimeout(() => spawnCoins(50), 400);
+  setTimeout(() => spawnCoins(40), 900);
+}
+
+function stopCoinExplosion() {
+  if (coinAnim) cancelAnimationFrame(coinAnim);
+  coinAnim = null; coins = [];
+  if (coinCtx) coinCtx.clearRect(0, 0, coinCanvas.width, coinCanvas.height);
+}
+
+window._stopCoinExplosion = stopCoinExplosion;
+
+// ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
+
+// ── QR IDENTITÉ CLIENT ──
+window.showMyQR = function() {
+  const ov = document.getElementById('myQrOv');
+  const frame = document.getElementById('myQrFrame');
+  const pseudo = document.getElementById('myQrPseudo');
+  frame.innerHTML = '';
+  // URL vers admin avec le clientId
+  const adminUrl = window.location.origin + window.location.pathname.replace('client.html','admin.html') + '?clientId=' + clientId;
+  new QRCode(frame, { text: adminUrl, width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M });
+  if (pseudo) pseudo.textContent = clientData?.pseudo || '—';
+  ov.style.display = 'flex';
+};
+function checkDailySpin(data) {
+  const now = new Date();
+  const todayStr = now.getUTCFullYear() + '-' + (now.getUTCMonth()+1) + '-' + now.getUTCDate();
+  const lastDaily = data.lastDailySpin || '';
+  const banner = document.getElementById('dailySpinBanner');
+  if (banner) banner.style.display = (lastDaily !== todayStr) ? 'block' : 'none';
+}
+
+window.useDailySpin = async function() {
+  if (!clientData) return;
+  await authReady;
+  const snap = await getDoc(doc(db, 'clients', clientId));
+  if (!snap.exists()) return;
+  const freshData = snap.data();
+  const now = new Date();
+  const todayStr = now.getUTCFullYear() + '-' + (now.getUTCMonth()+1) + '-' + now.getUTCDate();
+  if (freshData.lastDailySpin === todayStr) {
+    document.getElementById('dailySpinBanner').style.display = 'none';
+    return;
+  }
+  await updateDoc(doc(db, 'clients', clientId), { lastDailySpin: todayStr, lastDailySpinAt: serverTimestamp() });
+  document.getElementById('dailySpinBanner').style.display = 'none';
+  availableSpins++;
+  // Sauvegarde dans Firebase pour que addXP puisse lire le bon total
+  await setDoc(doc(db, 'slots', clientId), {
+    status: 'armed', clientId, multiCount: availableSpins,
+    autoGranted: true, unlockedAt: serverTimestamp()
+  });
+  updateSpinsUI();
+};
+
+// ── PARRAINAGE ──
+window.shareReferral = function() {
+  const url = window.location.origin + window.location.pathname.replace('client.html','register.html') + '?ref=' + clientId;
+  const fb = document.getElementById('referralFb');
+  if (navigator.share) {
+    navigator.share({ title: 'X-Games — Carte fidélité', text: '🎯 Rejoins X-Games et tente ta chance au jackpot !', url })
+      .then(() => {
+        if (fb) { fb.innerHTML = '<span style="color:var(--green)">✅ Lien partagé ! Tu gagneras 1 XP quand ton ami s\'inscrit.</span>'; setTimeout(()=>{ if(fb) fb.innerHTML=''; }, 4000); }
+      }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      if (fb) { fb.innerHTML = '<span style="color:var(--cyan)">📋 Lien copié ! Partage-le à tes amis.</span>'; setTimeout(()=>{ if(fb) fb.innerHTML=''; }, 3000); }
+    });
+  }
+};
+
+// Vérifie le parrainage — XP donné UNE SEULE FOIS au parrain via register.html
+// Le clientId courant est le nouveau client, refId est le parrain
+// Ce code s'exécute dans register.html via le param ref, pas ici
+
+// Charge les avis approuvés uniquement
+onSnapshot(query(collection(db, 'avis'), limit(50)), snap => {
+  const list = document.getElementById('avisList');
+  if (!list) return;
+  const all  = snap.docs.map(d => ({...d.data(), _id: d.id}));
+  const avis = all.filter(a => a.approved === true);
+  list.innerHTML = '';
+  if (!avis.length) {
+    list.innerHTML = '<div class="empty-c"><div class="empty-i">\u{1F4AC}</div>Aucun avis publié.</div>';
+    return;
+  }
+  avis.forEach(a => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:linear-gradient(135deg,rgba(10,15,30,.95),rgba(13,21,48,.95));border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px;margin-bottom:8px';
+    const top = document.createElement('div');
+    top.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px';
+    const av = document.createElement('div');
+    av.style.fontSize = '1.2rem';
+    av.textContent = a.avatar || '🎮';
+    const nm = document.createElement('div');
+    nm.style.cssText = "font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700";
+    nm.textContent = a.pseudo || '—';
+    const st = document.createElement('div');
+    st.style.cssText = 'margin-left:auto;font-size:.9rem';
+    st.textContent = '⭐'.repeat(a.stars || 0);
+    top.appendChild(av); top.appendChild(nm); top.appendChild(st);
+    card.appendChild(top);
+    if (a.message) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'font-size:.78rem;color:#4a5568;line-height:1.5';
+      msg.textContent = a.message;
+      card.appendChild(msg);
+    }
+    list.appendChild(card);
+  });
+});
+
+
+// ── COMPTEUR TOMBOLA ──
+let _cdInterval = null;
+let _tombolaWinners = [];
+
+onSnapshot(doc(db, 'config', 'tombola'), snap => {
+  const data = snap.exists() ? snap.data() : {};
+  const winners = data.winners || [];
+  const drawDate = data.drawDate ? new Date(data.drawDate) : null;
+  const active = data.active && winners.length > 0;
+  const lots = (data.tombolaLots || []).filter(l => l && l.trim());
+  const enabled = data.tombolaEnabled !== false;
+  const ticketPrice = data.ticketPrice || 0;
+  _tombolaWinners = winners;
+
+  // Si tombola désactivée → tout cacher
+  if (!enabled) {
+    if (homeBox) homeBox.style.display = 'none';
+    if (cdBox) cdBox.style.display = 'none';
+    if (resBox) resBox.style.display = 'none';
+    if (_cdInterval) clearInterval(_cdInterval);
+    return;
+  }
+
+  const cdBox = document.getElementById('tombolaCountdown');
+  const resBox = document.getElementById('tombolaResults');
+  const resList = document.getElementById('tombolaResultsList');
+
+  const homeBox = document.getElementById('tombolaHomeBox');
+
+  if (active) {
+    // Tirage terminé
+    if (cdBox) cdBox.style.display = 'none';
+    if (_cdInterval) { clearInterval(_cdInterval); _cdInterval = null; }
+    if (resBox) {
+      resBox.style.display = 'block';
+      if (resList) {
+        resList.innerHTML = winners.map(w =>
+          `<div style="padding:6px 0;border-bottom:1px solid rgba(255,214,10,.15);font-size:.75rem">
+            <span style="font-size:.9rem">${w.avatar}</span>
+            <b style="color:var(--txt)"> ${escapeHtml(w.pseudo)}</b>
+            <span style="color:var(--gold)"> 🏆 ${w.prize}</span>
+            <span style="font-size:.65rem;color:var(--dim)"> · N°${w.ticket}</span>
+          </div>`
+        ).join('');
+      }
+    }
+    // Box accueil — résultats
+    if (homeBox) {
+      homeBox.style.display = 'block';
+      const content = document.getElementById('tombHomeContent');
+      if (content) content.innerHTML = `
+        <div style="font-size:1.4rem">🏆</div>
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;margin:6px 0;letter-spacing:.1em">TIRAGE TERMINÉ !</div>
+        ${winners.map(w=>`<div style="font-size:.75rem;margin:4px 0;padding:4px 8px;background:rgba(255,214,10,.1);border-radius:8px">${w.avatar} <b>${escapeHtml(w.pseudo)}</b> <span style="color:var(--gold)">🏆 ${escapeHtml(w.prize)}</span></div>`).join('')}
+      `;
+    }
+    updateHallOfFame(winners);
+    showTombolaNotif(winners);
+    const isWinner = winners.some(w => w.clientId === clientId);
+    if (isWinner) markTombolaWinner(winners.filter(w => w.clientId === clientId));
+  } else {
+    if (resBox) resBox.style.display = 'none';
+    document.getElementById('tombolaNotif')?.remove();
+    document.querySelector('.tombola-winner-badge')?.remove();
+
+    if (drawDate && drawDate > new Date()) {
+      if (cdBox) cdBox.style.display = 'block';
+      const dateEl = document.getElementById('tombolaDrawDate');
+      if (dateEl) dateEl.textContent = 'Le ' + drawDate.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' });
+      // Box accueil avec compteur
+      if (homeBox) {
+        homeBox.style.display = 'block';
+        const lots = data.tombolaLots?.filter(l=>l.trim()) || [];
+        const content = document.getElementById('tombHomeContent');
+        if (content) content.innerHTML = `
+          <div style="font-size:1.3rem">🎟️</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;letter-spacing:.12em;margin:6px 0">TOMBOLA X-GAMES</div>
+          ${ticketPrice > 0 ? `<div style="background:linear-gradient(135deg,rgba(255,214,10,.2),rgba(255,159,28,.15));border:1px solid rgba(255,214,10,.4);border-radius:10px;padding:8px 14px;margin:8px 0;display:inline-block"><span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--gold)">${ticketPrice}€</span><span style="font-size:.65rem;color:var(--dim);margin-left:6px">/ ticket</span></div>` : ''}
+          ${lots.length ? `
+            <div style="margin:8px 0;padding:8px;background:rgba(0,0,0,.3);border-radius:10px">
+              <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);margin-bottom:5px">🎁 LOTS À GAGNER</div>
+              ${lots.map(l=>`<div style="font-size:.72rem;color:var(--txt);margin:3px 0">✦ ${l}</div>`).join('')}
+            </div>` : '<div style="font-size:.68rem;color:var(--dim);margin:6px 0">Lots à venir…</div>'}
+          <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:var(--dim);margin:8px 0">TIRAGE DANS</div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(255,214,10,.3);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbDays" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--gold)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">JOURS</div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold);align-self:center">:</div>
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(0,245,255,.3);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbHours" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--cyan)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">HEURES</div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold);align-self:center">:</div>
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(247,37,133,.3);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbMins" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--pink)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">MIN</div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold);align-self:center">:</div>
+            <div style="text-align:center;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px 10px;min-width:44px">
+              <div id="hbSecs" style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:var(--txt)">--</div>
+              <div style="font-size:.5rem;color:var(--dim)">SEC</div>
+            </div>
+          </div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:8px">🎟️ Achetez votre ticket tombola au stand !${ticketPrice > 0 ? `<span style="color:var(--gold);font-weight:700;font-size:.72rem"> ${ticketPrice}€</span>` : ''}</div>
+        `;
+        // Lance le décompte dans la box accueil
+        if (_cdInterval) clearInterval(_cdInterval);
+        _cdInterval = setInterval(() => {
+          const diff = drawDate - new Date();
+          if (diff <= 0) { clearInterval(_cdInterval); if(homeBox) homeBox.style.display='none'; return; }
+          const d = Math.floor(diff/86400000);
+          const h = Math.floor((diff%86400000)/3600000);
+          const m = Math.floor((diff%3600000)/60000);
+          const s = Math.floor((diff%60000)/1000);
+          const el = id => document.getElementById(id);
+          if(el('hbDays'))  el('hbDays').textContent  = String(d).padStart(2,'0');
+          if(el('hbHours')) el('hbHours').textContent = String(h).padStart(2,'0');
+          if(el('hbMins'))  el('hbMins').textContent  = String(m).padStart(2,'0');
+          if(el('hbSecs'))  el('hbSecs').textContent  = String(s).padStart(2,'0');
+          // Aussi onglet coupons
+          if(el('cdDays'))  el('cdDays').textContent  = String(d).padStart(2,'0');
+          if(el('cdHours')) el('cdHours').textContent = String(h).padStart(2,'0');
+          if(el('cdMins'))  el('cdMins').textContent  = String(m).padStart(2,'0');
+          if(el('cdSecs'))  el('cdSecs').textContent  = String(s).padStart(2,'0');
+        }, 1000);
+      }
+    } else {
+      if (cdBox) cdBox.style.display = 'none';
+      if (_cdInterval) clearInterval(_cdInterval);
+      // Affiche quand même les lots si définis
+      if (homeBox && lots.length) {
+        homeBox.style.display = 'block';
+        const content = document.getElementById('tombHomeContent');
+        if (content) content.innerHTML = `
+          <div style="font-size:1.3rem">🎟️</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:var(--gold);font-weight:900;margin:6px 0">TOMBOLA X-GAMES</div>
+          ${ticketPrice > 0 ? `<div style="background:linear-gradient(135deg,rgba(255,214,10,.2),rgba(255,159,28,.15));border:1px solid rgba(255,214,10,.4);border-radius:10px;padding:8px 14px;margin:8px 0;display:inline-block"><span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--gold)">${ticketPrice}€</span><span style="font-size:.65rem;color:var(--dim);margin-left:6px">/ ticket</span></div>` : ''}
+          <div style="margin:8px 0;padding:8px;background:rgba(0,0,0,.3);border-radius:10px">
+            <div style="font-family:'Orbitron',monospace;font-size:.58rem;color:var(--cyan);margin-bottom:5px">🎁 LOTS À GAGNER</div>
+            ${lots.map(l=>`<div style="font-size:.72rem;color:var(--txt);margin:3px 0">✦ ${l}</div>`).join('')}
+          </div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:6px">🎟️ Achetez votre ticket tombola au stand !${ticketPrice > 0 ? `<span style="color:var(--gold);font-weight:700;font-size:.72rem"> ${ticketPrice}€</span>` : ''}</div>
+        `;
+      } else if (homeBox) {
+        homeBox.style.display = 'none';
+      }
+    }
+  }
+});
+
+window.validateTombolaTicket = async function(ticket, prize) {
+  const fakeCoupon = { id: 'tombola-' + ticket, name: '🏆 Tombola N°' + ticket + ' — ' + prize, icon: '🏆', type: 'tombola' };
+  await openValidate(fakeCoupon.id, fakeCoupon);
+};
+
+function updateHallOfFame(winners) {
+  const hof = document.getElementById('tombolaHallOfFame');
+  const list = document.getElementById('tombolaHallList');
+  if (!hof || !list || !winners.length) { if(hof) hof.style.display='none'; return; }
+  hof.style.display = 'block';
+  list.innerHTML = winners.map(w => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:linear-gradient(135deg,rgba(255,214,10,.08),rgba(255,159,28,.05));border:1px solid rgba(255,214,10,.2);border-radius:12px;margin-bottom:6px">
+      <div style="font-size:1.3rem">${w.avatar}</div>
+      <div style="flex:1">
+        <div style="font-size:.82rem;font-weight:700">${escapeHtml(w.pseudo)} <span style="color:var(--gold)">🏆</span></div>
+        <div style="font-size:.65rem;color:var(--gold);margin-top:2px">${w.prize} · N°${w.ticket}</div>
+      </div>
+    </div>`).join('');
+}
+
+function showTombolaNotif(winners) {
+  let notif = document.getElementById('tombolaNotif');
+  if (!notif) {
+    notif = document.createElement('div');
+    notif.id = 'tombolaNotif';
+    notif.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:420px;z-index:5000;background:linear-gradient(135deg,rgba(255,214,10,.2),rgba(255,159,28,.15));border:2px solid var(--gold);border-radius:16px;padding:14px 18px;box-shadow:0 0 40px rgba(255,214,10,.3);animation:notif-slide-in .5s ease';
+    document.body.appendChild(notif);
+  }
+  const isMeWinner = winners.some(w => w.clientId === clientId);
+  notif.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:1.4rem">${isMeWinner ? '🎉🏆🎉' : '🎟️'}</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--gold);font-weight:900;margin:4px 0">${isMeWinner ? 'TU AS GAGNÉ !' : 'RÉSULTATS DE LA TOMBOLA'}</div>
+      ${winners.map(w => `<div style="font-size:.75rem;margin:3px 0">${w.avatar} <b>${escapeHtml(w.pseudo)}</b> 🏆 — N°${w.ticket}</div>`).join('')}
+    </div>
+    <button onclick="document.getElementById('tombolaNotif').style.display='none'" style="position:absolute;top:8px;right:10px;background:transparent;border:none;color:var(--dim);font-size:1rem;cursor:pointer">✕</button>
+  `;
+  notif.style.display = 'block';
+}
+
+function markTombolaWinner(wins) {
+  setTimeout(() => {
+    const list = document.getElementById('couponList');
+    if (!list) return;
+    document.querySelectorAll('.tombola-winner-badge').forEach(el => el.remove());
+    const badge = document.createElement('div');
+    badge.className = 'tombola-winner-badge';
+    badge.style.cssText = 'background:linear-gradient(135deg,rgba(255,214,10,.25),rgba(255,159,28,.2));border:2px solid var(--gold);border-radius:16px;padding:16px;text-align:center;margin-bottom:12px;animation:winner-pulse 1s ease-in-out infinite alternate;position:relative;overflow:hidden';
+    badge.innerHTML = `
+      <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,214,10,.15),transparent);animation:holographic-sweep 2s ease-in-out infinite;pointer-events:none"></div>
+      <div style="font-size:2rem">🏆</div>
+      <div style="font-family:'Orbitron',monospace;font-size:.82rem;color:var(--gold);font-weight:900">TON TICKET A GAGNÉ !</div>
+      ${wins.map(w => `
+        <div style="font-family:'Orbitron',monospace;font-size:.72rem;color:var(--txt);margin-top:6px">N°${w.ticket} · ${w.prize}</div>
+        <button onclick="validateTombolaTicket(${w.ticket},'${w.prize}')" style="margin-top:10px;width:100%;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:12px;color:#000;font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;padding:11px;cursor:pointer">📱 PRÉSENTER AU STAND — QR CODE</button>
+      `).join('')}
+      <div style="font-size:.65rem;color:var(--dim);margin-top:8px">🎁 Présente-toi au stand pour récupérer ton lot</div>
+    `;
+    list.prepend(badge);
+  }, 500);
+}
+
+// ── FIN ──
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+  if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+}
+// ── AJOUT À L'ÉCRAN D'ACCUEIL — aide à l'installation (Android + iOS) ──
+function closeInstallBar() {
+  const bar = document.getElementById('installBar');
+  if (bar) bar.style.display = 'none';
+  try { localStorage.setItem('xg_install_dismissed', String(Date.now())); } catch (e) {}
+}
+(function () {
+  const bar = document.getElementById('installBar');
+  const txt = document.getElementById('installBarTxt');
+  const btn = document.getElementById('installBarBtn');
+  if (!bar || !txt || !btn) return;
+
+  // Déjà installée (mode standalone, iOS ou Android) → ne rien montrer
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (isStandalone) return;
+
+  // Ne pas re-harceler moins de 7 jours après un "Plus tard"
+  let dismissedAt = 0;
+  try { dismissedAt = parseInt(localStorage.getItem('xg_install_dismissed') || '0', 10); } catch (e) {}
+  if (Date.now() - dismissedAt < 7 * 24 * 3600 * 1000) return;
+
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+  if (isIOS) {
+    // Pas d'installation native possible sur iOS (limitation Apple) :
+    // guide illustré simple, pas de bouton "Installer" puisqu'il n'existe pas.
+    txt.innerHTML = '1️⃣ Appuie sur <b style="color:#fff">Partager</b> <span style="display:inline-block;width:14px;height:14px;vertical-align:-2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 16V4M12 4l-4 4M12 4l4 4M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></span> tout en bas de l\'écran, puis choisis <b style="color:#fff">"Sur l\'écran d\'accueil"</b>.';
+    btn.style.display = 'none';
+    setTimeout(() => { bar.style.display = 'flex'; }, 1800);
+  } else {
+    // Android/Chrome/Edge : vraie installation native en 1 tap
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      txt.textContent = "Installe la carte fidélité comme une vraie appli, en 1 tap.";
+      btn.style.display = '';
+      bar.style.display = 'flex';
+    });
+    btn.onclick = async () => {
+      if (!deferredPrompt) return;
+      bar.style.display = 'none';
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) {}
+      deferredPrompt = null;
+    };
+    // Si le navigateur a déjà installé l'appli entre-temps, cacher la barre
+    window.addEventListener('appinstalled', () => { bar.style.display = 'none'; });
+  }
+})();
+
+mkPts();
+initCoinCanvas();
+
+// ── EXPOSITION WINDOW — toutes les fonctions appelées en onclick ──
+window.switchTab       = switchTab;
+window.setStars        = setStars;
+window.submitAvis      = submitAvis;
+window.closeJetBallArena = closeJetBallArena;
+window.pullLever       = pullLever;
+window.closeWin        = closeWin;
+window.closeInstallBar = closeInstallBar;
+</script>
+</body>
+</html>
