@@ -1058,10 +1058,20 @@ async function initFirebase(){
     const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
     const { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp, increment, query, orderBy, limit, getDocs }
       = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const { getAuth, signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
     fbQuery=query; fbOrderBy=orderBy; fbLimit=limit; fbGetDocs=getDocs; fbCollection=collection;
 
     const app = getApps().length ? getApps()[0] : initializeApp(FB_CFG);
     fbDb = getFirestore(app);
+    const fbAuth = getAuth(app);
+    // Même identité invisible que le reste de l'appli — nécessaire pour que
+    // l'historique du mini-jeu soit accepté par les règles Firestore.
+    await new Promise((resolve) => {
+      onAuthStateChanged(fbAuth, (user) => {
+        if (user) resolve(user);
+        else signInAnonymously(fbAuth).catch(() => resolve(null));
+      });
+    });
 
     // Récupérer l'UID passé en paramètre URL (?uid=XXX)
     const params = new URLSearchParams(window.location.search);
