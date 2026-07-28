@@ -797,6 +797,7 @@ function switchTab(name) {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, getDocs, query, orderBy, where, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
@@ -809,8 +810,20 @@ const firebaseConfig = {
 
 const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
+const auth = getAuth(app);
 const params   = new URLSearchParams(window.location.search);
 const clientId = params.get('id');
+
+// Identité invisible de l'appareil (même mécanisme que register.html) —
+// nécessaire pour que les actions du client (avis, coupons, lancer du jour)
+// soient acceptées par les règles Firestore.
+let myUid = null;
+const authReady = new Promise((resolve) => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) { myUid = user.uid; resolve(user.uid); }
+    else { signInAnonymously(auth).catch(() => resolve(null)); }
+  });
+});
 
 // Échappe le texte fourni par d'autres clients (pseudo, avis...) avant de
 // l'insérer dans du HTML, pour empêcher l'injection de code (XSS).
@@ -845,6 +858,7 @@ window._submitAvisModule = async function() {
       approved: false, xpRewarded: false, createdAt: serverTimestamp()
     });
     // Marque que ce client a soumis un avis
+    await authReady;
     await updateDoc(doc(db, 'clients', clientId), { avisSubmitted: true, updatedAt: serverTimestamp() });
     fb.innerHTML = '<span style="color:#06d6a0">✅ Merci ! +5 XP offerts après validation par l\'admin.</span>';
     document.getElementById('avisMsg').value = '';
@@ -880,6 +894,7 @@ if (!clientId) {
 
 // Global state
 let clientData  = null;
+let availableSpins = 0, isSpinning = false;
 let _pinVerified = false; // PIN vérifié une fois par session
 let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratuite',icon:'🎯'}] }, sumupLink:'', slotPrice:'2€', cashEnabled:false };
 let prevXP      = null;
@@ -1037,15 +1052,39 @@ if (clientId) {
     }
     const data = snap.data();
     clientData = data;
+    const needsLegacyClaim = !data.authUid && myUid;
     checkDailySpin(data);
     renderJetBallArena(data);
     // #main déjà visible
+
+    // Décision de palier + mise à jour de prevXP faites ICI, de façon
+    // strictement synchrone (aucun await avant cette ligne) : si Firestore
+    // délivre deux mises à jour très rapprochées, la seconde verra toujours
+    // le prevXP déjà à jour de la première, ce qui empêche tout double-octroi
+    // de coupon (le bug qui causait des coupons en double / qui réapparaissent).
+    let tierAward = null;
     if (prevXP !== null && data.xp > prevXP) {
-      const t = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp);
-      if (t) {
-        showLevelUp(t);
+      tierAward = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp) || null;
+      const bar = document.getElementById('xpFill');
+      bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
+    }
+    prevXP = data.xp;
+
+    // Partie asynchrone (a besoin de l'identité invisible) — déclenchée après
+    // coup, ne bloque jamais la détection de palier ci-dessus.
+    (async () => {
+      await authReady;
+      if (needsLegacyClaim) {
+        // Compte créé avant l'ajout de l'identité invisible : régularisation
+        // silencieuse, une seule fois, sur l'appareil qui l'ouvre en premier.
+        // On attend que ce soit bien pris en compte avant toute autre écriture
+        // (sinon une écriture juste après pourrait arriver avant et être refusée).
+        await updateDoc(doc(db, 'clients', clientId), { authUid: myUid }).catch(() => {});
+      }
+      if (tierAward) {
+        showLevelUp(tierAward);
         // Détecte JACKPOT dans le nom du palier → lancers automatiques
-        const tierName = (t.name||'').toUpperCase();
+        const tierName = (tierAward.name||'').toUpperCase();
         const jackpotMatch = tierName.match(/(\d+)\s*JACKPOT/);
         if (jackpotMatch) {
           const extraSpins = parseInt(jackpotMatch[1]) || 1;
@@ -1057,14 +1096,12 @@ if (clientId) {
           updateSpinsUI();
         } else {
           // Lot physique → coupon normal
-          const coupon = { id:'cp-'+Date.now(), type:'xp', name: t.name, icon: t.icon||'🎁', used:false, earnedAt: new Date().toLocaleDateString('fr-FR') };
+          const coupon = { id:'cp-'+Date.now(), type:'xp', name: tierAward.name, icon: tierAward.icon||'🎁', used:false, earnedAt: new Date().toLocaleDateString('fr-FR') };
           updateDoc(doc(db, 'clients', clientId), { coupons: arrayUnion(coupon), updatedAt: serverTimestamp() }).catch(()=>{});
         }
       }
-      const bar = document.getElementById('xpFill');
-      bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
-    }
-    prevXP = data.xp;
+    })();
+
     renderProfile(data);
     renderXP(data);
     renderCoupons(data.coupons || []);
@@ -1317,7 +1354,8 @@ function renderCoupons(coupons) {
 }
 
 function updateSlotUI() {
-  document.getElementById('slotPriceLabel').textContent = `Partie : ${config.slotPrice}`;
+  const el = document.getElementById('slotPriceLabel');
+  if (el) el.textContent = `Partie : ${config.slotPrice}`;
 }
 
 function showLevelUp(tier) {
@@ -1438,7 +1476,12 @@ async function openValidate(couponId, couponOverride) {
     if (!snap.exists() || snap.data().validated !== true) return;
     if (validateUnsub) { validateUnsub(); validateUnsub = null; }
     clearInterval(validateTimer);
-    const updated = currentCoupons.map(c => c.id === couponId ? { ...c, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : c);
+    await authReady;
+    // Relit les coupons à jour au moment de valider — jamais depuis une copie
+    // locale qui pourrait être obsolète (ex: un nouveau coupon gagné entre-temps).
+    const freshSnap = await getDoc(doc(db, 'clients', clientId));
+    const freshCoupons = freshSnap.exists() ? (freshSnap.data().coupons || []) : currentCoupons;
+    const updated = freshCoupons.map(c => c.id === couponId ? { ...c, used: true, usedDate: new Date().toLocaleDateString('fr-FR') } : c);
     await updateDoc(doc(db, 'clients', clientId), { coupons: updated });
     await addDoc(collection(db, 'clients', clientId, 'history'), { type: 'coupon_used', label: `✅ ${coupon.name}`, timestamp: serverTimestamp() });
     document.getElementById('vldMain').style.display = 'none';
@@ -1515,6 +1558,7 @@ function spinReels(autoWin = false) {
 }
 
 async function handleWin() {
+  await authReady;
   const prizes   = config.jackpot?.prizes || [{ name:'Surprise', icon:'🎁' }];
   const prizeRaw = prizes[Math.floor(Math.random()*prizes.length)];
   const prize    = typeof prizeRaw === 'string' ? { name:prizeRaw, icon:'🎰' } : prizeRaw;
@@ -1641,6 +1685,7 @@ function checkDailySpin(data) {
 
 window.useDailySpin = async function() {
   if (!clientData) return;
+  await authReady;
   const snap = await getDoc(doc(db, 'clients', clientId));
   if (!snap.exists()) return;
   const freshData = snap.data();

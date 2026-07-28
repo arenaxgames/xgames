@@ -227,38 +227,6 @@ body::after{
   </div>
 </div>
 
-<!-- ÉCRAN PIN — plein écran après pseudo -->
-<div id="pinScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;text-align:center">
-  <div style="font-size:3rem">🔐</div>
-  <div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--gold);text-shadow:0 0 20px var(--gold)">CODE SECRET</div>
-  <div id="pinScreenName" style="font-size:.85rem;color:var(--dim)"></div>
-  <input id="pinScreenInp" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •"
-    style="width:180px;background:rgba(0,0,0,.7);border:2px solid rgba(255,214,10,.6);border-radius:14px;color:var(--gold);font-size:2.2rem;text-align:center;letter-spacing:.5em;padding:14px;outline:none;font-family:'Orbitron',monospace">
-  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.8rem;color:var(--dim)">
-    <input type="checkbox" id="pinScreenStay" style="width:20px;height:20px;accent-color:var(--gold);cursor:pointer">
-    Rester connecté sur cet appareil
-  </label>
-  <button id="pinScreenBtn" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:15px 40px;cursor:pointer;width:100%;max-width:300px">VALIDER ⚡</button>
-  <div id="pinScreenMsg" style="font-size:.75rem;color:var(--red);min-height:20px"></div>
-  <button id="pinScreenBack" style="background:transparent;border:none;color:var(--dim);font-size:.72rem;cursor:pointer;text-decoration:underline">← Retour</button>
-</div>
-
-<!-- ÉCRAN CRÉER PIN — première fois -->
-<div id="pinCreateScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;text-align:center">
-  <div style="font-size:3rem">🔐</div>
-  <div style="font-family:'Orbitron',monospace;font-size:.95rem;font-weight:900;color:var(--gold)">CRÉE TON CODE SECRET</div>
-  <div style="font-size:.75rem;color:var(--dim);max-width:280px;line-height:1.6">Choisis un code à 4 chiffres pour protéger ta carte.<br><b style="color:var(--pink)">⚠️ Ne le donne jamais à quelqu'un d'autre !</b></div>
-  <input id="pinCreateScreenInp" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •"
-    style="width:180px;background:rgba(0,0,0,.7);border:2px solid rgba(255,214,10,.6);border-radius:14px;color:var(--gold);font-size:2.2rem;text-align:center;letter-spacing:.5em;padding:14px;outline:none;font-family:'Orbitron',monospace">
-  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:.8rem;color:var(--dim)">
-    <input type="checkbox" id="pinCreateStay" style="width:20px;height:20px;accent-color:var(--gold);cursor:pointer">
-    Rester connecté sur cet appareil
-  </label>
-  <button id="pinCreateBtn" style="background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:14px;color:#000;font-family:'Orbitron',monospace;font-size:.85rem;font-weight:900;padding:15px 40px;cursor:pointer;width:100%;max-width:300px">CRÉER MON CODE ⚡</button>
-  <div id="pinCreateScreenMsg" style="font-size:.75rem;color:var(--red);min-height:20px"></div>
-  <button id="pinCreateBack" style="background:transparent;border:none;color:var(--dim);font-size:.72rem;cursor:pointer;text-decoration:underline">← Retour</button>
-</div>
-
 <div id="main">
   <!-- LOGO CASINO -->
   <div class="logo-wrap">
@@ -306,25 +274,17 @@ body::after{
     <div class="card-title">🎮 Créer ma carte</div>
     <label class="inp-label">Choisis un pseudo</label>
     <input class="inp" id="newPseudo" type="text" placeholder="Ex: DragonBall99" maxlength="18" autocomplete="off">
-    <label class="inp-label" style="margin-top:10px">🔐 Crée ton PIN secret (4 chiffres)</label>
-    <input class="inp" id="newPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="off" style="letter-spacing:.4em;font-size:1.3rem;text-align:center">
-    <div style="font-size:.68rem;color:var(--dim);margin-top:4px;margin-bottom:6px;text-align:center">⚠️ Ce PIN est personnel et secret — ne le donne jamais</div>
     <label class="inp-label">Choisis ton avatar</label>
     <div class="avatar-grid" id="avatarGrid"></div>
     <button class="btn-primary" id="createBtn">CRÉER MA CARTE 🎮</button>
     <div class="msg" id="createMsg"></div>
   </div>
-
-  <div class="install-card" id="installHint" style="display:none">
-    <p>📲 <b>Installe l'app</b> sur ton écran d'accueil :<br>
-    iPhone : <b>⎙ Partager</b> → <b>Sur l'écran d'accueil</b><br>
-    Android : <b>⋮ Menu</b> → <b>Ajouter à l'écran d'accueil</b></p>
-  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
@@ -337,6 +297,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+const auth = getAuth(app);
+
+// Identité invisible du téléphone : créée une seule fois, puis mémorisée
+// automatiquement par le navigateur — le client ne voit jamais rien.
+let myUid = null;
+const authReady = new Promise((resolve) => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) { myUid = user.uid; resolve(user.uid); }
+    else { signInAnonymously(auth).catch(() => resolve(null)); }
+  });
+});
 
 // ── PIÈCES QUI TOMBENT ──
 function spawnFallingCoins() {
@@ -403,9 +374,7 @@ function showMsg(id, txt, type) {
 
 // Stats retirées - données internes
 
-// ── RETURNING PLAYER ──
-let _returnDoc = null;
-
+// ── RETURNING PLAYER (sans PIN — l'identité de l'appareil suffit) ──
 document.getElementById('returnBtn').addEventListener('click', async () => {
   const pseudo = document.getElementById('returnPseudo').value.trim();
   const msg    = document.getElementById('returnMsg');
@@ -414,100 +383,70 @@ document.getElementById('returnBtn').addEventListener('click', async () => {
   const btn = document.getElementById('returnBtn');
   btn.textContent = '⏳...'; btn.disabled = true;
 
+  await authReady;
   const snap = await getDocs(query(collection(db,'clients'), where('pseudo','==',pseudo)));
   btn.textContent = 'CONTINUER ⚡'; btn.disabled = false;
 
   if (snap.empty) { msg.textContent = 'Pseudo introuvable. Crée une nouvelle carte !'; msg.className = 'msg err'; return; }
-  msg.textContent = ''; msg.className = 'msg';
 
-  _returnDoc = snap.docs[0];
-  const data = _returnDoc.data();
+  const foundDoc = snap.docs[0];
+  const data = foundDoc.data();
 
-  if (!data.pin) {
-    // Pas de PIN — écran création
-    document.getElementById('pinCreateScreen').style.display = 'flex';
-  } else {
-    // A un PIN — écran saisie
-    document.getElementById('pinScreenName').textContent = `Bienvenue ${data.pseudo} 👋`;
-    document.getElementById('pinScreen').style.display = 'flex';
-    setTimeout(() => document.getElementById('pinScreenInp').focus(), 100);
+  if (!data.authUid || (myUid && data.authUid === myUid)) {
+    // Compte jamais réclamé (créé avant l'identité invisible) ou déjà le nôtre
+    if (!data.authUid && myUid) {
+      await updateDoc(doc(db, 'clients', foundDoc.id), { authUid: myUid }).catch(() => {});
+    }
+    localStorage.setItem('xgames_client_id', foundDoc.id);
+    window.location.href = `client.html?id=${foundDoc.id}`;
+    return;
   }
+
+  // Compte lié à un autre appareil : transfert nécessaire via l'équipe du stand
+  msg.className = 'msg err';
+  msg.innerHTML = `Cette carte est déjà liée à un autre appareil.<br>Demande à l'équipe du stand de te la transférer (10 secondes, sans rien à retenir).`;
 });
 
 document.getElementById('returnPseudo').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('returnBtn').click();
 });
 
-// Valider PIN existant
-document.getElementById('pinScreenBtn').addEventListener('click', async () => {
-  const pin = document.getElementById('pinScreenInp').value.trim();
-  const msg = document.getElementById('pinScreenMsg');
-  if (pin.length < 4) { msg.textContent = 'Entre 4 chiffres'; return; }
-  if (!_returnDoc) return;
-  if (pin !== _returnDoc.data().pin) {
-    msg.textContent = '❌ Code incorrect. Demande une réinitialisation au stand.';
-    document.getElementById('pinScreenInp').value = '';
-    return;
+// ── TRANSFERT DEPUIS L'ADMIN (nouvel appareil) — lien ?claim=TOKEN ──
+(async () => {
+  const claimToken = new URLSearchParams(window.location.search).get('claim');
+  if (!claimToken) return;
+  await authReady;
+  try {
+    const claimSnap = await getDoc(doc(db, 'claims', claimToken));
+    if (!claimSnap.exists()) {
+      alert('Ce lien de transfert a expiré ou a déjà été utilisé. Demande-en un nouveau au stand.');
+      return;
+    }
+    const clientId = claimSnap.data().clientId;
+    await updateDoc(doc(db, 'clients', clientId), { authUid: myUid, updatedAt: serverTimestamp() });
+    await deleteDoc(doc(db, 'claims', claimToken)).catch(() => {});
+    localStorage.setItem('xgames_client_id', clientId);
+    window.location.href = `client.html?id=${clientId}`;
+  } catch (e) {
+    alert('Le transfert a échoué. Réessaie ou demande à l\'équipe du stand.');
   }
-  if (document.getElementById('pinScreenStay').checked) {
-    localStorage.setItem('xgames_pin_ok', _returnDoc.id);
-  } else {
-    localStorage.removeItem('xgames_pin_ok');
-  }
-  localStorage.setItem('xgames_client_id', _returnDoc.id);
-  window.location.href = `client.html?id=${_returnDoc.id}`;
-});
-
-document.getElementById('pinScreenInp').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('pinScreenBtn').click();
-});
-
-document.getElementById('pinScreenBack').addEventListener('click', () => {
-  document.getElementById('pinScreen').style.display = 'none';
-  document.getElementById('pinScreenInp').value = '';
-  document.getElementById('pinScreenMsg').textContent = '';
-});
-
-// Créer PIN (première fois)
-document.getElementById('pinCreateBtn').addEventListener('click', async () => {
-  const pin = document.getElementById('pinCreateScreenInp').value.trim();
-  const msg = document.getElementById('pinCreateScreenMsg');
-  if (!/^\d{4}$/.test(pin)) { msg.textContent = '4 chiffres uniquement (ex: 1234)'; return; }
-  if (!_returnDoc) return;
-  await updateDoc(doc(db,'clients',_returnDoc.id), { pin });
-  if (document.getElementById('pinCreateStay').checked) {
-    localStorage.setItem('xgames_pin_ok', _returnDoc.id);
-  } else {
-    localStorage.removeItem('xgames_pin_ok');
-  }
-  localStorage.setItem('xgames_client_id', _returnDoc.id);
-  window.location.href = `client.html?id=${_returnDoc.id}`;
-});
-
-document.getElementById('pinCreateScreenInp').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('pinCreateBtn').click();
-});
-
-document.getElementById('pinCreateBack').addEventListener('click', () => {
-  document.getElementById('pinCreateScreen').style.display = 'none';
-  document.getElementById('pinCreateScreenInp').value = '';
-  document.getElementById('pinCreateScreenMsg').textContent = '';
-});
+})();
 
 // ── NEW PLAYER ──
 document.getElementById('createBtn').addEventListener('click', async () => {
   const pseudo = document.getElementById('newPseudo').value.trim();
-  const pin    = document.getElementById('newPin').value.trim();
   if (!pseudo || pseudo.length < 2) { showMsg('createMsg', 'Pseudo trop court (min 2 caractères)', 'err'); return; }
   if (pseudo.length > 18)           { showMsg('createMsg', 'Pseudo trop long (max 18)', 'err'); return; }
   if (containsBadWord(pseudo))      { showMsg('createMsg', 'Ce pseudo n\'est pas autorisé', 'err'); return; }
-  if (!pin || !/^\d{4}$/.test(pin)) { showMsg('createMsg', 'PIN invalide — 4 chiffres uniquement (ex: 1234)', 'err'); return; }
 
   const btn = document.getElementById('createBtn');
   btn.textContent = '⏳ Création en cours...';
   btn.disabled = true;
 
   try {
+    const uid = myUid || await authReady;
+    if (!uid) { showMsg('createMsg', 'Connexion impossible — vérifie ta connexion internet', 'err'); btn.textContent = 'CRÉER MA CARTE 🎮'; btn.disabled = false; return; }
+
     const q        = query(collection(db,'clients'), where('pseudo','==',pseudo));
     const existing = await getDocs(q);
     if (!existing.empty) {
@@ -519,7 +458,7 @@ document.getElementById('createBtn').addEventListener('click', async () => {
     const id  = genId();
     const ref = doc(collection(db,'clients'));
     await setDoc(ref, {
-      id, pseudo, avatar: selAvatar, pin,
+      id, pseudo, avatar: selAvatar, authUid: uid,
       xp: 0, level: 0, coupons: [], cycleCount: 0, totalEuros: 0,
       createdAt: serverTimestamp(), updatedAt: serverTimestamp()
     });
@@ -529,7 +468,7 @@ document.getElementById('createBtn').addEventListener('click', async () => {
       const parrain = await getDocs(query(collection(db,'clients'), where('id','==',refId)));
       if (!parrain.empty) {
         const parrainDoc = parrain.docs[0];
-        await updateDoc(doc(db,'clients',parrainDoc.id), { xp: (parrainDoc.data().xp||0) + 1, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db,'clients',parrainDoc.id), { xp: (parrainDoc.data().xp||0) + 1, updatedAt: serverTimestamp() }).catch(() => {});
       }
     }
     localStorage.setItem('xgames_client_id', ref.id);
@@ -547,108 +486,69 @@ document.getElementById('newPseudo').addEventListener('keydown', e => {
 // ── AUTO-RECONNEXION ──
 const savedId = localStorage.getItem('xgames_client_id');
 if (savedId) {
-  if (localStorage.getItem('xgames_pin_ok') === savedId) {
-    // Rester connecté activé → passe direct
-    window.location.href = `client.html?id=${savedId}`;
-  } else {
-    // Demande le PIN avant de rediriger
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, 'clients', savedId));
-        if (!snap.exists()) {
-          // Compte supprimé — nettoie et affiche les formulaires normalement
-          localStorage.removeItem('xgames_client_id');
-          localStorage.removeItem('xgames_pin_ok');
-          // PAS de reload — affiche juste les formulaires
-          return;
-        }
-        const data = snap.data();
-      // Cache les formulaires
-      document.getElementById('returnCard').style.display = 'none';
-      document.getElementById('newCard').style.display = 'none';
-      document.querySelectorAll('.divider').forEach(d => d.style.display = 'none');
-
-      // Crée l'écran PIN inline
-      const pinDiv = document.createElement('div');
-      pinDiv.className = 'card';
-      pinDiv.style.textAlign = 'center';
-      if (!data.pin) {
-        pinDiv.innerHTML = `
-          <div style="font-size:2rem;margin-bottom:8px">🔐</div>
-          <div class="card-title">Crée ton code secret</div>
-          <p style="font-size:.75rem;color:var(--dim);margin-bottom:14px;line-height:1.6">Pour protéger ta carte, crée un code à 4 chiffres.<br>⚠️ Ne le donne jamais à quelqu'un d'autre !</p>
-          <input class="inp" id="quickPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="letter-spacing:.4em;font-size:1.5rem;text-align:center">
-          <label style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:.75rem;color:var(--dim);margin:10px 0">
-            <input type="checkbox" id="quickStay" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer"> Rester connecté sur cet appareil
-          </label>
-          <button class="btn-primary" id="quickPinBtn">CRÉER MON CODE ⚡</button>
-          <div class="msg" id="quickMsg"></div>`;
-        document.getElementById('main').appendChild(pinDiv);
-        document.getElementById('quickPinBtn').addEventListener('click', async () => {
-          const pin = document.getElementById('quickPin').value.trim();
-          if (!/^\d{4}$/.test(pin)) { document.getElementById('quickMsg').textContent = '4 chiffres uniquement'; document.getElementById('quickMsg').className = 'msg err'; return; }
-          await updateDoc(doc(db, 'clients', savedId), { pin });
-          if (document.getElementById('quickStay').checked) localStorage.setItem('xgames_pin_ok', savedId);
-          window.location.href = `client.html?id=${savedId}`;
-        });
-      } else {
-        pinDiv.innerHTML = `
-          <div style="font-size:2rem;margin-bottom:8px">🔐</div>
-          <div class="card-title">Bienvenue ${data.pseudo} 👋</div>
-          <p style="font-size:.75rem;color:var(--dim);margin-bottom:14px">Entre ton code secret pour accéder à ta carte</p>
-          <input class="inp" id="quickPin" type="password" inputmode="numeric" maxlength="4" placeholder="• • • •" style="letter-spacing:.4em;font-size:1.5rem;text-align:center">
-          <label style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:.75rem;color:var(--dim);margin:10px 0">
-            <input type="checkbox" id="quickStay" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer"> Rester connecté sur cet appareil
-          </label>
-          <button class="btn-primary" id="quickPinBtn">VALIDER ⚡</button>
-          <div class="msg" id="quickMsg"></div>
-          <button onclick="localStorage.removeItem('xgames_client_id');localStorage.removeItem('xgames_pin_ok');window.location.reload()" style="background:transparent;border:none;color:var(--dim);font-size:.7rem;margin-top:10px;cursor:pointer;text-decoration:underline">← Changer de compte</button>`;
-        document.getElementById('main').appendChild(pinDiv);
-        const validate = async () => {
-          const pin = document.getElementById('quickPin').value.trim();
-          if (pin.length < 4) { document.getElementById('quickMsg').textContent = 'Code à 4 chiffres'; document.getElementById('quickMsg').className = 'msg err'; return; }
-          if (pin !== data.pin) { document.getElementById('quickMsg').textContent = '❌ Code incorrect'; document.getElementById('quickMsg').className = 'msg err'; document.getElementById('quickPin').value = ''; return; }
-          if (document.getElementById('quickStay').checked) localStorage.setItem('xgames_pin_ok', savedId);
-          window.location.href = `client.html?id=${savedId}`;
-        };
-        document.getElementById('quickPinBtn').addEventListener('click', validate);
-        document.getElementById('quickPin').addEventListener('keydown', e => { if(e.key==='Enter') validate(); });
-      }
-      } catch(e) {
-        // Erreur Firebase — nettoie et laisse le client se reconnecter manuellement
+  (async () => {
+    try {
+      await authReady;
+      const snap = await getDoc(doc(db, 'clients', savedId));
+      if (!snap.exists()) {
         localStorage.removeItem('xgames_client_id');
-        localStorage.removeItem('xgames_pin_ok');
+        return;
       }
-    })();
-  }
+      const data = snap.data();
+      if (!data.authUid || (myUid && data.authUid === myUid)) {
+        // Même appareil (identité déjà reconnue, ou compte pas encore réclamé
+        // car créé avant l'identité invisible) — aucune friction
+        if (!data.authUid && myUid) {
+          await updateDoc(doc(db, 'clients', savedId), { authUid: myUid }).catch(() => {});
+        }
+        window.location.href = `client.html?id=${savedId}`;
+      }
+      // Sinon (autre appareil / identité non reconnue) : on laisse les
+      // formulaires normaux s'afficher, rien à faire ici.
+    } catch (e) {
+      // Erreur Firebase — laisse le client utiliser les formulaires normaux
+    }
+  })();
+}
 }
 
-// ── BANNIÈRE INSTALLATION ──
+// ── INSTALLATION — un seul système, pas de doublon ──
 const isIos     = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isAndroid = /android/i.test(navigator.userAgent);
 const isMobile  = isIos || isAndroid;
-// Affiche seulement sur mobile et si pas déjà installé
 const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-if (isMobile && !isStandalone) {
+
+let deferredPrompt = null;
+let nativePromptShown = false;
+
+function showGenericPopup() {
+  if (nativePromptShown) return; // le vrai prompt Android a déjà pris le relais
   const txt = isIos
     ? 'Appuie sur <b style="color:var(--gold)">⎙ Partager</b> puis <b style="color:var(--gold)">"Sur l\'écran d\'accueil"</b>'
     : 'Appuie sur <b style="color:var(--gold)">⋮</b> puis <b style="color:var(--gold)">"Ajouter à l\'écran d\'accueil"</b>';
   document.getElementById('installPopupTxt').innerHTML = txt;
-  setTimeout(() => {
-    document.getElementById('installPopup').style.bottom = '20px';
-  }, 2000);
+  document.getElementById('installPopup').style.bottom = '20px';
 }
 
-// ── iOS INSTALL HINT ──
-if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !navigator.standalone)
-  document.getElementById('installHint').style.display = 'block';
+if (isMobile && !isStandalone) {
+  if (isIos) {
+    // iOS n'a pas de prompt natif possible : bannière générique après 2s
+    setTimeout(showGenericPopup, 2000);
+  } else {
+    // Android : on laisse une chance au vrai prompt natif (beforeinstallprompt).
+    // S'il n'arrive pas sous 3s (navigateur non compatible), on bascule sur la
+    // bannière générique — jamais les deux affichés en même temps.
+    setTimeout(() => { if (!nativePromptShown) showGenericPopup(); }, 3000);
+  }
+}
 
-// ── PWA INSTALL PROMPT (Android Chrome) ──
-let deferredPrompt = null;
+// ── PWA INSTALL PROMPT (Android Chrome — vrai bouton d'installation) ──
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
-  setTimeout(() => document.getElementById('pwaPrompt').classList.add('show'), 2000);
+  nativePromptShown = true;
+  document.getElementById('installPopup').style.bottom = '-200px'; // ferme la générique si déjà ouverte
+  setTimeout(() => document.getElementById('pwaPrompt').classList.add('show'), 500);
 });
 document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
   if (!deferredPrompt) return;

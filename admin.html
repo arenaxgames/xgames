@@ -191,9 +191,11 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
   <div class="login-logo">X-GAMES</div>
   <div class="login-sub">Admin Panel</div>
   <div class="login-box">
-    <label class="login-lbl">Mot de passe admin</label>
+    <label class="login-lbl" id="loginTitle">Connexion admin</label>
+    <input class="login-inp" type="email" id="emailInp" placeholder="ton-email@exemple.com" autocomplete="username" style="margin-bottom:10px">
     <input class="login-inp" type="password" id="pwdInp" placeholder="••••••••" autocomplete="current-password">
-    <button class="login-btn" id="loginBtn">ACCÉDER AU PANEL ⚡</button>
+    <div id="loginHint" style="font-size:.68rem;color:var(--dim);margin-top:8px;line-height:1.5"></div>
+    <button class="login-btn" id="loginBtn">SE CONNECTER ⚡</button>
     <div class="login-err" id="loginErr"></div>
   </div>
 </div>
@@ -250,6 +252,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, collection, setDoc, updateDoc, getDoc, getDocs, addDoc, onSnapshot, query, orderBy, where, limit, serverTimestamp, arrayUnion, deleteDoc, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ════════════════════════════════════
 // 🔧 COLLE TA CONFIG FIREBASE ICI
@@ -265,12 +268,9 @@ const firebaseConfig = {
 };
 // ════════════════════════════════════
 
-// ⚠️ CHANGE CE MOT DE PASSE
-// Hash SHA-256 du mot de passe — le vrai mot de passe n'est plus visible dans le code
-const ADMIN_HASH = "e6051bb480bf66cb904dbcc39562ef2a248e4549158fcd9f8641988e8bbe7270";
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Échappe le texte fourni par les clients (pseudo, avis...) avant de
 // l'insérer dans du HTML, pour empêcher l'injection de code (XSS).
@@ -287,69 +287,105 @@ let selClientId = null;
 let selEuros = null;
 let toastT;
 
-// Anti-brute force
-let _loginAttempts = 0;
-let _loginBlockedUntil = 0;
-
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
   if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
 }
 
-// Hash SHA-256
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('pwdInp').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('emailInp').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+let _adminAlreadyExists = null; // null = pas encore vérifié
+
+async function checkAdminExists() {
+  try {
+    const snap = await getDoc(doc(db, 'config', 'admin'));
+    _adminAlreadyExists = snap.exists();
+  } catch (e) {
+    _adminAlreadyExists = true; // par prudence, ne pas proposer de recréer un compte en cas de doute
+  }
+  const title = document.getElementById('loginTitle');
+  const btn = document.getElementById('loginBtn');
+  const hint = document.getElementById('loginHint');
+  if (!_adminAlreadyExists) {
+    title.textContent = 'Créer ton accès admin (première fois)';
+    btn.textContent = 'CRÉER MON COMPTE ⚡';
+    hint.textContent = 'Choisis un email et un mot de passe — ce sera ton accès admin définitif.';
+  } else {
+    title.textContent = 'Connexion admin';
+    btn.textContent = 'SE CONNECTER ⚡';
+    hint.textContent = '';
+  }
+}
+checkAdminExists();
 
 async function doLogin() {
   const errEl = document.getElementById('loginErr');
+  const email = document.getElementById('emailInp').value.trim();
+  const pwd   = document.getElementById('pwdInp').value;
+  errEl.textContent = '';
 
-  // Vérifie si bloqué (anti-brute force)
-  if (Date.now() < _loginBlockedUntil) {
-    const secs = Math.ceil((_loginBlockedUntil - Date.now()) / 1000);
-    errEl.textContent = `⏳ Trop de tentatives — attends ${secs}s`;
-    return;
-  }
+  if (!email || !pwd) { errEl.textContent = 'Entre un email et un mot de passe'; return; }
+  if (_adminAlreadyExists === false && pwd.length < 6) { errEl.textContent = 'Mot de passe trop court (6 caractères minimum)'; return; }
 
-  const v = document.getElementById('pwdInp').value;
-  const hash = await sha256(v);
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
 
-  if (hash === ADMIN_HASH) {
-    _loginAttempts = 0;
-    document.getElementById('loginScr').style.display = 'none';
-    document.getElementById('adm').style.display = 'flex';
-    // Session admin — déconnexion auto après 2h
-    setTimeout(() => {
-      document.getElementById('adm').style.display = 'none';
-      document.getElementById('loginScr').style.display = 'flex';
-      document.getElementById('loginErr').textContent = '⏱️ Session expirée — reconnecte-toi';
-    }, 2 * 60 * 60 * 1000);
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-    initAdmin();
-  } else {
-    _loginAttempts++;
-    document.getElementById('pwdInp').value = '';
-    if (_loginAttempts >= 3) {
-      _loginBlockedUntil = Date.now() + 30000;
-      _loginAttempts = 0;
-      errEl.textContent = '🚫 3 tentatives échouées — bloqué 30 secondes';
-      setTimeout(() => errEl.textContent = '', 30000);
+  try {
+    if (_adminAlreadyExists === false) {
+      // Première fois : crée le compte ET le fixe comme admin définitif
+      const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+      await setDoc(doc(db, 'config', 'admin'), { uid: cred.user.uid, email, createdAt: serverTimestamp() });
     } else {
-      errEl.textContent = `❌ Mot de passe incorrect (${3 - _loginAttempts} essai(s) restant(s))`;
-      setTimeout(() => errEl.textContent = '', 3000);
+      await signInWithEmailAndPassword(auth, email, pwd);
+    }
+    onLoginSuccess();
+  } catch (e) {
+    btn.disabled = false;
+    if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+      errEl.textContent = '❌ Email ou mot de passe incorrect';
+    } else if (e.code === 'auth/email-already-in-use') {
+      errEl.textContent = 'Un compte admin existe déjà — reconnecte-toi avec.';
+      checkAdminExists();
+    } else if (e.code === 'auth/too-many-requests') {
+      errEl.textContent = '⏳ Trop de tentatives — réessaie dans un instant';
+    } else {
+      errEl.textContent = '❌ ' + (e.message || 'Erreur de connexion');
     }
   }
 }
 
+let _sessionTimeout = null;
+function onLoginSuccess() {
+  document.getElementById('loginScr').style.display = 'none';
+  document.getElementById('adm').style.display = 'flex';
+  document.getElementById('loginBtn').disabled = false;
+  // Session admin — déconnexion auto après 2h d'inactivité de l'onglet
+  clearTimeout(_sessionTimeout);
+  _sessionTimeout = setTimeout(() => {
+    signOut(auth);
+  }, 2 * 60 * 60 * 1000);
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+  initAdmin();
+}
+
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  document.getElementById('adm').style.display = 'none';
-  document.getElementById('loginScr').style.display = 'flex';
+  signOut(auth);
+});
+
+// Si déjà connecté (session Firebase persistée) → accès direct, sinon écran de connexion
+onAuthStateChanged(auth, (user) => {
+  clearTimeout(_sessionTimeout);
+  if (user) {
+    onLoginSuccess();
+  } else {
+    document.getElementById('adm').style.display = 'none';
+    document.getElementById('loginScr').style.display = 'flex';
+    checkAdminExists();
+  }
 });
 
 function initAdmin() {
@@ -679,11 +715,15 @@ function renderDetail(id) {
       <div class="fb" id="tombolaTicketFb" style="margin-top:6px"></div>
     </div>
 
-    <!-- RESET PIN -->
-    <div style="background:rgba(247,37,133,.06);border:1px solid rgba(247,37,133,.25);border-radius:12px;padding:12px;margin-top:8px">
-      <div style="font-size:.68rem;color:var(--pink);font-weight:700;margin-bottom:6px">🔐 PIN de sécurité</div>
-      <div style="font-size:.65rem;color:var(--dim);margin-bottom:8px">${cl.pin ? '✅ PIN défini' : '⚠️ Pas encore de PIN — le client doit en créer un'}</div>
-      <button onclick="resetPin('${id}')" style="width:100%;background:linear-gradient(135deg,rgba(247,37,133,.3),rgba(114,9,183,.3));border:1px solid rgba(247,37,133,.4);border-radius:10px;color:#fff;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:9px;cursor:pointer">🔄 RÉINITIALISER LE PIN</button>
+    <!-- TRANSFERT VERS UN NOUVEL APPAREIL -->
+    <div style="background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.25);border-radius:12px;padding:12px;margin-top:8px">
+      <div style="font-size:.68rem;color:var(--cyan);font-weight:700;margin-bottom:6px">📲 Nouveau téléphone</div>
+      <div style="font-size:.65rem;color:var(--dim);margin-bottom:8px">Le client a changé d'appareil ? Génère un lien à faire scanner sur son nouveau téléphone (valable 10 minutes).</div>
+      <button onclick="generateDeviceTransfer('${id}')" style="width:100%;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:10px;color:#000;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;padding:9px;cursor:pointer">🔗 GÉNÉRER LE LIEN DE TRANSFERT</button>
+      <div id="transferBox" style="margin-top:10px;display:none;text-align:center">
+        <div id="transferQr" style="display:inline-block;background:#fff;padding:8px;border-radius:8px"></div>
+        <div style="font-size:.6rem;color:var(--dim);margin-top:6px;word-break:break-all" id="transferLinkTxt"></div>
+      </div>
       <div class="fb" id="pinFb" style="margin-top:6px"></div>
     </div>
 
@@ -763,13 +803,23 @@ function renderDetail(id) {
 
 }
 
-window.resetPin = async function(clientId) {
+window.generateDeviceTransfer = async function(clientId) {
   const cl = allClients.find(x => x._id === clientId);
-  if (!confirm(`Réinitialiser le PIN de ${cl?.pseudo} ? Il devra en créer un nouveau à sa prochaine connexion.`)) return;
-  await updateDoc(doc(db, 'clients', clientId), { pin: null, updatedAt: serverTimestamp() });
   const fb = document.getElementById('pinFb');
-  if (fb) { fb.className='fb ok'; fb.textContent='✓ PIN réinitialisé — le client devra en créer un nouveau'; }
-  toast(`PIN de ${cl?.pseudo} réinitialisé`);
+  try {
+    await setDoc(doc(db, 'claims', clientId), { clientId, createdAt: serverTimestamp() });
+    const url = window.location.origin + window.location.pathname.replace('admin.html', 'register.html') + `?claim=${clientId}`;
+    const box = document.getElementById('transferBox');
+    const qrDiv = document.getElementById('transferQr');
+    qrDiv.innerHTML = '';
+    new QRCode(qrDiv, { text: url, width: 140, height: 140 });
+    document.getElementById('transferLinkTxt').textContent = url;
+    box.style.display = 'block';
+    if (fb) { fb.className = 'fb ok'; fb.textContent = '✓ Lien généré — valable 10 minutes'; }
+    toast(`Lien de transfert généré pour ${cl?.pseudo}`);
+  } catch (e) {
+    if (fb) { fb.className = 'fb err'; fb.textContent = 'Erreur : ' + e.message; }
+  }
 };
 
 window.deleteClient = async function(id) {
@@ -1489,10 +1539,30 @@ function renderConfig(c) {
     <!-- ══ MOT DE PASSE ══ -->
     <div class="st">Mot de passe admin</div>
     <div class="card">
-      <p style="font-size:.74rem;color:var(--dim);line-height:1.5">
-        Modifie le hash dans <code style="color:var(--cyan);background:rgba(0,245,255,.07);padding:1px 5px;border-radius:4px">const ADMIN_HASH</code> dans admin.html
-      </p>
+      <p style="font-size:.74rem;color:var(--dim);line-height:1.5;margin-bottom:10px">Connecté en tant que <b style="color:var(--cyan)">${escapeHtml(auth.currentUser?.email || '—')}</b></p>
+      <input class="login-inp" type="password" id="newPwdInp" placeholder="Nouveau mot de passe (6 caractères min.)" style="margin-bottom:8px;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.2);border-radius:10px;color:var(--txt);padding:11px;width:100%">
+      <button class="btn btn-primary btn-full" onclick="window._changeAdminPassword()">🔑 CHANGER LE MOT DE PASSE</button>
+      <div class="fb" id="pwdChangeFb"></div>
     </div>`;
+
+    window._changeAdminPassword = async function() {
+      const inp = document.getElementById('newPwdInp');
+      const fb = document.getElementById('pwdChangeFb');
+      const val = inp.value;
+      if (val.length < 6) { fb.className = 'fb err'; fb.textContent = 'Mot de passe trop court (6 caractères minimum)'; return; }
+      try {
+        const { updatePassword } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        await updatePassword(auth.currentUser, val);
+        fb.className = 'fb ok'; fb.textContent = '✓ Mot de passe changé';
+        inp.value = '';
+      } catch (e) {
+        if (e.code === 'auth/requires-recent-login') {
+          fb.className = 'fb err'; fb.textContent = 'Reconnecte-toi (déconnexion puis connexion) avant de changer le mot de passe.';
+        } else {
+          fb.className = 'fb err'; fb.textContent = 'Erreur : ' + e.message;
+        }
+      }
+    };
 
   // ── TIERS ──
   // Initialise seulement la première fois ou si pas encore chargé
