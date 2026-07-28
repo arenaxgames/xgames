@@ -2,58 +2,159 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Clients — lecture publique limitée, écriture limitée
+    // ── Identité admin ──
+    // config/admin.uid est fixé UNE SEULE FOIS (la toute première personne
+    // authentifiée qui le crée devient l'admin pour toujours — voir la
+    // règle sur /config/{id} plus bas). Ensuite, isAdmin() vérifie que
+    // c'est bien cette même personne qui écrit.
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/config/admin)
+        && request.auth.uid == get(/databases/$(database)/documents/config/admin).data.uid;
+    }
+
+    // ── Propriétaire d'une fiche client ──
+    // authUid est posé une fois à la création du compte (identité invisible
+    // de l'appareil). isOwner vérifie que c'est bien ce même appareil qui
+    // écrit ; isSelfServiceEdit limite ce qu'il peut changer lui-même
+    // (jamais l'XP, les euros, le niveau — ça reste admin/jeu uniquement).
+    function isOwner(before) {
+      return request.auth != null && ('authUid' in before) && request.auth.uid == before.authUid;
+    }
+    function isSelfServiceEdit(before, after) {
+      return isOwner(before)
+        && after.diff(before).affectedKeys()
+             .hasOnly(['avisSubmitted','coupons','lastDailySpin','lastDailySpinAt','updatedAt']);
+    }
+
+    // ── Transfert vers un nouvel appareil ──
+    // L'admin génère un jeton court dans /claims/{token} (voir plus bas).
+    // Le nouvel appareil du client, en présentant ce jeton, peut poser SON
+    // PROPRE authUid sur la fiche — rien d'autre ne peut changer via cette
+    // voie. Le jeton expire au bout de 10 minutes.
+    function isDeviceClaim(clientId, before, after) {
+      return request.auth != null
+        && after.diff(before).affectedKeys().hasOnly(['authUid','updatedAt'])
+        && after.authUid == request.auth.uid
+        && exists(/databases/$(database)/documents/claims/$(clientId))
+        && get(/databases/$(database)/documents/claims/$(clientId)).data.clientId == clientId
+        && request.time < get(/databases/$(database)/documents/claims/$(clientId)).data.createdAt + duration.value(10, 'm');
+    }
+
+    // ── Bonus de parrainage : +1 XP exactement, rien d'autre ──
+    function isReferralBonus(before, after) {
+      return request.auth != null
+        && after.diff(before).affectedKeys().hasOnly(['xp','updatedAt'])
+        && after.xp == before.xp + 1;
+    }
+
+    // ── Migration des comptes créés avant l'ajout de l'identité invisible ──
+    // Un compte existant sans authUid peut être réclamé une seule fois — dès
+    // que ce champ est posé, cette règle ne s'applique plus jamais à lui.
+    function isLegacyClaim(before, after) {
+      return request.auth != null
+        && !('authUid' in before)
+        && after.diff(before).affectedKeys().hasOnly(['authUid']);
+    }
+
+    // ── Mini-jeu Jet Ball Arena (XP + compteur de parties + meilleur score) ──
+    // Une partie ne peut donner que +15 XP max, incrémente le compteur du
+    // jour de 1 exactement, et respecte 20s minimum entre deux parties.
+    // Si le quota gratuit du jour (3) est déjà atteint, la partie n'est
+    // acceptée que si le client a des "parties bonus" (offertes par l'admin),
+    // qui sont alors consommées une par une.
+    function isGameWrite(before, after) {
+      let sameDay = ('jbaGamesDate' in before) && before.jbaGamesDate == after.jbaGamesDate;
+      let gamesBefore = sameDay && ('jbaGamesToday' in before) ? before.jbaGamesToday : 0;
+      let bonusBefore = ('jbaBonusGames' in before) ? before.jbaBonusGames : 0;
+      let bestBefore = ('jbaBestScore' in before) ? before.jbaBestScore : 0;
+      return after.diff(before).affectedKeys()
+               .hasOnly(['xp','jbaGamesToday','jbaGamesDate','jbaBonusGames','jbaBestScore','jbaLastGameAt','updatedAt'])
+             && after.diff(before).affectedKeys().hasAny(['jbaGamesToday','jbaGamesDate','jbaLastGameAt'])
+             && after.xp >= before.xp && after.xp <= before.xp + 15
+             && after.jbaGamesToday is int && after.jbaGamesToday == gamesBefore + 1
+             && (
+                  (gamesBefore < 3 && after.jbaBonusGames == bonusBefore)
+                  || (gamesBefore >= 3 && bonusBefore > 0 && after.jbaBonusGames == bonusBefore - 1)
+                )
+             && (!('jbaBestScore' in after) || (after.jbaBestScore is int && after.jbaBestScore >= bestBefore))
+             && (!('jbaLastGameAt' in before)
+                 || request.time > before.jbaLastGameAt + duration.value(20, 's'));
+    }
+
+    // ── Écriture admin : offrir des parties bonus au client ──
+    function isBonusGrant(before, after) {
+      let bonusBefore = ('jbaBonusGames' in before) ? before.jbaBonusGames : 0;
+      return after.diff(before).affectedKeys().hasOnly(['jbaBonusGames', 'updatedAt'])
+             && after.jbaBonusGames is int
+             && after.jbaBonusGames > bonusBefore
+             && after.jbaBonusGames <= bonusBefore + 50;
+    }
+
     match /clients/{clientId} {
-      // Lecture : champs publics uniquement (pas le PIN)
       allow read: if true;
-      // Écriture : autorisée mais uniquement les champs légitimes
-      // (pas de suppression de compte via API directe)
-      allow create: if request.resource.data.keys().hasAll(['pseudo','xp','level','coupons'])
+
+      allow create: if request.auth != null
+                    && request.resource.data.authUid == request.auth.uid
+                    && request.resource.data.keys().hasAll(['pseudo','xp','level','coupons','authUid'])
                     && request.resource.data.xp == 0
                     && request.resource.data.level == 0;
-      allow update: if true; // nécessaire pour addXP, PIN, daily spin
-      allow delete: if false; // suppression uniquement via admin
+
+      allow update: if
+        isAdmin()
+        || isGameWrite(resource.data, request.resource.data)
+        || isBonusGrant(resource.data, request.resource.data)
+        || isSelfServiceEdit(resource.data, request.resource.data)
+        || isDeviceClaim(clientId, resource.data, request.resource.data)
+        || isReferralBonus(resource.data, request.resource.data)
+        || isLegacyClaim(resource.data, request.resource.data);
+
+      allow delete: if false;
+
       match /history/{h} {
         allow read: if true;
-        allow create: if true;
+        allow create: if request.auth != null;
         allow update, delete: if false;
       }
     }
 
-    // Config — lecture seule pour tous, écriture impossible via API
-    match /config/{id} {
-      allow read: if true;
-      allow write: if false;
+    // ── Jetons de transfert vers un nouvel appareil (créés par l'admin) ──
+    match /claims/{token} {
+      allow read: if true; // le nouvel appareil du client doit pouvoir le lire
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if true; // nettoyage après usage, sans conséquence si oublié
     }
 
-    // Slots — lecture/écriture (machine à sous)
+    // ── config/admin : posé UNE SEULE FOIS par le premier compte authentifié ──
+    // (à faire immédiatement après la mise en ligne, avant de partager le lien admin)
+    // config/main reste en lecture seule comme avant.
+    match /config/{id} {
+      allow read: if true;
+      allow write: if id == 'admin'
+                   && request.auth != null
+                   && !exists(/databases/$(database)/documents/config/admin);
+    }
+
     match /slots/{id} {
       allow read, write: if true;
     }
-
-    // Validations coupons — lecture/écriture limitée
     match /validations/{id} {
       allow read: if true;
       allow create: if true;
       allow update: if true;
       allow delete: if false;
     }
-
-    // Logs — écriture seule, pas de lecture publique
     match /logs/{id} {
       allow create: if true;
       allow read, update, delete: if false;
     }
-
-    // Avis — lecture publique, création/update autorisés
     match /avis/{id} {
       allow read: if true;
       allow create: if true;
       allow update: if true;
       allow delete: if false;
     }
-
-    // Tombola winners — lecture publique uniquement
     match /tombola/{id} {
       allow read: if true;
       allow write: if false;
