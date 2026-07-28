@@ -237,6 +237,7 @@ body::after{
     </div>
     <div class="logo">X-GAMES</div>
     <div class="logo-sub">Stand de jeu · Fête foraine</div>
+    <div style="font-size:.55rem;color:rgba(255,255,255,.25);margin-top:4px;font-family:monospace">build-clean-v1</div>
     <div class="logo-tagline">✦ Joue · Progresse · Gagne ✦</div>
     <div class="casino-lights">
       <div class="clight"></div><div class="clight"></div><div class="clight"></div>
@@ -286,6 +287,24 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+// ── Bannière d'erreur visible (diagnostic direct à l'écran) ──
+function showFatalError(msg) {
+  let box = document.getElementById('fatalErrBox');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'fatalErrBox';
+    box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ff006e;color:#fff;font-family:monospace;font-size:.72rem;padding:10px 14px;line-height:1.5;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.5)';
+    document.body.prepend(box);
+  }
+  box.textContent = '⚠️ ' + msg;
+}
+window.addEventListener('error', (e) => {
+  showFatalError('Erreur JS : ' + (e.message || e.error) + (e.filename ? ` (${e.filename}:${e.lineno})` : ''));
+});
+window.addEventListener('unhandledrejection', (e) => {
+  showFatalError('Erreur promesse : ' + (e.reason?.message || e.reason));
+});
+
 const firebaseConfig = {
   apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
   authDomain: "xgames-loyalty.firebaseapp.com",
@@ -302,12 +321,21 @@ const auth = getAuth(app);
 // Identité invisible du téléphone : créée une seule fois, puis mémorisée
 // automatiquement par le navigateur — le client ne voit jamais rien.
 let myUid = null;
-const authReady = new Promise((resolve) => {
-  onAuthStateChanged(auth, (user) => {
-    if (user) { myUid = user.uid; resolve(user.uid); }
-    else { signInAnonymously(auth).catch(() => resolve(null)); }
-  });
-});
+const authReady = Promise.race([
+  new Promise((resolve) => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) { myUid = user.uid; resolve(user.uid); }
+      else {
+        signInAnonymously(auth)
+          .catch((e) => { showFatalError('Connexion Firebase impossible : ' + e.code + ' — ' + e.message); resolve(null); });
+      }
+    }, (e) => { showFatalError('Erreur Auth Firebase : ' + e.message); resolve(null); });
+  }),
+  new Promise((resolve) => setTimeout(() => {
+    if (!myUid) showFatalError('Connexion trop lente (plus de 6s) — vérifie ta connexion internet, ou le domaine peut ne pas être autorisé dans Firebase Authentication → Settings → Authorized domains.');
+    resolve(null);
+  }, 6000))
+]);
 
 // ── PIÈCES QUI TOMBENT ──
 function spawnFallingCoins() {
@@ -509,7 +537,6 @@ if (savedId) {
       // Erreur Firebase — laisse le client utiliser les formulaires normaux
     }
   })();
-}
 }
 
 // ── INSTALLATION — un seul système, pas de doublon ──
