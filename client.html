@@ -1146,6 +1146,14 @@ if (clientId) {
     });
   });
 
+  // Affiche/masque le compteur de lancers + le bouton LANCER selon availableSpins
+  function updateSpinsUI() {
+    const div = document.getElementById('spinsAvailable');
+    const count = document.getElementById('spinsCount');
+    if (count) count.textContent = availableSpins;
+    if (div) div.style.display = availableSpins > 0 ? 'block' : 'none';
+  }
+
   // Slot listener — le client appuie sur LANCER lui-même
   onSnapshot(doc(db, 'slots', clientId), snap => {
     if (!snap.exists()) return;
