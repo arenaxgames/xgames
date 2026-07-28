@@ -540,7 +540,7 @@ body{padding-bottom:0}
       <!-- MACHINE À SOUS -->
       <div class="slot-machine-wrap">
         <!-- Levier -->
-        <div class="slot-lever" id="slotLever" onclick="pullLever()">
+        <div class="slot-lever" id="slotLever" onclick="lancerJackpot()">
           <div class="slot-lever-stick"></div>
           <div class="slot-lever-ball"></div>
         </div>
@@ -868,6 +868,14 @@ window._submitAvisModule = async function() {
     fb.innerHTML = '<span style="color:#ff006e">Erreur : ' + e.message + '</span>';
   }
 };
+window.submitAvis = window._submitAvisModule;
+window.setStars = function(n) {
+  window._selectedStars = n;
+  document.querySelectorAll('.star-btn').forEach(el => {
+    const v = parseInt(el.dataset.v, 10);
+    el.style.opacity = v <= n ? '1' : '.3';
+  });
+};
 
 // Affiche pseudo + avatar immédiatement depuis localStorage
 const savedPseudo = localStorage.getItem('xgames_pseudo');
@@ -898,6 +906,7 @@ let availableSpins = 0, isSpinning = false;
 let _pinVerified = false; // PIN vérifié une fois par session
 let config      = { tiers:[], jackpot:{ winRate:20, prizes:[{name:'Partie gratuite',icon:'🎯'}] }, sumupLink:'', slotPrice:'2€', cashEnabled:false };
 let prevXP      = null;
+let prevLastOpId = undefined; // undefined = pas encore vu de snapshot
 let lastSpinTime = 0;
 const SPIN_COOLDOWN = 90000;
 
@@ -1062,13 +1071,19 @@ if (clientId) {
     // délivre deux mises à jour très rapprochées, la seconde verra toujours
     // le prevXP déjà à jour de la première, ce qui empêche tout double-octroi
     // de coupon (le bug qui causait des coupons en double / qui réapparaissent).
+    //
+    // Si la hausse d'XP vient d'une opération admin (lastOpId a changé),
+    // l'admin a déjà calculé et ajouté le bon coupon dans la même écriture —
+    // on ne doit surtout pas en ajouter un deuxième ici.
+    const isAdminOp = prevLastOpId !== undefined && data.lastOpId && data.lastOpId !== prevLastOpId;
     let tierAward = null;
-    if (prevXP !== null && data.xp > prevXP) {
+    if (prevXP !== null && data.xp > prevXP && !isAdminOp) {
       tierAward = (config.tiers||[]).find(t => t.xp > prevXP && t.xp <= data.xp) || null;
       const bar = document.getElementById('xpFill');
       bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
     }
     prevXP = data.xp;
+    prevLastOpId = data.lastOpId;
 
     // Partie asynchrone (a besoin de l'identité invisible) — déclenchée après
     // coup, ne bloque jamais la détection de palier ci-dessus.
@@ -1661,6 +1676,12 @@ function stopCoinExplosion() {
 
 window._stopCoinExplosion = stopCoinExplosion;
 
+function closeWin() {
+  document.getElementById('winOv').classList.remove('show');
+  stopCoinExplosion();
+}
+window.closeWin = closeWin;
+
 // ── SÉLECTEUR DE JEU — défini dans script sync au-dessus ──
 
 // ── QR IDENTITÉ CLIENT ──
@@ -2044,7 +2065,6 @@ window.switchTab       = switchTab;
 window.setStars        = setStars;
 window.submitAvis      = submitAvis;
 window.closeJetBallArena = closeJetBallArena;
-window.pullLever       = pullLever;
 window.closeWin        = closeWin;
 window.closeInstallBar = closeInstallBar;
 </script>
