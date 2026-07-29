@@ -122,13 +122,14 @@ body::after{content:'';position:fixed;inset:0;
 .slot-title{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:900;color:var(--gold);text-align:center;letter-spacing:.2em;margin-bottom:12px;text-shadow:0 0 20px var(--gold),0 0 40px rgba(255,214,10,.5);animation:title-pulse 2s ease-in-out infinite}
 @keyframes title-pulse{0%,100%{text-shadow:0 0 15px var(--gold)}50%{text-shadow:0 0 30px var(--gold),0 0 60px rgba(255,214,10,.6)}}
 .reels{display:flex;justify-content:center;align-items:stretch;gap:0;position:relative}
-.reel{width:80px;height:90px;background:linear-gradient(180deg,rgba(0,0,0,.95) 0%,rgba(8,5,0,.98) 50%,rgba(0,0,0,.95) 100%);border:none;border-right:2px solid rgba(180,120,20,.4);display:flex;align-items:center;justify-content:center;font-size:2.8rem;overflow:hidden;position:relative;flex-shrink:0}
+.reel{width:80px;height:90px;background:linear-gradient(180deg,rgba(0,0,0,.95) 0%,rgba(8,5,0,.98) 50%,rgba(0,0,0,.95) 100%);border:none;border-right:2px solid rgba(180,120,20,.4);overflow:hidden;position:relative;flex-shrink:0}
 .reel:first-child{border-radius:8px 0 0 8px;border-left:none}
 .reel:last-child{border-radius:0 8px 8px 0;border-right:none}
-.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);pointer-events:none}
-.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(0deg,rgba(0,0,0,.6),transparent);pointer-events:none}
-.reel.spin{animation:reelspin .06s steps(1) infinite}
-@keyframes reelspin{0%{transform:translateY(0) scale(1)}33%{transform:translateY(-10px) scale(.9)}66%{transform:translateY(5px) scale(.95)}}
+.reel::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);pointer-events:none;z-index:2}
+.reel::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(0deg,rgba(0,0,0,.6),transparent);pointer-events:none;z-index:2}
+.reel-strip{display:flex;flex-direction:column}
+.reel-sym{height:90px;width:80px;display:flex;align-items:center;justify-content:center;font-size:2.8rem;flex-shrink:0}
+.reel.spin .reel-sym{filter:blur(1.5px)}
 .reel.win{box-shadow:0 0 40px var(--gold),0 0 80px rgba(255,214,10,.5),inset 0 0 30px rgba(255,214,10,.15);animation:reel-win .25s ease-in-out infinite alternate}
 @keyframes reel-win{from{box-shadow:0 0 20px var(--gold)}to{box-shadow:0 0 60px var(--gold),0 0 100px rgba(255,214,10,.7)}}
 .slot-status{text-align:center;font-family:'Orbitron',monospace;font-size:.72rem;color:var(--dim);letter-spacing:.1em;margin:10px 0 8px;min-height:20px}
@@ -562,9 +563,9 @@ body{padding-bottom:0}
           <div class="slot-arrow left">▶</div>
           <div class="slot-arrow right">◀</div>
           <div class="reels">
-            <div class="reel" id="r0">🎯</div>
-            <div class="reel" id="r1">⚡</div>
-            <div class="reel" id="r2">🎮</div>
+            <div class="reel" id="r0"><div class="reel-strip" id="r0strip"><div class="reel-sym">🎯</div></div></div>
+            <div class="reel" id="r1"><div class="reel-strip" id="r1strip"><div class="reel-sym">⚡</div></div></div>
+            <div class="reel" id="r2"><div class="reel-strip" id="r2strip"><div class="reel-sym">🎮</div></div></div>
           </div>
         </div>
 
@@ -1549,36 +1550,63 @@ function spinReels(autoWin = false) {
   const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
   const won = autoWin || (Math.random() * 100 < winRate);
   document.getElementById('slotStatus').textContent = 'Lancement…';
-  const reels = [document.getElementById('r0'), document.getElementById('r1'), document.getElementById('r2')];
-  reels.forEach(r => { r.classList.remove('win'); r.classList.add('spin'); });
-  // Tourne pendant 2s (26 ticks × 75ms = ~2s)
-  let elapsed = 0;
-  const interval = setInterval(() => {
-    reels.forEach(r => r.textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]);
-    elapsed++;
-    if (elapsed > 26) {
-      clearInterval(interval);
-      reels.forEach(r => r.classList.remove('spin'));
-      if (won) {
-        const sym = SYMBOLS[Math.floor(Math.random()*4)];
-        reels.forEach(r => { r.textContent = sym; r.classList.add('win'); });
-        handleWin();
-      } else {
-        // En cas de perte : 3 symboles forcément différents
-        let s0 = Math.floor(Math.random()*SYMBOLS.length);
-        let s1 = Math.floor(Math.random()*SYMBOLS.length);
-        while (s1 === s0) s1 = Math.floor(Math.random()*SYMBOLS.length);
-        let s2 = Math.floor(Math.random()*SYMBOLS.length);
-        while (s2 === s0 || s2 === s1) s2 = Math.floor(Math.random()*SYMBOLS.length);
-        reels[0].textContent = SYMBOLS[s0];
-        reels[1].textContent = SYMBOLS[s1];
-        reels[2].textContent = SYMBOLS[s2];
-        document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
-        isSpinning = false;
-        updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
-      }
+
+  // Détermine les 3 symboles finaux AVANT de lancer le défilement
+  let finals;
+  if (won) {
+    const sym = SYMBOLS[Math.floor(Math.random()*4)];
+    finals = [sym, sym, sym];
+  } else {
+    // Perte : 3 symboles forcément différents
+    let s0 = Math.floor(Math.random()*SYMBOLS.length);
+    let s1 = Math.floor(Math.random()*SYMBOLS.length);
+    while (s1 === s0) s1 = Math.floor(Math.random()*SYMBOLS.length);
+    let s2 = Math.floor(Math.random()*SYMBOLS.length);
+    while (s2 === s0 || s2 === s1) s2 = Math.floor(Math.random()*SYMBOLS.length);
+    finals = [SYMBOLS[s0], SYMBOLS[s1], SYMBOLS[s2]];
+  }
+
+  const REEL_H = 90;      // doit correspondre à la hauteur CSS de .reel / .reel-sym
+  const SYM_COUNT = 22;   // nombre de symboles dans la bande qui défile
+  const reelIds = ['r0', 'r1', 'r2'];
+  const durations = [1.7, 2.1, 2.5]; // chaque rouleau s'arrête un peu après le précédent
+
+  reelIds.forEach((id, i) => {
+    const reelEl  = document.getElementById(id);
+    const stripEl = document.getElementById(id + 'strip');
+    reelEl.classList.remove('win');
+    reelEl.classList.add('spin');
+
+    // Construit la bande : symboles aléatoires puis le résultat final en dernier
+    let html = '';
+    for (let k = 0; k < SYM_COUNT - 1; k++) {
+      html += `<div class="reel-sym">${SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]}</div>`;
     }
-  }, 75);
+    html += `<div class="reel-sym">${finals[i]}</div>`;
+    stripEl.innerHTML = html;
+
+    // Repart de 0 sans transition, puis lance le glissement vers le bas
+    stripEl.style.transition = 'none';
+    stripEl.style.transform  = 'translateY(0px)';
+    void stripEl.offsetHeight; // force le navigateur à appliquer la position de départ
+    requestAnimationFrame(() => {
+      stripEl.style.transition = `transform ${durations[i]}s cubic-bezier(.13,.74,.24,1)`;
+      stripEl.style.transform  = `translateY(-${(SYM_COUNT - 1) * REEL_H}px)`;
+    });
+  });
+
+  const totalDuration = Math.max(...durations) * 1000 + 150;
+  setTimeout(() => {
+    reelIds.forEach(id => document.getElementById(id).classList.remove('spin'));
+    if (won) {
+      reelIds.forEach(id => document.getElementById(id).classList.add('win'));
+      handleWin();
+    } else {
+      document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
+      isSpinning = false;
+      updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
+    }
+  }, totalDuration);
 }
 
 async function handleWin() {
