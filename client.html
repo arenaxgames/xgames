@@ -1165,16 +1165,6 @@ if (clientId) {
     });
   });
 
-  // Affiche/masque le compteur de lancers + le bouton LANCER selon availableSpins
-  function updateSpinsUI() {
-    const div = document.getElementById('spinsAvailable');
-    const count = document.getElementById('spinsCount');
-    const btn = div ? div.querySelector('button') : null;
-    if (count) count.textContent = availableSpins;
-    if (div) div.style.display = availableSpins > 0 ? 'block' : 'none';
-    if (btn && !isSpinning) { btn.disabled = false; btn.textContent = '🎰 LANCER !'; }
-  }
-
   // Slot listener — le client appuie sur LANCER lui-même
   onSnapshot(doc(db, 'slots', clientId), snap => {
     if (!snap.exists()) return;
@@ -1201,6 +1191,20 @@ if (clientId) {
       updateSpinsUI();
     }
   });
+}
+
+// Affiche/masque le compteur de lancers + le bouton LANCER selon availableSpins
+// (placée ici, au niveau racine du script, pour être accessible depuis
+// lancerJackpot/spinReels/handleWin/useDailySpin — la mettre à l'intérieur du
+// bloc "if (clientId) {...}" la rendait invisible en dehors de ce bloc,
+// d'où l'erreur "updateSpinsUI is not defined" au moment de lancer.)
+function updateSpinsUI() {
+  const div = document.getElementById('spinsAvailable');
+  const count = document.getElementById('spinsCount');
+  const btn = div ? div.querySelector('button') : null;
+  if (count) count.textContent = availableSpins;
+  if (div) div.style.display = availableSpins > 0 ? 'block' : 'none';
+  if (btn && !isSpinning) { btn.disabled = false; btn.textContent = '🎰 LANCER !'; }
 }
 
 window.lancerJackpot = function() {
