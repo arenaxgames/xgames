@@ -1151,8 +1151,10 @@ if (clientId) {
   function updateSpinsUI() {
     const div = document.getElementById('spinsAvailable');
     const count = document.getElementById('spinsCount');
+    const btn = div ? div.querySelector('button') : null;
     if (count) count.textContent = availableSpins;
     if (div) div.style.display = availableSpins > 0 ? 'block' : 'none';
+    if (btn && !isSpinning) { btn.disabled = false; btn.textContent = '🎰 LANCER !'; }
   }
 
   // Slot listener — le client appuie sur LANCER lui-même
@@ -1545,11 +1547,16 @@ function spinReels(autoWin = false) {
   isSpinning = true;
   const spinsDiv = document.getElementById('spinsAvailable');
   const slotBtns = document.getElementById('slotBtns');
-  if (spinsDiv) spinsDiv.style.display = 'none';
+  const spinBtn  = spinsDiv ? spinsDiv.querySelector('button') : null;
   if (slotBtns) slotBtns.style.display = 'none';
+  // Le compteur reste visible pendant la partie — seul le bouton se désactive,
+  // avec un message clair, pour que ce soit évident qu'une partie est en cours
+  // (avant, tout le panneau disparaissait, ce qui donnait l'impression que
+  // rien ne se passait quand on cliquait pendant qu'une partie tournait déjà).
+  if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = '⏳ EN COURS…'; }
   const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
   const won = autoWin || (Math.random() * 100 < winRate);
-  document.getElementById('slotStatus').textContent = 'Lancement…';
+  document.getElementById('slotStatus').textContent = '🎰 Lancement…';
 
   // Détermine les 3 symboles finaux AVANT de lancer le défilement
   let finals;
