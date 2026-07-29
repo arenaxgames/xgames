@@ -471,7 +471,7 @@ body{padding-bottom:0}
 <div id="main">
   <div class="hdr">
     <div class="hdr-logo">X-GAMES</div>
-    <div style="font-size:.5rem;color:rgba(255,255,255,.2);font-family:monospace;text-align:center;margin-top:-4px;margin-bottom:4px">build-jackpot-fix-v1</div>
+    <div style="font-size:.5rem;color:rgba(255,255,255,.2);font-family:monospace;text-align:center;margin-top:-4px;margin-bottom:4px">build-jackpot-v3-debug</div>
     <button class="hdr-back" onclick="localStorage.removeItem('xgames_client_id');window.location.href='register.html'">⬅ Changer</button>
   </div>
   <!-- ONGLET : CARTE (défaut) -->
@@ -799,6 +799,25 @@ function switchTab(name) {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, collection, onSnapshot, updateDoc, addDoc, setDoc, getDoc, getDocs, query, orderBy, where, limit, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ── Bannière d'erreur visible (diagnostic direct à l'écran) — posée en tout
+// premier pour attraper même une erreur d'initialisation.
+function showFatalError(msg) {
+  let box = document.getElementById('fatalErrBox');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'fatalErrBox';
+    box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ff006e;color:#fff;font-family:monospace;font-size:.68rem;padding:10px 14px;line-height:1.5;word-break:break-word;box-shadow:0 2px 10px rgba(0,0,0,.5)';
+    document.body.prepend(box);
+  }
+  box.textContent = '⚠️ ' + msg;
+}
+window.addEventListener('error', (e) => {
+  showFatalError('Erreur JS : ' + (e.message || e.error) + (e.filename ? ` (L${e.lineno})` : ''));
+});
+window.addEventListener('unhandledrejection', (e) => {
+  showFatalError('Erreur promesse : ' + (e.reason?.message || e.reason));
+});
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvI3WYc4kM3VbQ8otzq0fraMCQDR7OJc0",
@@ -1185,13 +1204,18 @@ if (clientId) {
 }
 
 window.lancerJackpot = function() {
-  if (availableSpins <= 0 || isSpinning) return;
-  availableSpins--;
-  // Sauvegarde le nb restant dans Firebase
-  const newStatus = availableSpins > 0 ? 'armed' : 'used';
-  setDoc(doc(db, 'slots', clientId), { status: newStatus, clientId, multiCount: availableSpins }).catch(()=>{});
-  updateSpinsUI();
-  spinReels(false);
+  try {
+    if (availableSpins <= 0 || isSpinning) return;
+    availableSpins--;
+    // Sauvegarde le nb restant dans Firebase
+    const newStatus = availableSpins > 0 ? 'armed' : 'used';
+    setDoc(doc(db, 'slots', clientId), { status: newStatus, clientId, multiCount: availableSpins }).catch(()=>{});
+    updateSpinsUI();
+    spinReels(false);
+  } catch (e) {
+    showFatalError('Erreur lancerJackpot : ' + e.message);
+    isSpinning = false;
+  }
 };
 
 
@@ -1544,51 +1568,64 @@ document.getElementById('btnPay')?.addEventListener('click', () => {
 function spinReels(autoWin = false) {
   if (isSpinning) return;
   isSpinning = true;
-  const spinsDiv = document.getElementById('spinsAvailable');
-  const slotBtns = document.getElementById('slotBtns');
-  const spinBtn  = spinsDiv ? spinsDiv.querySelector('button') : null;
-  if (slotBtns) slotBtns.style.display = 'none';
-  // Le compteur reste visible pendant la partie — seul le bouton se désactive,
-  // avec un message clair, pour que ce soit évident qu'une partie est en cours
-  // (avant, tout le panneau disparaissait, ce qui donnait l'impression que
-  // rien ne se passait quand on cliquait pendant qu'une partie tournait déjà).
-  if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = '⏳ EN COURS…'; }
-  const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
-  const won = autoWin || (Math.random() * 100 < winRate);
-  document.getElementById('slotStatus').textContent = '🎰 Lancement…';
+  try {
+    const spinsDiv = document.getElementById('spinsAvailable');
+    const slotBtns = document.getElementById('slotBtns');
+    const spinBtn  = spinsDiv ? spinsDiv.querySelector('button') : null;
+    if (slotBtns) slotBtns.style.display = 'none';
+    // Le compteur reste visible pendant la partie — seul le bouton se désactive,
+    // avec un message clair, pour que ce soit évident qu'une partie est en cours
+    // (avant, tout le panneau disparaissait, ce qui donnait l'impression que
+    // rien ne se passait quand on cliquait pendant qu'une partie tournait déjà).
+    if (spinBtn) { spinBtn.disabled = true; spinBtn.textContent = '⏳ EN COURS…'; }
+    const winRate = typeof config.jackpot?.winRate === 'number' ? config.jackpot.winRate : 20;
+    const won = autoWin || (Math.random() * 100 < winRate);
+    const statusEl = document.getElementById('slotStatus');
+    if (statusEl) statusEl.textContent = '🎰 Lancement…';
 
-  const reels = [document.getElementById('r0'), document.getElementById('r1'), document.getElementById('r2')];
-  reels.forEach(r => { r.classList.remove('win'); r.classList.add('spin'); });
+    const reels = [document.getElementById('r0'), document.getElementById('r1'), document.getElementById('r2')];
+    reels.forEach(r => { if (r) { r.classList.remove('win'); r.classList.add('spin'); } });
 
-  // Fait défiler des symboles aléatoires pendant ~2.2s (28 ticks × 80ms)
-  let elapsed = 0;
-  const interval = setInterval(() => {
-    reels.forEach(r => { r.textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]; });
-    elapsed++;
-    if (elapsed > 28) {
-      clearInterval(interval);
-      reels.forEach(r => r.classList.remove('spin'));
+    // Fait défiler des symboles aléatoires pendant ~2.2s (28 ticks × 80ms)
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      try {
+        reels.forEach(r => { if (r) r.textContent = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]; });
+        elapsed++;
+        if (elapsed > 28) {
+          clearInterval(interval);
+          reels.forEach(r => { if (r) r.classList.remove('spin'); });
 
-      if (won) {
-        const sym = SYMBOLS[Math.floor(Math.random()*4)];
-        reels.forEach(r => { r.textContent = sym; r.classList.add('win'); });
-        handleWin();
-      } else {
-        // Perte : 3 symboles forcément différents
-        let s0 = Math.floor(Math.random()*SYMBOLS.length);
-        let s1 = Math.floor(Math.random()*SYMBOLS.length);
-        while (s1 === s0) s1 = Math.floor(Math.random()*SYMBOLS.length);
-        let s2 = Math.floor(Math.random()*SYMBOLS.length);
-        while (s2 === s0 || s2 === s1) s2 = Math.floor(Math.random()*SYMBOLS.length);
-        reels[0].textContent = SYMBOLS[s0];
-        reels[1].textContent = SYMBOLS[s1];
-        reels[2].textContent = SYMBOLS[s2];
-        document.getElementById('slotStatus').textContent = 'Pas de chance… Retente !';
+          if (won) {
+            const sym = SYMBOLS[Math.floor(Math.random()*4)];
+            reels.forEach(r => { if (r) { r.textContent = sym; r.classList.add('win'); } });
+            handleWin();
+          } else {
+            // Perte : 3 symboles forcément différents
+            let s0 = Math.floor(Math.random()*SYMBOLS.length);
+            let s1 = Math.floor(Math.random()*SYMBOLS.length);
+            while (s1 === s0) s1 = Math.floor(Math.random()*SYMBOLS.length);
+            let s2 = Math.floor(Math.random()*SYMBOLS.length);
+            while (s2 === s0 || s2 === s1) s2 = Math.floor(Math.random()*SYMBOLS.length);
+            if (reels[0]) reels[0].textContent = SYMBOLS[s0];
+            if (reels[1]) reels[1].textContent = SYMBOLS[s1];
+            if (reels[2]) reels[2].textContent = SYMBOLS[s2];
+            if (statusEl) statusEl.textContent = 'Pas de chance… Retente !';
+            isSpinning = false;
+            updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
+          }
+        }
+      } catch (e) {
+        clearInterval(interval);
+        showFatalError('Erreur pendant le lancer : ' + e.message);
         isSpinning = false;
-        updateSpinsUI(); // Remonte le bouton LANCER si lancers restants
+        updateSpinsUI();
       }
-    }
-  }, 80);
+    }, 80);
+  } catch (e) {
+    showFatalError('Erreur spinReels : ' + e.message);
+    isSpinning = false;
+  }
 }
 
 async function handleWin() {
