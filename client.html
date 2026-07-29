@@ -1855,6 +1855,11 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
   const ticketPrice = data.ticketPrice || 0;
   _tombolaWinners = winners;
 
+  const cdBox = document.getElementById('tombolaCountdown');
+  const resBox = document.getElementById('tombolaResults');
+  const resList = document.getElementById('tombolaResultsList');
+  const homeBox = document.getElementById('tombolaHomeBox');
+
   // Si tombola désactivée → tout cacher
   if (!enabled) {
     if (homeBox) homeBox.style.display = 'none';
@@ -1863,12 +1868,6 @@ onSnapshot(doc(db, 'config', 'tombola'), snap => {
     if (_cdInterval) clearInterval(_cdInterval);
     return;
   }
-
-  const cdBox = document.getElementById('tombolaCountdown');
-  const resBox = document.getElementById('tombolaResults');
-  const resList = document.getElementById('tombolaResultsList');
-
-  const homeBox = document.getElementById('tombolaHomeBox');
 
   if (active) {
     // Tirage terminé
